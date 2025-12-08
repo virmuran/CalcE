@@ -1,0 +1,283 @@
+卷 Windows 2022 的文件夹 PATH 列表
+卷序列号为 E404-ECAF
+C:.
+│  base_module.py
+│  build.bat
+│  data_manager.py
+│  debug_data.py
+│  main.py
+│  module_loader.py
+│  requirements.txt
+│  resource_helper.py
+│  theme_manager.py
+│  tofuapp.ico
+│  tofuapp.png
+│  TofuApp.spec
+│  一键安装依赖库说明文件.txt
+│  文件结构.txt
+│  
+├─.vscode
+│      settings.json
+│      
+├─build
+│  └─TofuApp
+│      │  Analysis-00.toc
+│      │  base_library.zip
+│      │  EXE-00.toc
+│      │  PKG-00.toc
+│      │  PYZ-00.pyz
+│      │  PYZ-00.toc
+│      │  TofuApp.pkg
+│      │  warn-TofuApp.txt
+│      │  xref-TofuApp.html
+│      │  
+│      └─localpycs
+│              pyimod01_archive.pyc
+│              pyimod02_importers.pyc
+│              pyimod03_ctypes.pyc
+│              pyimod04_pywin32.pyc
+│              struct.pyc
+│              
+├─dist
+│      TofuApp.exe
+│      
+├─modules
+│  │  bookmarks.py
+│  │  countdowns.py
+│  │  important_dates.py
+│  │  notes.py
+│  │  pomodoro.py
+│  │  todo.py
+│  │  year_progress.py
+│  │  __init__.py
+│  │  
+│  ├─chemical_calculations
+│  │  │  chemical_calculations_widget.py
+│  │  │  __init__.py
+│  │  │  
+│  │  ├─calculators
+│  │  │  │  basket_filter_design_calculator.py
+│  │  │  │  compressible_flow_pressure_drop.py
+│  │  │  │  corrosion_data_query.py
+│  │  │  │  eos_calculator.py
+│  │  │  │  fan_power_calculator.py
+│  │  │  │  fire_hydrant_calculator.py
+│  │  │  │  flange_size_calculator.py
+│  │  │  │  gas_mixture_properties_calculator.py
+│  │  │  │  gas_state_converter.py
+│  │  │  │  hazardous_chemicals_query.py
+│  │  │  │  heat_exchanger_area_calculator.py
+│  │  │  │  heat_exchanger_calculator.py
+│  │  │  │  insulation_thickness_calculator.py
+│  │  │  │  long_distance_steam_pipe_calculator.py
+│  │  │  │  mixed_liquid_flash_point_calculator.py
+│  │  │  │  npsha_calculator.py
+│  │  │  │  pipe_compensation_calculator.py
+│  │  │  │  pipe_diameter_calculator.py
+│  │  │  │  pipe_span_calculator.py
+│  │  │  │  pipe_thickness_calculator.py
+│  │  │  │  pressure_drop_calculator.py
+│  │  │  │  pressure_pipe_definition.py
+│  │  │  │  pump_power_calculator.py
+│  │  │  │  pure_substance_properties.py
+│  │  │  │  refrigerant_properties_calculator.py
+│  │  │  │  refrigeration_cycle_calculator.py
+│  │  │  │  relief_area_calculator.py
+│  │  │  │  safety_valve_calculator.py
+│  │  │  │  scipy_missing_calculator.py
+│  │  │  │  solid_solubility_calculator.py
+│  │  │  │  steam_pipe_calculator.py
+│  │  │  │  steam_property_calculator.py
+│  │  │  │  tank_weight_calculator.py
+│  │  │  │  vle_activity_coefficient_calculator.py
+│  │  │  │  wet_air_calculator.py
+│  │  │  │  __init__.py
+│  │  │  │  
+│  │  │  └─__pycache__
+│  │  │          basket_filter_design_calculator.cpython-310.pyc
+│  │  │          basket_filter_design_calculator.cpython-313.pyc
+│  │  │          basket_filter_pressure_drop_calculator.cpython-310.pyc
+│  │  │          compressible_flow_pressure_drop.cpython-310.pyc
+│  │  │          compressible_flow_pressure_drop.cpython-313.pyc
+│  │  │          corrosion_data_query.cpython-310.pyc
+│  │  │          corrosion_data_query.cpython-313.pyc
+│  │  │          eos_calculator.cpython-310.pyc
+│  │  │          eos_calculator.cpython-313.pyc
+│  │  │          fan_power_calculator.cpython-310.pyc
+│  │  │          fan_power_calculator.cpython-313.pyc
+│  │  │          fire_hydrant_calculator.cpython-310.pyc
+│  │  │          fire_hydrant_calculator.cpython-313.pyc
+│  │  │          flange_size_calculator.cpython-310.pyc
+│  │  │          flange_size_calculator.cpython-313.pyc
+│  │  │          gas_mixture_properties_calculator.cpython-310.pyc
+│  │  │          gas_mixture_properties_calculator.cpython-313.pyc
+│  │  │          gas_state_converter.cpython-310.pyc
+│  │  │          gas_state_converter.cpython-313.pyc
+│  │  │          hazardous_chemicals_query.cpython-310.pyc
+│  │  │          hazardous_chemicals_query.cpython-313.pyc
+│  │  │          heat_exchanger_area_calculator.cpython-313.pyc
+│  │  │          heat_exchanger_calculator.cpython-310.pyc
+│  │  │          heat_exchanger_calculator.cpython-313.pyc
+│  │  │          insulation_thickness_calculator.cpython-310.pyc
+│  │  │          insulation_thickness_calculator.cpython-313.pyc
+│  │  │          long_distance_steam_pipe_calculator.cpython-310.pyc
+│  │  │          long_distance_steam_pipe_calculator.cpython-313.pyc
+│  │  │          mixed_liquid_flash_point_calculator.cpython-310.pyc
+│  │  │          mixed_liquid_flash_point_calculator.cpython-313.pyc
+│  │  │          npsha_calculator.cpython-310.pyc
+│  │  │          npsha_calculator.cpython-313.pyc
+│  │  │          pipe_compensation_calculator.cpython-310.pyc
+│  │  │          pipe_compensation_calculator.cpython-313.pyc
+│  │  │          pipe_diameter_calculator.cpython-310.pyc
+│  │  │          pipe_diameter_calculator.cpython-313.pyc
+│  │  │          pipe_span_calculator.cpython-310.pyc
+│  │  │          pipe_span_calculator.cpython-313.pyc
+│  │  │          pipe_thickness_calculator.cpython-310.pyc
+│  │  │          pipe_thickness_calculator.cpython-313.pyc
+│  │  │          pressure_drop_calculator.cpython-310.pyc
+│  │  │          pressure_drop_calculator.cpython-313.pyc
+│  │  │          pressure_pipe_definition.cpython-310.pyc
+│  │  │          pressure_pipe_definition.cpython-313.pyc
+│  │  │          pump_power_calculator.cpython-310.pyc
+│  │  │          pump_power_calculator.cpython-313.pyc
+│  │  │          pure_substance_properties.cpython-310.pyc
+│  │  │          pure_substance_properties.cpython-313.pyc
+│  │  │          refrigerant_properties_calculator.cpython-310.pyc
+│  │  │          refrigerant_properties_calculator.cpython-313.pyc
+│  │  │          refrigeration_cycle_calculator.cpython-310.pyc
+│  │  │          refrigeration_cycle_calculator.cpython-313.pyc
+│  │  │          relief_area_calculator.cpython-310.pyc
+│  │  │          relief_area_calculator.cpython-313.pyc
+│  │  │          safety_valve_calculator.cpython-310.pyc
+│  │  │          safety_valve_calculator.cpython-313.pyc
+│  │  │          solid_solubility_calculator.cpython-310.pyc
+│  │  │          solid_solubility_calculator.cpython-313.pyc
+│  │  │          steam_pipe_calculator.cpython-310.pyc
+│  │  │          steam_pipe_calculator.cpython-313.pyc
+│  │  │          steam_property_calculator.cpython-310.pyc
+│  │  │          steam_property_calculator.cpython-313.pyc
+│  │  │          tank_weight_calculator.cpython-310.pyc
+│  │  │          tank_weight_calculator.cpython-313.pyc
+│  │  │          vle_activity_coefficient_calculator.cpython-310.pyc
+│  │  │          vle_activity_coefficient_calculator.cpython-313.pyc
+│  │  │          wet_air_calculator.cpython-310.pyc
+│  │  │          wet_air_calculator.cpython-313.pyc
+│  │  │          __init__.cpython-310.pyc
+│  │  │          
+│  │  └─__pycache__
+│  │          chemical_calculations_widget.cpython-310.pyc
+│  │          chemical_calculations_widget.cpython-313.pyc
+│  │          __init__.cpython-310.pyc
+│  │          __init__.cpython-313.pyc
+│  │          
+│  ├─converter
+│  │  │  converter_widget.py
+│  │  │  __init__.py
+│  │  │  
+│  │  ├─calculators
+│  │  │  │  area_converter.py
+│  │  │  │  base_converter.py
+│  │  │  │  energy_converter.py
+│  │  │  │  force_converter.py
+│  │  │  │  length_converter.py
+│  │  │  │  loan_calculator.py
+│  │  │  │  power_converter.py
+│  │  │  │  pressure_converter.py
+│  │  │  │  scientific_calculator.py
+│  │  │  │  speed_converter.py
+│  │  │  │  tax_calculator.py
+│  │  │  │  temperature_converter.py
+│  │  │  │  volume_converter.py
+│  │  │  │  weight_converter.py
+│  │  │  │  __init__.py
+│  │  │  │  
+│  │  │  └─__pycache__
+│  │  │          area_converter.cpython-310.pyc
+│  │  │          area_converter.cpython-313.pyc
+│  │  │          base_converter.cpython-310.pyc
+│  │  │          base_converter.cpython-313.pyc
+│  │  │          energy_converter.cpython-310.pyc
+│  │  │          energy_converter.cpython-313.pyc
+│  │  │          force_converter.cpython-310.pyc
+│  │  │          force_converter.cpython-313.pyc
+│  │  │          length_converter.cpython-310.pyc
+│  │  │          length_converter.cpython-313.pyc
+│  │  │          loan_calculator.cpython-310.pyc
+│  │  │          loan_calculator.cpython-313.pyc
+│  │  │          power_converter.cpython-310.pyc
+│  │  │          power_converter.cpython-313.pyc
+│  │  │          pressure_converter.cpython-310.pyc
+│  │  │          pressure_converter.cpython-313.pyc
+│  │  │          scientific_calculator.cpython-310.pyc
+│  │  │          scientific_calculator.cpython-313.pyc
+│  │  │          speed_converter.cpython-310.pyc
+│  │  │          speed_converter.cpython-313.pyc
+│  │  │          tax_calculator.cpython-310.pyc
+│  │  │          tax_calculator.cpython-313.pyc
+│  │  │          temperature_converter.cpython-310.pyc
+│  │  │          temperature_converter.cpython-313.pyc
+│  │  │          volume_converter.cpython-310.pyc
+│  │  │          volume_converter.cpython-313.pyc
+│  │  │          weight_converter.cpython-310.pyc
+│  │  │          weight_converter.cpython-313.pyc
+│  │  │          __init__.cpython-310.pyc
+│  │  │          __init__.cpython-313.pyc
+│  │  │          
+│  │  └─__pycache__
+│  │          converter_widget.cpython-310.pyc
+│  │          converter_widget.cpython-313.pyc
+│  │          __init__.cpython-310.pyc
+│  │          __init__.cpython-313.pyc
+│  │          
+│  ├─process_design
+│  │  │  fix_imports.py
+│  │  │  process_design_data.py
+│  │  │  process_design_manager.py
+│  │  │  process_design_module.py
+│  │  │  process_design_widget.py
+│  │  │  utils.py
+│  │  │  __init__.py
+│  │  │  
+│  │  ├─tabs
+│  │  │      equipment_list_tab.py
+│  │  │      heat_balance_tab.py
+│  │  │      mass_balance_tab.py
+│  │  │      material_database_tab.py
+│  │  │      msds_manager_tab.py
+│  │  │      process_route_tab.py
+│  │  │      __init__.py
+│  │  │      
+│  │  └─__pycache__
+│  │          process_design_data.cpython-313.pyc
+│  │          process_design_manager.cpython-313.pyc
+│  │          process_design_widget.cpython-313.pyc
+│  │          __init__.cpython-313.pyc
+│  │          
+│  └─__pycache__
+│          bookmarks.cpython-310.pyc
+│          bookmarks.cpython-313.pyc
+│          converter.cpython-310.pyc
+│          countdowns.cpython-310.pyc
+│          countdowns.cpython-313.pyc
+│          important_dates.cpython-310.pyc
+│          important_dates.cpython-313.pyc
+│          notes.cpython-310.pyc
+│          notes.cpython-313.pyc
+│          pomodoro.cpython-310.pyc
+│          pomodoro.cpython-313.pyc
+│          process_design_widget.cpython-313.pyc
+│          todo.cpython-310.pyc
+│          todo.cpython-313.pyc
+│          year_progress.cpython-310.pyc
+│          year_progress.cpython-313.pyc
+│          __init__.cpython-310.pyc
+│          
+└─__pycache__
+        data_manager.cpython-310.pyc
+        data_manager.cpython-313.pyc
+        module_loader.cpython-310.pyc
+        module_loader.cpython-313.pyc
+        resource_helper.cpython-310.pyc
+        theme_manager.cpython-310.pyc
+        theme_manager.cpython-313.pyc
+        

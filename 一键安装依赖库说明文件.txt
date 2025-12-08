@@ -1,0 +1,20 @@
+最常用、最标准的做法是使用 `requirements.txt` 文件。下面我为你详细解释如何建立和使用它，并提供更高级的方案。
+
+### 核心方案：使用 `requirements.txt` 文件（推荐）
+
+**第一步：为当前项目生成依赖清单**
+在你的 `TofuApp` 项目目录下打开PowerShell，运行以下命令，它会将**当前环境**中已安装的包（包括PySide6）列表导出到一个文件中：
+```powershell
+pip freeze > requirements.txt
+```
+执行后，你会在 `TofuApp` 文件夹里看到一个名为 `requirements.txt` 的新文件。
+
+**第二步：将 `requirements.txt` 加入版本管理（如Git）**
+**这是关键一步！** 确保将这个 `requirements.txt` 文件和你的 `main.py` 等源代码一起保存（例如提交到Git仓库）。这样，它就成为了你项目的一部分。
+
+**第三步：在新设备上“一键安装”所有依赖**
+当你换到新电脑，并拉取（clone）了项目代码后，只需在项目目录下（确保已进入虚拟环境）运行一条命令：
+```powershell
+pip install -r requirements.txt
+```
+`pip` 会自动读取 `requirements.txt` 文件里的每一行，并安装所有指定的库及其对应版本。**这就是你想要的“一键安装”**。
