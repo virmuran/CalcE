@@ -1,0 +1,117 @@
+{
+  "template_type": "标准模板",
+  "created_date": "2025-12-09T09:07:37.871855",
+  "version": "1.0",
+  "description": "包含完整信息的标准设备清单模板",
+  "data_start_row": 10,
+  "columns": [
+    {
+      "display_name": "序号",
+      "field_name": "item",
+      "width": 6,
+      "style": "number"
+    },
+    {
+      "display_name": "设备编号",
+      "field_name": "equipment_id",
+      "width": 12,
+      "style": "text"
+    },
+    {
+      "display_name": "英文描述",
+      "field_name": "description_en",
+      "width": 20,
+      "style": "text"
+    },
+    {
+      "display_name": "设备名称",
+      "field_name": "name",
+      "width": 20,
+      "style": "text"
+    },
+    {
+      "display_name": "技术规格",
+      "field_name": "specification",
+      "width": 25,
+      "style": "text"
+    },
+    {
+      "display_name": "数量",
+      "field_name": "quantity",
+      "width": 8,
+      "style": "number"
+    },
+    {
+      "display_name": "单价",
+      "field_name": "unit_price",
+      "width": 12,
+      "style": "currency"
+    },
+    {
+      "display_name": "总价",
+      "field_name": "total_price",
+      "width": 12,
+      "style": "currency_formula"
+    },
+    {
+      "display_name": "设计温度℃",
+      "field_name": "design_temperature",
+      "width": 12,
+      "style": "number"
+    },
+    {
+      "display_name": "设计压力MPa",
+      "field_name": "design_pressure",
+      "width": 12,
+      "style": "number"
+    },
+    {
+      "display_name": "操作温度℃",
+      "field_name": "operating_temperature",
+      "width": 12,
+      "style": "number"
+    },
+    {
+      "display_name": "操作压力MPa",
+      "field_name": "operating_pressure",
+      "width": 12,
+      "style": "number"
+    },
+    {
+      "display_name": "估计功率kW",
+      "field_name": "estimated_power",
+      "width": 12,
+      "style": "number"
+    },
+    {
+      "display_name": "材质",
+      "field_name": "material",
+      "width": 10,
+      "style": "text"
+    },
+    {
+      "display_name": "保温",
+      "field_name": "insulation",
+      "width": 10,
+      "style": "text"
+    },
+    {
+      "display_name": "重量估计t",
+      "field_name": "weight_estimate",
+      "width": 12,
+      "style": "number"
+    },
+    {
+      "display_name": "动态",
+      "field_name": "dynamic",
+      "width": 10,
+      "style": "text"
+    },
+    {
+      "display_name": "备注",
+      "field_name": "notes",
+      "width": 20,
+      "style": "text"
+    }
+  ]
+}

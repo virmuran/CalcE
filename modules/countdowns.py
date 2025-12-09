@@ -68,7 +68,7 @@ class CountdownsWidget(QWidget):
         
         self.hour_spinbox = QSpinBox()
         self.hour_spinbox.setRange(0, 23)
-        self.hour_spinbox.setValue(12)
+        self.hour_spinbox.setValue(0)
         self.hour_spinbox.setFixedWidth(50)
         time_layout.addWidget(self.hour_spinbox)
         time_layout.addWidget(QLabel("时"))

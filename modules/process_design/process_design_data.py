@@ -12,7 +12,7 @@ if current_dir not in sys.path:
 print(f"📁 工艺设计数据模块路径: {current_dir}")
 
 from dataclasses import dataclass, asdict, field
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Union
 
 class JSONEncoder(json.JSONEncoder):
     """自定义JSON编码器，处理datetime和date对象"""
@@ -232,12 +232,12 @@ class EquipmentItem:
     location: str = ""
     status: str = ""
     commission_date: Optional[str] = None
-    design_pressure: Optional[float] = None
-    design_temperature: Optional[float] = None
+    design_pressure: Optional[Union[float, str]] = None  # 修改：支持字符串
+    design_temperature: Optional[Union[float, str]] = None  # 修改：支持字符串
     capacity: str = ""
     project_id: str = ""
     description: str = ""
-    description_en: str = ""  # 新增：英文描述
+    description_en: str = ""  # 英文描述
     tag_number: str = ""
     equipment_type: str = ""
     notes: str = ""
@@ -247,13 +247,20 @@ class EquipmentItem:
     quantity: int = 1  # QTY.
     unit_price: Optional[float] = None  # 单价
     total_price: Optional[float] = None  # 总价
-    operating_temperature: Optional[float] = None  # 操作温度
-    operating_pressure: Optional[float] = None  # 操作压力
+    operating_temperature: Optional[Union[float, str]] = None  # 修改：支持字符串
+    operating_pressure: Optional[Union[float, str]] = None  # 修改：支持字符串
     estimated_power: Optional[float] = None  # 估计功率
     material: str = ""  # 材质
     insulation: str = ""  # 保温
     weight_estimate: Optional[float] = None  # 重量估计
     dynamic: str = ""  # 动态
+    
+    # 新增：电机功率相关字段
+    running_quantity: int = 1  # 运行设备数量
+    single_power: Optional[float] = None  # 单机功率
+    operating_power: Optional[float] = None  # 运行功率
+    total_power: Optional[float] = None  # 总功率
+    frequency_conversion: bool = False  # 是否变频
     
     # 元数据
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
