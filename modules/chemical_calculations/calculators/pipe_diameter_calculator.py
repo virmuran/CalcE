@@ -1,7 +1,8 @@
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
-    QGroupBox, QTextEdit, QComboBox, QMessageBox, QGridLayout,
-    QFileDialog, QDialog, QDialogButtonBox  # 确保导入这些
+    QGroupBox, QTextEdit, QComboBox, QMessageBox, QFrame,
+    QScrollArea, QDialog, QSpinBox, QButtonGroup, QGridLayout,
+    QFileDialog, QDialogButtonBox
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QDoubleValidator
@@ -11,7 +12,7 @@ from datetime import datetime
 
 
 class PipeDiameterCalculator(QWidget):
-    """管道直径计算器 - 基于表格数据"""
+    """管道直径计算器 - 基于表格数据（统一UI风格版）"""
     
     def __init__(self, parent=None, data_manager=None):
         super().__init__(parent)
@@ -21,13 +22,13 @@ class PipeDiameterCalculator(QWidget):
         # 使用传入的数据管理器或创建新的
         if data_manager is not None:
             self.data_manager = data_manager
-            print("使用共享的数据管理器")
         else:
             self.init_data_manager()
         
         self.setup_ui()
         self.setup_fluid_ranges()
         self.setup_fluid_options()
+        self.setup_mode_dependencies()
 
     def init_data_manager(self):
         """初始化数据管理器 - 使用单例模式"""
@@ -288,6 +289,460 @@ class PipeDiameterCalculator(QWidget):
             "三氯乙烷": {"velocity": (2, 2), "flow": (0, 0), "pressure": (0, 0), "flow_unit": "m³/h"}
         }
     
+    def setup_ui(self):
+        """设置UI界面 - 统一风格布局"""
+        main_layout = QHBoxLayout(self)
+        main_layout.setSpacing(15)
+        main_layout.setContentsMargins(10, 10, 10, 10)
+        
+        # 左侧：输入参数区域 (占2/3宽度)
+        left_widget = QWidget()
+        left_widget.setMaximumWidth(900)
+        left_layout = QVBoxLayout(left_widget)
+        left_layout.setSpacing(15)
+        
+        # 1. 说明文本
+        description = QLabel(
+            "根据流体类型和计算条件计算管道直径或流量，依据《化工管路设计手册》表1.3-1推荐值。"
+        )
+        description.setWordWrap(True)
+        description.setStyleSheet("color: #7f8c8d; font-size: 12px; padding: 5px;")
+        left_layout.addWidget(description)
+        
+        # 2. 计算模式选择
+        mode_group = QGroupBox("计算模式")
+        mode_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 1px solid #bdc3c7;
+                border-radius: 8px;
+                margin-top: 10px;
+                padding-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 8px 0 8px;
+            }
+        """)
+        mode_layout = QHBoxLayout(mode_group)
+        
+        self.mode_button_group = QButtonGroup(self)
+        self.mode_buttons = {}
+        
+        modes = [
+            ("由流量计算管径", "已知流量，计算合适管径"),
+            ("由管径计算流量", "已知管径，计算最大流量")
+        ]
+        
+        for i, (mode_name, tooltip) in enumerate(modes):
+            btn = QPushButton(mode_name)
+            btn.setCheckable(True)
+            btn.setToolTip(tooltip)
+            btn.setFixedWidth(180)
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #ecf0f1;
+                    border: 1px solid #bdc3c7;
+                    border-radius: 4px;
+                    padding: 8px;
+                    text-align: center;
+                    color: black;
+                }
+                QPushButton:checked {
+                    background-color: #3498db;
+                    color: white;
+                }
+                QPushButton:hover {
+                    background-color: #d5dbdb;
+                    color: green;
+                }
+            """)
+            self.mode_button_group.addButton(btn, i)
+            mode_layout.addWidget(btn)
+            self.mode_buttons[mode_name] = btn
+        
+        # 默认选择第一个
+        self.mode_buttons["由流量计算管径"].setChecked(True)
+        self.mode_button_group.buttonClicked.connect(self.on_mode_button_clicked)
+        
+        mode_layout.addStretch()
+        left_layout.addWidget(mode_group)
+        
+        # 3. 输入参数组 - 使用GridLayout实现整齐的布局
+        input_group = QGroupBox("📥 输入参数")
+        input_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 1px solid #bdc3c7;
+                border-radius: 8px;
+                margin-top: 10px;
+                padding-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 8px 0 8px;
+            }
+        """)
+        
+        # 使用GridLayout确保整齐排列
+        input_layout = QGridLayout(input_group)
+        input_layout.setVerticalSpacing(12)
+        input_layout.setHorizontalSpacing(10)
+        
+        # 标签样式 - 右对齐
+        label_style = """
+            QLabel {
+                font-weight: bold;
+                padding-right: 10px;
+            }
+        """
+        
+        # 输入框和下拉菜单的固定宽度
+        input_width = 400
+        combo_width = 250
+        
+        row = 0
+        
+        # 流体类型
+        fluid_label = QLabel("流体类型:")
+        fluid_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        fluid_label.setStyleSheet(label_style)
+        input_layout.addWidget(fluid_label, row, 0)
+        
+        self.fluid_combo = QComboBox()
+        self.setup_fluid_options()
+        self.fluid_combo.setFixedWidth(input_width)
+        self.fluid_combo.currentTextChanged.connect(self.on_fluid_changed)
+        input_layout.addWidget(self.fluid_combo, row, 1)
+        
+        # 流体选择不需要额外提示，留空
+        self.fluid_hint = QLabel("")
+        self.fluid_hint.setFixedWidth(combo_width)
+        input_layout.addWidget(self.fluid_hint, row, 2)
+        
+        row += 1
+        
+        # 计算条件
+        condition_label = QLabel("计算条件:")
+        condition_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        condition_label.setStyleSheet(label_style)
+        input_layout.addWidget(condition_label, row, 0)
+        
+        self.condition_combo = QComboBox()
+        self.condition_combo.setFixedWidth(input_width)
+        self.condition_combo.currentTextChanged.connect(self.on_condition_changed)
+        input_layout.addWidget(self.condition_combo, row, 1)
+        
+        # 条件提示标签
+        self.condition_hint = QLabel("选择流体后出现")
+        self.condition_hint.setStyleSheet("color: #7f8c8d; font-style: italic;")
+        self.condition_hint.setFixedWidth(combo_width)
+        input_layout.addWidget(self.condition_hint, row, 2)
+        
+        row += 1
+        
+        # 压力
+        pressure_label = QLabel("压力 (MPa):")
+        pressure_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        pressure_label.setStyleSheet(label_style)
+        input_layout.addWidget(pressure_label, row, 0)
+        
+        self.pressure_input = QLineEdit()
+        self.pressure_input.setPlaceholderText("例如: 0.9")
+        self.pressure_input.setValidator(QDoubleValidator(0.0, 30.0, 2))
+        self.pressure_input.setFixedWidth(input_width)
+        input_layout.addWidget(self.pressure_input, row, 1)
+        
+        # 压力范围标签
+        self.pressure_range_label = QLabel("")
+        self.pressure_range_label.setStyleSheet("color: #7f8c8d; font-size: 10px;")
+        self.pressure_range_label.setFixedWidth(combo_width)
+        input_layout.addWidget(self.pressure_range_label, row, 2)
+        
+        row += 1
+        
+        # 流速
+        velocity_label = QLabel("流速 (m/s):")
+        velocity_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        velocity_label.setStyleSheet(label_style)
+        input_layout.addWidget(velocity_label, row, 0)
+        
+        self.velocity_input = QLineEdit()
+        self.velocity_input.setPlaceholderText("例如: 35")
+        self.velocity_input.setValidator(QDoubleValidator(0.1, 100.0, 2))
+        self.velocity_input.setFixedWidth(input_width)
+        input_layout.addWidget(self.velocity_input, row, 1)
+        
+        # 流速范围标签
+        self.velocity_range_label = QLabel("")
+        self.velocity_range_label.setStyleSheet("color: #7f8c8d; font-size: 10px;")
+        self.velocity_range_label.setFixedWidth(combo_width)
+        input_layout.addWidget(self.velocity_range_label, row, 2)
+        
+        row += 1
+        
+        # 推荐流速按钮行
+        self.velocity_recommend_btn = QPushButton("📏 获取推荐流速")
+        self.velocity_recommend_btn.setFixedWidth(combo_width)
+        self.velocity_recommend_btn.clicked.connect(self.set_recommended_velocity)
+        self.velocity_recommend_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #95a5a6;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 6px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #7f8c8d;
+            }
+        """)
+        # 放在第1列，占据1列宽度
+        input_layout.addWidget(self.velocity_recommend_btn, row, 1, 1, 1)
+        
+        # 空白的提示标签占据第2列
+        self.velocity_button_hint = QLabel("")
+        self.velocity_button_hint.setFixedWidth(combo_width)
+        input_layout.addWidget(self.velocity_button_hint, row, 2)
+        
+        row += 1
+        
+        # 流量输入 - 流量计算管径模式
+        self.flow_label = QLabel("流量:")
+        self.flow_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.flow_label.setStyleSheet(label_style)
+        input_layout.addWidget(self.flow_label, row, 0)
+        
+        self.flow_input = QLineEdit()
+        self.flow_input.setPlaceholderText("例如: 100")
+        self.flow_input.setValidator(QDoubleValidator(0.1, 10000.0, 2))
+        self.flow_input.setFixedWidth(input_width)
+        input_layout.addWidget(self.flow_input, row, 1)
+        
+        # 流量范围标签
+        self.flow_range_label = QLabel("")
+        self.flow_range_label.setStyleSheet("color: #7f8c8d; font-size: 10px;")
+        self.flow_range_label.setFixedWidth(combo_width)
+        input_layout.addWidget(self.flow_range_label, row, 2)
+        
+        row += 1
+        
+        # 推荐流量按钮行
+        self.flow_recommend_btn = QPushButton("📏 获取推荐流量")
+        self.flow_recommend_btn.setFixedWidth(combo_width)
+        self.flow_recommend_btn.clicked.connect(self.set_recommended_flow)
+        self.flow_recommend_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #95a5a6;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 6px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #7f8c8d;
+            }
+        """)
+        input_layout.addWidget(self.flow_recommend_btn, row, 1, 1, 1)
+        
+        # 空白的提示标签
+        self.flow_button_hint = QLabel("")
+        self.flow_button_hint.setFixedWidth(combo_width)
+        input_layout.addWidget(self.flow_button_hint, row, 2)
+        
+        row += 1
+        
+        # 管径输入 - 管径计算流量模式
+        self.diameter_label = QLabel("管道内径 (mm):")
+        self.diameter_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.diameter_label.setStyleSheet(label_style)
+        input_layout.addWidget(self.diameter_label, row, 0)
+        
+        self.diameter_input = QLineEdit()
+        self.diameter_input.setPlaceholderText("例如: 80")
+        self.diameter_input.setValidator(QDoubleValidator(1.0, 2000.0, 1))
+        self.diameter_input.setFixedWidth(input_width)
+        input_layout.addWidget(self.diameter_input, row, 1)
+        
+        self.diameter_combo = QComboBox()
+        self.setup_diameter_options()
+        self.diameter_combo.setFixedWidth(combo_width)
+        self.diameter_combo.currentTextChanged.connect(self.on_diameter_changed)
+        input_layout.addWidget(self.diameter_combo, row, 2)
+        
+        row += 1
+        
+        # 密度显示
+        density_label = QLabel("密度 (kg/m³):")
+        density_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        density_label.setStyleSheet(label_style)
+        input_layout.addWidget(density_label, row, 0)
+        
+        self.density_input = QLineEdit()
+        self.density_input.setPlaceholderText("自动计算")
+        self.density_input.setReadOnly(True)
+        self.density_input.setFixedWidth(input_width)
+        input_layout.addWidget(self.density_input, row, 1)
+        
+        # 密度提示标签
+        self.density_hint = QLabel("根据流体自动计算")
+        self.density_hint.setStyleSheet("color: #7f8c8d; font-style: italic;")
+        self.density_hint.setFixedWidth(combo_width)
+        input_layout.addWidget(self.density_hint, row, 2)
+        
+        left_layout.addWidget(input_group)
+        
+        # 4. 计算按钮
+        calculate_btn = QPushButton("🧮 开始计算")
+        calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
+        calculate_btn.clicked.connect(self.calculate)
+        calculate_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #3498db;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 12px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #2980b9;
+            }
+        """)
+        calculate_btn.setMinimumHeight(50)
+        left_layout.addWidget(calculate_btn)
+        
+        # 5. 下载按钮布局
+        download_layout = QHBoxLayout()
+        download_txt_btn = QPushButton("📄 下载计算书(TXT)")
+        download_txt_btn.clicked.connect(self.download_txt_report)
+        download_txt_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #27ae60;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #219653;
+            }
+        """)
+
+        download_pdf_btn = QPushButton("📊 下载计算书(PDF)")
+        download_pdf_btn.clicked.connect(self.generate_pdf_report)
+        download_pdf_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #e74c3c;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #c0392b;
+            }
+        """)
+
+        download_layout.addWidget(download_txt_btn)
+        download_layout.addWidget(download_pdf_btn)
+        left_layout.addLayout(download_layout)
+        
+        # 6. 在底部添加拉伸因子
+        left_layout.addStretch()
+        
+        # 右侧：结果显示区域 (占1/3宽度)
+        right_widget = QWidget()
+        right_widget.setMinimumWidth(400)
+        right_layout = QVBoxLayout(right_widget)
+        right_layout.setSpacing(15)
+        
+        # 结果显示
+        self.result_group = QGroupBox("📤 计算结果")
+        self.result_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 1px solid #bdc3c7;
+                border-radius: 8px;
+                margin-top: 10px;
+                padding-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 8px 0 8px;
+            }
+        """)
+        result_layout = QVBoxLayout(self.result_group)
+        
+        self.result_text = QTextEdit()
+        self.result_text.setReadOnly(True)
+        self.result_text.setStyleSheet("""
+            QTextEdit {
+                border: 1px solid #ecf0f1;
+                border-radius: 6px;
+                padding: 8px;
+                background-color: #f8f9fa;
+                min-height: 500px;
+            }
+        """)
+        result_layout.addWidget(self.result_text)
+        
+        right_layout.addWidget(self.result_group)
+        
+        # 将左右两部分添加到主布局
+        main_layout.addWidget(left_widget, 2)  # 左侧占2/3
+        main_layout.addWidget(right_widget, 1)  # 右侧占1/3
+        
+        # 设置默认值
+        self.set_default_values()
+    
+    def setup_mode_dependencies(self):
+        """设置计算模式的依赖关系"""
+        # 初始状态 - 由流量计算管径
+        self.on_mode_changed("由流量计算管径")
+    
+    def on_mode_button_clicked(self, button):
+        """处理计算模式按钮点击"""
+        mode_text = button.text()
+        self.on_mode_changed(mode_text)
+
+    def get_current_mode(self):
+        """获取当前选择的计算模式"""
+        checked_button = self.mode_button_group.checkedButton()
+        if checked_button:
+            return checked_button.text()
+        return "由流量计算管径"  # 默认值
+    
+    def on_mode_changed(self, mode):
+        """处理计算模式变化"""
+        if mode == "由流量计算管径":
+            # 显示流量输入，隐藏管径输入
+            self.flow_label.setVisible(True)
+            self.flow_input.setVisible(True)
+            self.flow_range_label.setVisible(True)
+            self.flow_recommend_btn.setVisible(True)
+            self.flow_button_hint.setVisible(True)
+            self.diameter_label.setVisible(False)
+            self.diameter_input.setVisible(False)
+            self.diameter_combo.setVisible(False)
+        else:  # "由管径计算流量"
+            # 显示管径输入，隐藏流量输入
+            self.flow_label.setVisible(False)
+            self.flow_input.setVisible(False)
+            self.flow_range_label.setVisible(False)
+            self.flow_recommend_btn.setVisible(False)
+            self.flow_button_hint.setVisible(False)
+            self.diameter_label.setVisible(True)
+            self.diameter_input.setVisible(True)
+            self.diameter_combo.setVisible(True)
+    
     def setup_fluid_options(self):
         """设置流体选项"""
         # 更新流体选项列表
@@ -352,398 +807,6 @@ class PipeDiameterCalculator(QWidget):
             "三氯乙烷": 1320
         }
     
-    def setup_ui(self):
-        """设置UI界面"""
-        main_layout = QHBoxLayout(self)
-        main_layout.setSpacing(15)
-        main_layout.setContentsMargins(10, 10, 10, 10)
-        
-        # 左侧：输入参数区域
-        left_widget = QWidget()
-        left_widget.setMaximumWidth(900)
-        left_layout = QVBoxLayout(left_widget)
-        left_layout.setSpacing(15)
-        
-        # 说明文本
-        description = QLabel(
-            "计算管道直径或流量，支持多种流体类型和计算条件。"
-        )
-        description.setWordWrap(True)
-        description.setStyleSheet("color: #7f8c8d; font-size: 12px; padding: 5px;")
-        left_layout.addWidget(description)
-        
-        # 输入参数组
-        input_group = QGroupBox("📥 输入参数")
-        input_group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 1px solid #bdc3c7;
-                border-radius: 8px;
-                margin-top: 10px;
-                padding-top: 10px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 8px 0 8px;
-            }
-        """)
-        
-        input_layout = QGridLayout(input_group)
-        input_layout.setVerticalSpacing(12)
-        input_layout.setHorizontalSpacing(10)
-        
-        # 标签样式
-        label_style = "QLabel { font-weight: bold; padding-right: 10px; }"
-        range_style = "QLabel { color: #7f8c8d; font-size: 10px; padding-left: 5px; }"
-        
-        input_width = 400
-        button_width = 250
-        
-        row = 0
-        
-        # 计算模式
-        mode_label = QLabel("计算模式:")
-        mode_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        mode_label.setStyleSheet(label_style)
-        input_layout.addWidget(mode_label, row, 0)
-        
-        self.mode_combo = QComboBox()
-        self.mode_combo.addItems(["由流量计算管径", "由管径计算流量"])
-        self.mode_combo.setFixedWidth(input_width)
-        self.mode_combo.currentTextChanged.connect(self.on_mode_changed)
-        input_layout.addWidget(self.mode_combo, row, 1)
-        
-        row += 1
-        
-        # 流体选择
-        fluid_label = QLabel("流体类型:")
-        fluid_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        fluid_label.setStyleSheet(label_style)
-        input_layout.addWidget(fluid_label, row, 0)
-        
-        self.fluid_combo = QComboBox()
-        self.fluid_combo.setFixedWidth(input_width)
-        self.fluid_combo.currentTextChanged.connect(self.on_fluid_changed)
-        input_layout.addWidget(self.fluid_combo, row, 1)
-        
-        row += 1
-        
-        # 计算条件
-        condition_label = QLabel("计算条件:")
-        condition_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        condition_label.setStyleSheet(label_style)
-        input_layout.addWidget(condition_label, row, 0)
-        
-        self.condition_combo = QComboBox()
-        self.condition_combo.setFixedWidth(input_width)
-        self.condition_combo.currentTextChanged.connect(self.on_condition_changed)
-        input_layout.addWidget(self.condition_combo, row, 1)
-        
-        row += 1
-        
-        # 压力输入
-        pressure_label = QLabel("压力 (MPa(G)):")
-        pressure_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        pressure_label.setStyleSheet(label_style)
-        input_layout.addWidget(pressure_label, row, 0)
-        
-        pressure_layout = QHBoxLayout()
-        self.pressure_input = QLineEdit()
-        self.pressure_input.setPlaceholderText("例如: 0.9")
-        self.pressure_input.setValidator(QDoubleValidator(0.0, 30.0, 2))
-        self.pressure_input.setFixedWidth(input_width - 150)
-        pressure_layout.addWidget(self.pressure_input)
-        
-        self.pressure_range_label = QLabel("")
-        self.pressure_range_label.setStyleSheet(range_style)
-        self.pressure_range_label.setFixedWidth(140)
-        pressure_layout.addWidget(self.pressure_range_label)
-        
-        input_layout.addLayout(pressure_layout, row, 1)
-        
-        row += 1
-        
-        # 流速输入
-        velocity_label = QLabel("流速 (m/s):")
-        velocity_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        velocity_label.setStyleSheet(label_style)
-        input_layout.addWidget(velocity_label, row, 0)
-        
-        velocity_layout = QHBoxLayout()
-        self.velocity_input = QLineEdit()
-        self.velocity_input.setPlaceholderText("例如: 35")
-        self.velocity_input.setValidator(QDoubleValidator(0.1, 100.0, 2))
-        self.velocity_input.setFixedWidth(input_width - 150)
-        velocity_layout.addWidget(self.velocity_input)
-        
-        self.velocity_range_label = QLabel("")
-        self.velocity_range_label.setStyleSheet(range_style)
-        self.velocity_range_label.setFixedWidth(140)
-        velocity_layout.addWidget(self.velocity_range_label)
-        
-        input_layout.addLayout(velocity_layout, row, 1)
-        
-        self.velocity_recommend_btn = QPushButton("推荐流速")
-        self.velocity_recommend_btn.setFixedWidth(button_width)
-        self.velocity_recommend_btn.clicked.connect(self.set_recommended_velocity)
-        self.velocity_recommend_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #95a5a6;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 6px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #7f8c8d;
-            }
-        """)
-        input_layout.addWidget(self.velocity_recommend_btn, row, 2)
-        
-        row += 1
-        
-        # 流量输入 - 管径计算模式
-        self.flow_label = QLabel("流量:")
-        self.flow_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.flow_label.setStyleSheet(label_style)
-        input_layout.addWidget(self.flow_label, row, 0)
-        
-        flow_layout = QHBoxLayout()
-        self.flow_input = QLineEdit()
-        self.flow_input.setPlaceholderText("例如: 100")
-        self.flow_input.setValidator(QDoubleValidator(0.1, 10000.0, 2))
-        self.flow_input.setFixedWidth(input_width - 150)
-        flow_layout.addWidget(self.flow_input)
-        
-        self.flow_range_label = QLabel("")
-        self.flow_range_label.setStyleSheet(range_style)
-        self.flow_range_label.setFixedWidth(140)
-        flow_layout.addWidget(self.flow_range_label)
-        
-        input_layout.addLayout(flow_layout, row, 1)
-        
-        self.flow_recommend_btn = QPushButton("推荐流量")
-        self.flow_recommend_btn.setFixedWidth(button_width)
-        self.flow_recommend_btn.clicked.connect(self.set_recommended_flow)
-        self.flow_recommend_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #95a5a6;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 6px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #7f8c8d;
-            }
-        """)
-        input_layout.addWidget(self.flow_recommend_btn, row, 2)
-        
-        row += 1
-        
-        # 管径输入 - 流量计算模式
-        self.diameter_label = QLabel("管道内径 (mm):")
-        self.diameter_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.diameter_label.setStyleSheet(label_style)
-        input_layout.addWidget(self.diameter_label, row, 0)
-        
-        self.diameter_input = QLineEdit()
-        self.diameter_input.setPlaceholderText("例如: 80")
-        self.diameter_input.setValidator(QDoubleValidator(1.0, 2000.0, 1))
-        self.diameter_input.setFixedWidth(input_width)
-        input_layout.addWidget(self.diameter_input, row, 1)
-        
-        self.diameter_combo = QComboBox()
-        self.setup_diameter_options()
-        self.diameter_combo.setFixedWidth(button_width)
-        self.diameter_combo.currentTextChanged.connect(self.on_diameter_changed)
-        input_layout.addWidget(self.diameter_combo, row, 2)
-        
-        row += 1
-        
-        # 密度显示
-        density_label = QLabel("密度 (kg/m³):")
-        density_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        density_label.setStyleSheet(label_style)
-        input_layout.addWidget(density_label, row, 0)
-        
-        self.density_input = QLineEdit()
-        self.density_input.setPlaceholderText("自动计算")
-        self.density_input.setReadOnly(True)
-        self.density_input.setFixedWidth(input_width)
-        input_layout.addWidget(self.density_input, row, 1)
-        
-        # 密度提示标签（替换禁用的下拉菜单）
-        self.density_hint = QLabel("根据流体自动计算")
-        self.density_hint.setStyleSheet("color: #7f8c8d; font-style: italic;")
-        self.density_hint.setFixedWidth(button_width)
-        input_layout.addWidget(self.density_hint, row, 2)
-        
-        left_layout.addWidget(input_group)
-        
-        # 计算按钮
-        calculate_btn = QPushButton("🧮 开始计算")
-        calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
-        calculate_btn.clicked.connect(self.calculate)
-        calculate_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #3498db;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 12px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #2980b9;
-            }
-        """)
-        calculate_btn.setMinimumHeight(50)
-        left_layout.addWidget(calculate_btn)
-        
-        # 下载按钮布局
-        download_layout = QHBoxLayout()
-        download_txt_btn = QPushButton("📄 下载计算书(TXT)")
-        download_txt_btn.clicked.connect(self.download_txt_report)
-        download_txt_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #27ae60;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                padding: 8px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #219653;
-            }
-        """)
-
-        download_pdf_btn = QPushButton("📊 下载计算书(PDF)")
-        download_pdf_btn.clicked.connect(self.generate_pdf_report)
-        download_pdf_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #e74c3c;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                padding: 8px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #c0392b;
-            }
-        """)
-
-        download_layout.addWidget(download_txt_btn)
-        download_layout.addWidget(download_pdf_btn)
-        left_layout.addLayout(download_layout)
-        
-        # 右侧：结果显示区域
-        right_widget = QWidget()
-        right_widget.setMinimumWidth(400)
-        right_layout = QVBoxLayout(right_widget)
-        right_layout.setSpacing(15)
-        
-        # 结果显示
-        self.result_group = QGroupBox("📤 计算结果")
-        self.result_group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 1px solid #bdc3c7;
-                border-radius: 8px;
-                margin-top: 10px;
-                padding-top: 10px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 8px 0 8px;
-            }
-        """)
-        result_layout = QVBoxLayout(self.result_group)
-        
-        self.result_text = QTextEdit()
-        self.result_text.setReadOnly(True)
-        self.result_text.setStyleSheet("""
-            QTextEdit {
-                border: 1px solid #ecf0f1;
-                border-radius: 6px;
-                padding: 8px;
-                background-color: #f8f9fa;
-                min-height: 500px;
-            }
-        """)
-        result_layout.addWidget(self.result_text)
-        
-        right_layout.addWidget(self.result_group)
-        
-        # 将左右两部分添加到主布局
-        main_layout.addWidget(left_widget, 2)
-        main_layout.addWidget(right_widget, 1)
-        
-        # 设置默认值
-        self.set_default_values()
-        # 初始化界面状态
-        self.on_fluid_changed(self.fluid_combo.currentText())
-        self.on_mode_changed(self.mode_combo.currentText())
-    
-    def set_default_values(self):
-        """设置默认值"""
-        # 设置下拉框默认选项为空
-        self.mode_combo.setCurrentIndex(0)  # 由流量计算管径
-        self.fluid_combo.setCurrentIndex(0)  # 请选择流体类型
-        self.diameter_combo.setCurrentIndex(0)  # 请选择管道内径
-    
-    def setup_diameter_options(self):
-        """设置管道内径选项"""
-        diameter_options = [
-            "- 请选择管道内径 -",  # 添加空选项
-            "6.0 mm - DN6 [1/8\"]",
-            "7.8 mm - DN8 [1/4\"]", 
-            "10.3 mm - DN10 [3/8\"]",
-            "15.8 mm - DN15 [1/2\"]",
-            "21.0 mm - DN20 [3/4\"]",
-            "26.6 mm - DN25 [1.00\"]",
-            "35.1 mm - DN32 [1.25\"]",
-            "40.9 mm - DN40 [1.50\"]",
-            "52.5 mm - DN50 [2.00\"]",
-            "62.7 mm - DN65 [2.50\"]",
-            "77.9 mm - DN80 [3.00\"]",
-            "90.1 mm - DN90 [3.50\"]",
-            "102.3 mm - DN100 [4.00\"]",
-            "128.2 mm - DN125 [5.00\"]",
-            "154.1 mm - DN150 [6.00\"]",
-            "202.7 mm - DN200 [8.00\"]",
-            "254.5 mm - DN250 [10.00\"]", 
-            "303.3 mm - DN300 [12.00\"]"
-        ]
-        self.diameter_combo.addItems(diameter_options)
-    
-    def on_mode_changed(self, mode):
-        """处理计算模式变化"""
-        if "流量计算管径" in mode:
-            # 管径计算模式：显示流量输入，隐藏管径输入
-            self.flow_label.setVisible(True)
-            self.flow_input.setVisible(True)
-            self.flow_range_label.setVisible(True)
-            self.flow_recommend_btn.setVisible(True)
-            self.diameter_label.setVisible(False)
-            self.diameter_input.setVisible(False)
-            self.diameter_combo.setVisible(False)
-        else:
-            # 流量计算模式：显示管径输入，隐藏流量输入
-            self.flow_label.setVisible(False)
-            self.flow_input.setVisible(False)
-            self.flow_range_label.setVisible(False)
-            self.flow_recommend_btn.setVisible(False)
-            self.diameter_label.setVisible(True)
-            self.diameter_input.setVisible(True)
-            self.diameter_combo.setVisible(True)
-    
     def on_fluid_changed(self, text):
         """处理流体选择变化"""
         # 检查是否为空选项
@@ -754,6 +817,7 @@ class PipeDiameterCalculator(QWidget):
             self.velocity_range_label.setText("")
             self.pressure_range_label.setText("")
             self.flow_range_label.setText("")
+            self.condition_hint.setText("选择流体后出现")
             return
             
         # 更新条件选项
@@ -761,6 +825,9 @@ class PipeDiameterCalculator(QWidget):
         
         # 更新密度
         self.update_density(text)
+        
+        # 更新提示
+        self.condition_hint.setText("根据流体显示可选条件")
         
         # 更新参数范围和推荐值
         self.update_parameter_ranges()
@@ -798,6 +865,7 @@ class PipeDiameterCalculator(QWidget):
             
         if text:  # 确保不是空文本
             self.update_parameter_ranges()
+            self.condition_hint.setText("已选择计算条件")
     
     def update_parameter_ranges(self):
         """更新参数范围和推荐值标签"""
@@ -813,16 +881,16 @@ class PipeDiameterCalculator(QWidget):
             
             # 更新流速范围标签（但不自动填入数值）
             vel_min, vel_max = ranges["velocity"]
-            self.velocity_range_label.setText(f"范围: {vel_min}~{vel_max} m/s")
+            self.velocity_range_label.setText(f"推荐范围: {vel_min}~{vel_max} m/s")
             
             # 更新压力范围
             pressure_min, pressure_max = ranges["pressure"]
             if pressure_min == pressure_max and pressure_min > 0:
-                self.pressure_range_label.setText(f"固定: {pressure_min} MPa")
+                self.pressure_range_label.setText(f"固定值: {pressure_min} MPa")
                 self.pressure_input.setText(f"{pressure_min}")
                 self.pressure_input.setReadOnly(True)
             elif pressure_min > 0 or pressure_max > 0:
-                self.pressure_range_label.setText(f"范围: {pressure_min}~{pressure_max} MPa")
+                self.pressure_range_label.setText(f"适用范围: {pressure_min}~{pressure_max} MPa")
                 self.pressure_input.setReadOnly(False)
             else:
                 self.pressure_range_label.setText("")
@@ -835,9 +903,36 @@ class PipeDiameterCalculator(QWidget):
             # 如果有流量范围，显示范围
             flow_min, flow_max = ranges["flow"]
             if flow_min > 0 or flow_max > 0:
-                self.flow_range_label.setText(f"范围: {flow_min}~{flow_max} {flow_unit}")
+                self.flow_range_label.setText(f"流量范围: {flow_min}~{flow_max} {flow_unit}")
             else:
                 self.flow_range_label.setText("")
+    
+    def setup_diameter_options(self):
+        """设置管道内径选项"""
+        diameter_options = [
+            "- 请选择管道内径 -",  # 添加空选项
+            "6.0 mm - DN6 [1/8\"]",
+            "7.8 mm - DN8 [1/4\"]", 
+            "10.3 mm - DN10 [3/8\"]",
+            "15.8 mm - DN15 [1/2\"]",
+            "21.0 mm - DN20 [3/4\"]",
+            "26.6 mm - DN25 [1.00\"]",
+            "35.1 mm - DN32 [1.25\"]",
+            "40.9 mm - DN40 [1.50\"]",
+            "52.5 mm - DN50 [2.00\"]",
+            "62.7 mm - DN65 [2.50\"]",
+            "77.9 mm - DN80 [3.00\"]",
+            "90.1 mm - DN90 [3.50\"]",
+            "102.3 mm - DN100 [4.00\"]",
+            "128.2 mm - DN125 [5.00\"]",
+            "154.1 mm - DN150 [6.00\"]",
+            "202.7 mm - DN200 [8.00\"]",
+            "254.5 mm - DN250 [10.00\"]", 
+            "303.3 mm - DN300 [12.00\"]"
+        ]
+        self.diameter_combo.addItems(diameter_options)
+        # 设置默认值为空选项
+        self.diameter_combo.setCurrentIndex(0)
     
     def on_diameter_changed(self, text):
         """处理直径选择变化"""
@@ -868,6 +963,7 @@ class PipeDiameterCalculator(QWidget):
             vel_min, vel_max = self.fluid_ranges[fluid][condition]["velocity"]
             recommended = (vel_min + vel_max) / 2
             self.velocity_input.setText(f"{recommended:.2f}")
+            self.velocity_range_label.setText(f"已设置推荐值: {recommended:.2f} m/s")
     
     def set_recommended_flow(self):
         """设置推荐流量"""
@@ -887,12 +983,23 @@ class PipeDiameterCalculator(QWidget):
             if flow_min > 0 or flow_max > 0:
                 recommended = (flow_min + flow_max) / 2
                 self.flow_input.setText(f"{recommended:.1f}")
+                self.flow_range_label.setText(f"已设置推荐值: {recommended:.1f} {ranges['flow_unit']}")
+            else:
+                QMessageBox.information(self, "提示", "当前条件下无推荐的流量范围")
+    
+    def set_default_values(self):
+        """设置默认值"""
+        # 初始化下拉框默认选项
+        self.fluid_combo.setCurrentIndex(0)  # 请选择流体类型
+        self.diameter_combo.setCurrentIndex(0)  # 请选择管道内径
     
     def calculate(self):
         """执行计算"""
         try:
+            # 获取当前模式
+            mode = self.get_current_mode()
+            
             # 获取输入参数
-            mode = self.mode_combo.currentText()
             fluid = self.fluid_combo.currentText()
             condition = self.condition_combo.currentText()
             
@@ -930,7 +1037,7 @@ class PipeDiameterCalculator(QWidget):
             # 验证参数范围
             self.validate_parameters(fluid, condition, velocity, pressure)
             
-            if "流量计算管径" in mode:
+            if mode == "由流量计算管径":
                 # 由流量计算管径
                 flow_text = self.flow_input.text()
                 if not flow_text:
@@ -940,7 +1047,7 @@ class PipeDiameterCalculator(QWidget):
                 flow_rate = float(flow_text)
                 diameter_mm = self.calculate_diameter_from_flow(flow_rate, velocity, density, fluid, condition)
                 self.show_diameter_result(fluid, condition, flow_rate, velocity, 
-                                        diameter_mm, density, pressure)
+                                        diameter_mm, density, pressure, mode)
             else:
                 # 由管径计算流量
                 diameter_mm = float(self.diameter_input.text() or 0)
@@ -950,7 +1057,7 @@ class PipeDiameterCalculator(QWidget):
                 
                 flow_rate = self.calculate_flow_from_diameter(diameter_mm, velocity, density, fluid, condition)
                 self.show_flow_result(fluid, condition, diameter_mm, velocity, 
-                                    flow_rate, density, pressure)
+                                    flow_rate, density, pressure, mode)
                 
         except ValueError as e:
             QMessageBox.critical(self, "输入错误", f"参数格式错误: {str(e)}")
@@ -1017,7 +1124,7 @@ class PipeDiameterCalculator(QWidget):
         
         return flow_rate
     
-    def show_diameter_result(self, fluid, condition, flow_rate, velocity, diameter_mm, density, pressure):
+    def show_diameter_result(self, fluid, condition, flow_rate, velocity, diameter_mm, density, pressure, mode):
         """显示管径计算结果"""
         # 获取流量单位
         flow_unit = self.fluid_ranges[fluid][condition]["flow_unit"]
@@ -1039,12 +1146,11 @@ class PipeDiameterCalculator(QWidget):
         # 找到最接近的标准管径
         closest_diam = min(standard_diameters, key=lambda x: abs(x - diameter_mm))
         
-        result = f"""
-══════════
+        result = f"""═══════════
 📋 输入参数
 ══════════
 
-    计算模式: 由流量计算管径
+    计算模式: {mode}
     流体类型: {fluid}
     计算条件: {condition}
     压力: {pressure} MPa(G)
@@ -1088,7 +1194,7 @@ class PipeDiameterCalculator(QWidget):
         
         self.result_text.setText(result)
     
-    def show_flow_result(self, fluid, condition, diameter_mm, velocity, flow_rate, density, pressure):
+    def show_flow_result(self, fluid, condition, diameter_mm, velocity, flow_rate, density, pressure, mode):
         """显示流量计算结果"""
         # 获取流量单位
         flow_unit = self.fluid_ranges[fluid][condition]["flow_unit"]
@@ -1103,12 +1209,11 @@ class PipeDiameterCalculator(QWidget):
         else:
             W = flow_rate * 1000
         
-        result = f"""
-══════════
+        result = f"""══════════
 📋 输入参数
 ══════════
 
-    计算模式: 由管径计算流量
+    计算模式: {mode}
     流体类型: {fluid}
     计算条件: {condition}
     压力: {pressure} MPa(G)
@@ -1318,7 +1423,7 @@ class PipeDiameterCalculator(QWidget):
         except Exception as e:
             print(f"获取工程信息失败: {e}")
             return None
-
+    
     def generate_report(self):
         """生成计算书"""
         try:
@@ -1345,8 +1450,7 @@ class PipeDiameterCalculator(QWidget):
             report += result_text
             
             # 添加工程信息部分
-            report += f"""
-══════════
+            report += f"""══════════
 📋 工程信息
 ══════════
 
@@ -1381,7 +1485,7 @@ class PipeDiameterCalculator(QWidget):
         except Exception as e:
             print(f"生成计算书失败: {e}")
             return None
-
+    
     def download_txt_report(self):
         """下载TXT格式计算书"""
         try:
@@ -1407,7 +1511,7 @@ class PipeDiameterCalculator(QWidget):
                     
         except Exception as e:
             QMessageBox.critical(self, "下载失败", f"保存计算书时发生错误: {str(e)}")
-
+    
     def generate_pdf_report(self):
         """生成PDF格式计算书"""
         try:
@@ -1541,7 +1645,7 @@ class PipeDiameterCalculator(QWidget):
         except Exception as e:
             QMessageBox.critical(self, "生成失败", f"生成PDF时发生错误: {str(e)}")
             return False
-
+    
     def process_content_for_pdf(self, content):
         """处理内容，使其适合PDF显示"""
         # 替换表情图标为文字描述

@@ -20,7 +20,6 @@ class BasketFilterDesignCalculator(QWidget):
         # 使用传入的数据管理器或创建新的
         if data_manager is not None:
             self.data_manager = data_manager
-            print("使用共享的数据管理器")
         else:
             self.init_data_manager()
         

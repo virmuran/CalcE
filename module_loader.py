@@ -1,4 +1,4 @@
-# module_loader.py
+# TofuApp/module_loader.py
 import sys
 import os
 import traceback

@@ -17,7 +17,6 @@ class ChemicalCalculationsWidget(QWidget):
         # 使用传入的数据管理器或单例
         if data_manager is not None:
             self.data_manager = data_manager
-            print("工程计算模块使用共享的数据管理器")
         else:
             try:
                 from data_manager import DataManager
@@ -32,8 +31,6 @@ class ChemicalCalculationsWidget(QWidget):
         
         # 设置UI
         self.setup_ui()
-        
-        print("✅ 工程计算模块初始化完成")
 
     def setup_ui(self):
         """设置工程计算UI - 左侧导航布局"""
@@ -121,7 +118,6 @@ class ChemicalCalculationsWidget(QWidget):
         # 默认选择第一项
         if self.nav_list.count() > 0:
             self.nav_list.setCurrentRow(0)
-            print(f"✅ 默认选择: {self.nav_list.item(0).text()}")
 
     def add_calculator_pages(self):
         """添加所有计算器页面"""
@@ -132,10 +128,11 @@ class ChemicalCalculationsWidget(QWidget):
             ("📊 压降计算", "PressureDropCalculator", "pressure_drop_calculator", True),
             ("📏 管径计算", "PipeDiameterCalculator", "pipe_diameter_calculator", True),
             ("📐 管道跨距", "PipeSpanCalculator", "pipe_span_calculator", True),
-            ("🔄 管道补偿", "PipeCompensationCalculator", "pipe_compensation_calculator", False),
-            ("📏 管道壁厚", "PipeThicknessCalculator", "pipe_thickness_calculator", False),
-            ("💨 蒸汽管径查询", "SteamPipeCalculator", "steam_pipe_calculator", False),
-            ("🌬️ 气体标态转压缩态", "GasStateConverter", "gas_state_converter", False),
+            ("📏 管道间距", "PipeSpacingCalculator", "pipe_spacing_calculator", True),
+            ("🔄 管道补偿", "PipeCompensationCalculator", "pipe_compensation_calculator", True),
+            ("📏 管道壁厚", "PipeThicknessCalculator", "pipe_thickness_calculator", True),
+            ("💨 蒸汽管径流量", "SteamPipeCalculator", "steam_pipe_calculator", True),
+            ("🌬️ 气体标态转压缩态", "GasStateConverter", "gas_state_converter", True),
             ("🔧 压力管道定义", "PressurePipeDefinition", "pressure_pipe_definition", False),
             ("🚒 消火栓计算", "FireHydrantCalculator", "fire_hydrant_calculator", False),
             ("🔥 换热器计算", "HeatExchangerSimpleCalculator", "heat_exchanger_calculator", True),
@@ -170,15 +167,12 @@ class ChemicalCalculationsWidget(QWidget):
             try:
                 widget = self.create_calculator_widget(calculator_name, module_name, supports_data_manager)
                 self.add_page(title, widget)
-                print(f"✅ {title} 页面创建成功")
                 success_count += 1
             except Exception as e:
                 print(f"❌ {title} 页面创建失败: {e}")
                 # 创建错误页面
                 error_widget = self.create_error_widget(title, str(e))
                 self.add_page(f"{title} (错误)", error_widget)
-        
-        print(f"🎯 成功加载 {success_count}/{len(page_configs)} 个计算器")
         
         # 如果没有成功添加任何页面，添加一个提示页面
         if len(self.pages) == 0:
@@ -289,7 +283,6 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     
     widget = ChemicalCalculationsWidget()
-    widget.resize(1200, 800)
-    widget.show()
+    widget.showMaximized()
     
     sys.exit(app.exec())

@@ -1,3 +1,4 @@
+# TofuApp/modules/bookmarks.py
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
                                QPushButton, QListWidget, QListWidgetItem, QComboBox,
                                QMessageBox, QInputDialog, QGroupBox, QSplitter)

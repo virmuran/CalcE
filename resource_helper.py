@@ -1,4 +1,4 @@
-# resource_helper.py (仅资源功能版本)
+# TofuApp/resource_helper.py
 import sys
 import os
 from pathlib import Path

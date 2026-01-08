@@ -121,7 +121,6 @@ class PressureDropCalculator(QWidget):
         # 使用传入的数据管理器或创建新的
         if data_manager is not None:
             self.data_manager = data_manager
-            print("使用共享的数据管理器")
         else:
             self.init_data_manager()
         
@@ -151,7 +150,7 @@ class PressureDropCalculator(QWidget):
         left_layout = QVBoxLayout(left_widget)
         left_layout.setSpacing(15)
         
-        # 说明文本
+        # 1. 首先添加说明文本
         description = QLabel(
             "计算流体在管道中流动时的压力损失，支持不可压缩流体和可压缩流体计算。"
         )
@@ -159,7 +158,7 @@ class PressureDropCalculator(QWidget):
         description.setStyleSheet("color: #7f8c8d; font-size: 12px; padding: 5px;")
         left_layout.addWidget(description)
         
-        # 计算模式选择 - 改为顶部按钮
+        # 2. 然后添加计算模式选择
         mode_group = QGroupBox("计算模式")
         mode_group.setStyleSheet("""
             QGroupBox {
@@ -198,6 +197,7 @@ class PressureDropCalculator(QWidget):
                     border-radius: 4px;
                     padding: 8px;
                     text-align: center;
+                    color: black;
                 }
                 QPushButton:checked {
                     background-color: #3498db;
@@ -205,6 +205,7 @@ class PressureDropCalculator(QWidget):
                 }
                 QPushButton:hover {
                     background-color: #d5dbdb;
+                    color: green;
                 }
             """)
             self.mode_button_group.addButton(btn, i)
@@ -218,7 +219,7 @@ class PressureDropCalculator(QWidget):
         mode_layout.addStretch()
         left_layout.addWidget(mode_group)
         
-        # 输入参数组 - 使用GridLayout实现整齐的布局
+        # 3. 输入参数组 - 使用GridLayout实现整齐的布局
         input_group = QGroupBox("📥 输入参数")
         input_group.setStyleSheet("""
             QGroupBox {
@@ -465,7 +466,7 @@ class PressureDropCalculator(QWidget):
         
         left_layout.addWidget(input_group)
         
-        # 管件和阀门按钮
+        # 4. 管件和阀门按钮
         self.fittings_btn = QPushButton("🔧 选择管件和阀门")
         self.fittings_btn.setFont(QFont("Arial", 10))
         self.fittings_btn.clicked.connect(self.select_fittings)
@@ -484,7 +485,7 @@ class PressureDropCalculator(QWidget):
         """)
         left_layout.addWidget(self.fittings_btn)
         
-        # 计算按钮
+        # 5. 计算按钮
         calculate_btn = QPushButton("🧮 计算压降")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate_pressure_drop)
@@ -504,7 +505,7 @@ class PressureDropCalculator(QWidget):
         calculate_btn.setMinimumHeight(50)
         left_layout.addWidget(calculate_btn)
         
-        # 下载按钮布局
+        # 6. 下载按钮布局
         download_layout = QHBoxLayout()
         download_txt_btn = QPushButton("📄 下载计算书(TXT)")
         download_txt_btn.clicked.connect(self.download_txt_report)
@@ -541,6 +542,9 @@ class PressureDropCalculator(QWidget):
         download_layout.addWidget(download_txt_btn)
         download_layout.addWidget(download_pdf_btn)
         left_layout.addLayout(download_layout)
+        
+        # 7. 在底部添加拉伸因子，这样放大窗口时空白会出现在这里
+        left_layout.addStretch()
         
         # 右侧：结果显示区域 (占1/3宽度)
         right_widget = QWidget()
@@ -1017,8 +1021,7 @@ class PressureDropCalculator(QWidget):
                                    flow_regime, friction_factor, pressure_drop_friction, 
                                    pressure_drop_local, pressure_drop_elevation, total_pressure_drop):
         """格式化不可压缩流体计算结果"""
-        return f"""
-═══════════
+        return f"""═══════════
 📋 输入参数
 ══════════
 
@@ -1318,8 +1321,7 @@ class PressureDropCalculator(QWidget):
             report += result_text
             
             # 添加工程信息部分
-            report += f"""
-══════════
+            report += f"""══════════
 📋 工程信息
 ══════════
 

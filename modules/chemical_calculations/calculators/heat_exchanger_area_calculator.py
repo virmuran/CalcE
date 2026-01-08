@@ -1,160 +1,134 @@
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QLabel, QLineEdit, QPushButton,
-    QComboBox, QGridLayout, QTextEdit, QTabWidget, QMessageBox, QDialog, 
-    QDialogButtonBox, QScrollArea, QDoubleSpinBox, QRadioButton, QButtonGroup
+    QComboBox, QGridLayout, QTextEdit, QMessageBox, QDialog,
+    QDialogButtonBox, QScrollArea, QSpinBox, QButtonGroup, QCheckBox,
+    QFrame, QSizePolicy, QFileDialog
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont, QDoubleValidator
 import math
-import random
 import re
 from datetime import datetime
+from enum import Enum
 
+# ==================== 枚举定义 ====================
+
+class FlowArrangement(Enum):
+    """流动方式枚举"""
+    COUNTERCURRENT = "逆流"
+    COCURRENT = "并流"
+
+class HeatTransferMode(Enum):
+    """传热模式枚举"""
+    DIRECT = "直接计算法"
+    FLUID_PARAMS = "流体参数法"
+    STEAM_HEATING = "蒸汽加热法"
+    INTELLIGENT = "智能选型"
+
+# ==================== 主界面类 ====================
 
 class HeatExchangerAreaCalculator(QWidget):
-    """换热器面积计算器 - 左右布局，与压降计算器保持一致"""
+    """换热器面积计算器 - 统一UI风格版"""
     
     def __init__(self, parent=None, data_manager=None):
         super().__init__(parent)
         
-        # 使用传入的数据管理器或创建新的
-        if data_manager is not None:
-            self.data_manager = data_manager
-            print("使用共享的数据管理器")
-        else:
-            self.init_data_manager()
+        # 初始化数据管理器
+        self.data_manager = data_manager
         
-        # 流体比热容数据
+        # 初始化数据
         self.specific_heat_data = self.setup_specific_heat_data()
-        
-        # 传热系数数据
-        self.heat_transfer_coeff_data = self.setup_heat_transfer_coeff_data()
-        
-        # 换热器类型数据
         self.exchanger_types_data = self.setup_exchanger_types_data()
-        
-        # 初始化输入控件字典
-        self.input_widgets = {}
+        self.flow_arrangements = list(FlowArrangement)
+        self.steam_properties = {}  # 蒸汽物性数据缓存
         
         self.setup_ui()
-        self.setup_calculation_mode(0)  # 默认第一种模式
-    
-    def init_data_manager(self):
-        """初始化数据管理器 - 使用单例模式"""
-        try:
-            from data_manager import DataManager
-            self.data_manager = DataManager.get_instance()
-            print("使用共享的数据管理器实例")
-        except Exception as e:
-            print(f"数据管理器初始化失败: {e}")
-            self.data_manager = None
+        self.setup_mode_dependencies()
+        
+        # 连接信号
+        self.mode_button_group.buttonClicked.connect(self.on_mode_button_clicked)
     
     def setup_specific_heat_data(self):
-        """设置流体比热容数据"""
+        """设置流体比热容数据 - 增加常用介质"""
         return {
-            "水": 4.19,
-            "乙醇": 2.4,
+            "水": 4.187,
             "95%乙醇": 2.51,
-            "90%乙醇": 2.72,
             "乙二醇": 2.35,
-            "丙三醇": 2.46,
             "导热油": 2.9,
-            "乙酸": 2.01,
-            "10%乙酸": 4.02,
-            "丙酮": 2.15,
-            "蜂蜜": 1.42,
-            "31%盐酸": 2.51,
-            "10%盐酸": 3.14,
-            "90%硫酸": 1.47,
-            "60%硫酸": 2.18,
-            "20%硫酸": 3.52,
-            "蔗糖(60%糖浆)": 3.1,
-            "蔗糖(40%糖浆)": 2.76,
             "汽油": 2.22,
-            "空气": 1.0,
+            "空气": 1.005,
             "氨气": 2.26,
             "苯": 1.36,
-            "丁烷": 1.91,
-            "二氧化碳": 0.88,
-            "一氧化碳": 1.07,
-            "氯气": 0.5
+            "甲醇": 2.53,
+            "盐水(20%)": 3.71
         }
     
-    def setup_heat_transfer_coeff_data(self):
-        """设置传热系数数据"""
-        data = []
-        
-        # 板式换热器数据
-        data.append({"hot_fluid": "水", "cold_fluid": "水", "range": (4500.0, 6500.0), "exchanger": "板式换热器"})
-        data.append({"hot_fluid": "油", "cold_fluid": "水", "range": (500.0, 700.0), "exchanger": "板式换热器"})
-        
-        # 螺旋板式换热器数据
-        data.append({"hot_fluid": "水", "cold_fluid": "水", "range": (1750.0, 2210.0), "exchanger": "螺旋板式换热器"})
-        data.append({"hot_fluid": "废液", "cold_fluid": "水", "range": (1400.0, 2100.0), "exchanger": "螺旋板式换热器"})
-        data.append({"hot_fluid": "有机液", "cold_fluid": "有机液", "range": (350.0, 580.0), "exchanger": "螺旋板式换热器"})
-        data.append({"hot_fluid": "中焦油", "cold_fluid": "中焦油", "range": (160.0, 200.0), "exchanger": "螺旋板式换热器"})
-        data.append({"hot_fluid": "中焦油", "cold_fluid": "水", "range": (270.0, 310.0), "exchanger": "螺旋板式换热器"})
-        data.append({"hot_fluid": "高粘度油", "cold_fluid": "水", "range": (230.0, 350.0), "exchanger": "螺旋板式换热器"})
-        data.append({"hot_fluid": "油", "cold_fluid": "油", "range": (90.0, 140.0), "exchanger": "螺旋板式换热器"})
-        data.append({"hot_fluid": "气体", "cold_fluid": "气体", "range": (30.0, 47.0), "exchanger": "螺旋板式换热器"})
-        data.append({"hot_fluid": "变压器油", "cold_fluid": "水", "range": (327.0, 550.0), "exchanger": "螺旋板式换热器"})
-        data.append({"hot_fluid": "电解液", "cold_fluid": "水", "range": (600.0, 1900.0), "exchanger": "螺旋板式换热器"})
-        data.append({"hot_fluid": "浓碱液", "cold_fluid": "水", "range": (350.0, 650.0), "exchanger": "螺旋板式换热器"})
-        
-        # 管壳式换热器数据
-        data.append({"hot_fluid": "水", "cold_fluid": "芳香族蒸气共沸物", "range": (250.0, 460.0), "exchanger": "管壳式换热器"})
-        data.append({"hot_fluid": "空气", "cold_fluid": "水或盐水", "range": (57.0, 280.0), "exchanger": "管壳式换热器"})
-        data.append({"hot_fluid": "水或盐水", "cold_fluid": "空气等（压缩）", "range": (110.0, 230.0), "exchanger": "管壳式换热器"})
-        data.append({"hot_fluid": "水或盐水", "cold_fluid": "空气等（大气压）", "range": (30.0, 110.0), "exchanger": "管壳式换热器"})
-        data.append({"hot_fluid": "道生油", "cold_fluid": "气体", "range": (20.0, 200.0), "exchanger": "管壳式换热器"})
-        data.append({"hot_fluid": "水", "cold_fluid": "水", "range": (3000.0, 4500.0), "exchanger": "板翅式换热器"})
-        data.append({"hot_fluid": "水", "cold_fluid": "油", "range": (400.0, 600.0), "exchanger": "板翅式换热器"})
-        data.append({"hot_fluid": "油", "cold_fluid": "油", "range": (170.0, 350.0), "exchanger": "板翅式换热器"})
-        data.append({"hot_fluid": "气体", "cold_fluid": "气体", "range": (70.0, 200.0), "exchanger": "板翅式换热器"})
-        data.append({"hot_fluid": "空气", "cold_fluid": "水", "range": (80.0, 200.0), "exchanger": "板翅式换热器"})
-        data.append({"hot_fluid": "硫酸", "cold_fluid": "水", "range": (870.0, 870.0), "exchanger": "石墨管壳式换热器-冷却器"})
-        data.append({"hot_fluid": "氯气（除水）", "cold_fluid": "水", "range": (35.0, 170.0), "exchanger": "石墨管壳式换热器-冷却器"})
-        data.append({"hot_fluid": "焙烧SO2气体", "cold_fluid": "水", "range": (350.0, 470.0), "exchanger": "石墨管壳式换热器-冷却器"})
-        
-        return data
-    
     def setup_exchanger_types_data(self):
-        """设置换热器类型数据"""
+        """设置换热器类型数据 - 基于图片信息优化"""
         return {
-            "管壳式换热器": {
-                "description": "最常见的换热器类型，适用于多种工况",
-                "k_range": (300, 4500),
-                "common_fluids": ["水-水", "蒸汽-水", "油-水"]
-            },
-            "板式换热器": {
-                "description": "高效紧凑型换热器，传热系数高",
-                "k_range": (4500, 6500),
-                "common_fluids": ["水-水", "蒸汽-水"]
-            },
-            "螺旋板式换热器": {
-                "description": "适用于高粘度流体和含有固体颗粒的流体",
-                "k_range": (1750, 2210),
-                "common_fluids": ["水-水", "废液-水", "油-水"]
-            },
-            "板翅式换热器": {
-                "description": "紧凑型换热器，适用于气体和低粘度流体",
-                "k_range": (3000, 4500),
-                "common_fluids": ["气体-气体", "空气-水"]
-            },
-            "沉浸式换热器": {
-                "description": "用于加热或冷却储罐中的液体",
-                "k_range": (200, 600),
-                "common_fluids": ["蒸汽-水", "蒸汽-油"]
-            },
-            "套管式换热器": {
-                "description": "简单的换热器结构，适用于小流量",
-                "k_range": (500, 1500),
-                "common_fluids": ["水-水", "蒸汽-水"]
+            "管壳式换热器": {"k_range": (300, 1200), "desc": "结构简单，适应性强，耐高压"},
+            "板式换热器": {"k_range": (2000, 7000), "desc": "传热效率高，结构紧凑"},
+            "螺旋板式换热器": {"k_range": (500, 2200), "desc": "不易结垢，处理含固体颗粒"},
+            "套管式换热器": {"k_range": (300, 800), "desc": "结构简单，耐高压"},
+            "容积式加热器": {"k_range": (500, 1500), "desc": "蒸汽加热水专用，K=1160-3950"}
+        }
+    
+    def calculate_steam_properties_from_gauge(self, pressure_gauge_MPa):
+        """
+        根据表压计算蒸汽物性参数
+        输入：表压 (MPa)
+        返回：饱和温度 (°C), 汽化潜热 (kJ/kg)
+        """
+        # 蒸汽表数据（表压MPa，饱和温度°C，汽化潜热kJ/kg）
+        steam_data_gauge = [
+            (0.0, 100.0, 2256.4),
+            (0.1, 120.2, 2201.6),
+            (0.2, 133.5, 2163.2),
+            (0.3, 143.6, 2133.0),  # 常用压力点
+            (0.4, 151.8, 2107.4),
+            (0.5, 158.8, 2084.3),
+            (0.6, 165.0, 2063.0),
+            (0.7, 170.4, 2043.1),
+            (0.8, 175.4, 2024.3),
+            (0.9, 179.9, 2006.5),
+            (1.0, 184.1, 1989.8)
+        ]
+        
+        # 边界检查
+        if pressure_gauge_MPa <= steam_data_gauge[0][0]:
+            return {
+                "saturation_temp": steam_data_gauge[0][1],
+                "latent_heat": steam_data_gauge[0][2]
             }
+        elif pressure_gauge_MPa >= steam_data_gauge[-1][0]:
+            return {
+                "saturation_temp": steam_data_gauge[-1][1],
+                "latent_heat": steam_data_gauge[-1][2]
+            }
+        
+        # 线性插值
+        for i in range(len(steam_data_gauge)-1):
+            P1, T1, r1 = steam_data_gauge[i]
+            P2, T2, r2 = steam_data_gauge[i+1]
+            
+            if P1 <= pressure_gauge_MPa <= P2:
+                factor = (pressure_gauge_MPa - P1) / (P2 - P1)
+                T_sat = T1 + factor * (T2 - T1)
+                latent_heat = r1 + factor * (r2 - r1)
+                
+                return {
+                    "saturation_temp": round(T_sat, 1),
+                    "latent_heat": round(latent_heat, 1)
+                }
+        
+        # 默认返回100°C
+        return {
+            "saturation_temp": 100.0,
+            "latent_heat": 2256.4
         }
     
     def setup_ui(self):
-        """设置左右布局的换热器面积计算UI"""
+        """设置用户界面 - 与压降计算模块统一风格"""
         main_layout = QHBoxLayout(self)
         main_layout.setSpacing(15)
         main_layout.setContentsMargins(10, 10, 10, 10)
@@ -165,20 +139,15 @@ class HeatExchangerAreaCalculator(QWidget):
         left_layout = QVBoxLayout(left_widget)
         left_layout.setSpacing(15)
         
-        # 标题
-        title_label = QLabel("🔥 换热器面积计算器")
-        title_label.setFont(QFont("Arial", 16, QFont.Bold))
-        title_label.setAlignment(Qt.AlignCenter)
-        title_label.setStyleSheet("color: #2c3e50; margin: 10px;")
-        left_layout.addWidget(title_label)
+        # 1. 首先添加说明文本
+        description = QLabel(
+            "基于《传热技术、设备与工业应用》原理，计算换热器传热面积，支持多种计算模式。"
+        )
+        description.setWordWrap(True)
+        description.setStyleSheet("color: #7f8c8d; font-size: 12px; padding: 5px;")
+        left_layout.addWidget(description)
         
-        # 说明文本
-        desc_label = QLabel("换热器面积计算器 - 根据热负荷、传热系数和温差计算所需换热面积")
-        desc_label.setWordWrap(True)
-        desc_label.setStyleSheet("color: #7f8c8d; font-size: 12px; padding: 5px;")
-        left_layout.addWidget(desc_label)
-        
-        # 计算模式选择 - 下拉菜单
+        # 2. 然后添加计算模式选择
         mode_group = QGroupBox("计算模式")
         mode_group.setStyleSheet("""
             QGroupBox {
@@ -196,43 +165,49 @@ class HeatExchangerAreaCalculator(QWidget):
         """)
         mode_layout = QHBoxLayout(mode_group)
         
-        # 模式选择下拉菜单
-        mode_label = QLabel("选择计算模式:")
-        mode_label.setStyleSheet("font-weight: bold;")
-        mode_layout.addWidget(mode_label)
+        self.mode_button_group = QButtonGroup(self)
+        self.mode_buttons = {}
         
-        self.mode_combo = QComboBox()
         modes = [
-            ("直接计算法", "已知热负荷、传热系数和温差，直接计算面积"),
-            ("流体参数法", "根据流体进出口参数计算热负荷和温差，再计算面积"),
-            ("蒸汽加热法", "使用蒸汽加热冷流体，计算所需换热面积")
+            ("直接计算", "已知热负荷、传热系数和温差"),
+            ("流体参数", "根据流体进出口参数计算"),
+            ("蒸汽加热", "使用蒸汽加热冷流体"),
+            ("智能选型", "自动推荐换热器类型")
         ]
         
-        for mode_name, tooltip in modes:
-            self.mode_combo.addItem(mode_name)
-            # 设置tooltip为最后一项
-            self.mode_combo.setItemData(self.mode_combo.count()-1, tooltip, Qt.ToolTipRole)
+        for i, (mode_name, tooltip) in enumerate(modes):
+            btn = QPushButton(mode_name)
+            btn.setCheckable(True)
+            btn.setToolTip(tooltip)
+            btn.setFixedWidth(180)  # 固定宽度
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #ecf0f1;
+                    border: 1px solid #bdc3c7;
+                    border-radius: 4px;
+                    padding: 8px;
+                    text-align: center;
+                    color: black;
+                }
+                QPushButton:checked {
+                    background-color: #3498db;
+                    color: white;
+                }
+                QPushButton:hover {
+                    background-color: #d5dbdb;
+                    color: green;
+                }
+            """)
+            self.mode_button_group.addButton(btn, i)
+            mode_layout.addWidget(btn)
+            self.mode_buttons[mode_name] = btn
         
-        self.mode_combo.setCurrentIndex(0)
-        self.mode_combo.currentIndexChanged.connect(self.on_mode_changed)
-        self.mode_combo.setStyleSheet("""
-            QComboBox {
-                padding: 6px;
-                border: 1px solid #bdc3c7;
-                border-radius: 4px;
-                background-color: white;
-            }
-            QComboBox:hover {
-                border-color: #3498db;
-            }
-        """)
-        self.mode_combo.setFixedWidth(350)
-        
-        mode_layout.addWidget(self.mode_combo)
+        # 默认选择第一个
+        self.mode_buttons["直接计算"].setChecked(True)
         mode_layout.addStretch()
         left_layout.addWidget(mode_group)
         
-        # 输入参数组 - 使用GridLayout实现整齐的布局
+        # 3. 输入参数组 - 使用GridLayout实现整齐的布局
         input_group = QGroupBox("📥 输入参数")
         input_group.setStyleSheet("""
             QGroupBox {
@@ -254,9 +229,78 @@ class HeatExchangerAreaCalculator(QWidget):
         self.input_layout.setVerticalSpacing(12)
         self.input_layout.setHorizontalSpacing(10)
         
+        # 标签样式 - 右对齐
+        label_style = """
+            QLabel {
+                font-weight: bold;
+                padding-right: 10px;
+            }
+        """
+        
+        # 输入框和下拉菜单的固定宽度
+        input_width = 400
+        combo_width = 250
+        
+        # 输入控件字典
+        self.input_widgets = {}
+        self.advanced_widgets = {}
+        
+        # 蒸汽加热专用控件
+        self.steam_flow_label = None
+        self.steam_temp_label = None
+        
         left_layout.addWidget(input_group)
         
-        # 计算按钮
+        # 4. 高级参数组
+        advanced_group = QGroupBox("⚙️ 高级参数")
+        advanced_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 1px solid #bdc3c7;
+                border-radius: 8px;
+                margin-top: 10px;
+                padding-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 8px 0 8px;
+            }
+        """)
+        
+        advanced_layout = QGridLayout(advanced_group)
+        advanced_layout.setVerticalSpacing(10)
+        advanced_layout.setHorizontalSpacing(10)
+        
+        # 安全系数
+        safety_label = QLabel("安全系数:")
+        safety_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        safety_label.setStyleSheet(label_style)
+        advanced_layout.addWidget(safety_label, 0, 0)
+        
+        self.safety_factor_input = QLineEdit()
+        self.safety_factor_input.setPlaceholderText("建议：1.10-1.30")
+        self.safety_factor_input.setValidator(QDoubleValidator(1.0, 2.0, 2))
+        self.safety_factor_input.setText("1.15")
+        self.safety_factor_input.setFixedWidth(200)
+        advanced_layout.addWidget(self.safety_factor_input, 0, 1)
+        
+        # 污垢系数
+        fouling_label = QLabel("污垢系数 (m²·K/W):")
+        fouling_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        fouling_label.setStyleSheet(label_style)
+        advanced_layout.addWidget(fouling_label, 0, 2)
+        
+        self.fouling_factor_input = QLineEdit()
+        self.fouling_factor_input.setPlaceholderText("例如：0.0002")
+        self.fouling_factor_input.setValidator(QDoubleValidator(0.00001, 0.01, 5))
+        self.fouling_factor_input.setText("0.0002")
+        self.fouling_factor_input.setFixedWidth(200)
+        advanced_layout.addWidget(self.fouling_factor_input, 0, 3)
+        
+        left_layout.addWidget(advanced_group)
+        
+        # 5. 计算按钮
         calculate_btn = QPushButton("🧮 计算换热面积")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate)
@@ -276,8 +320,9 @@ class HeatExchangerAreaCalculator(QWidget):
         calculate_btn.setMinimumHeight(50)
         left_layout.addWidget(calculate_btn)
         
-        # 下载按钮布局
+        # 6. 下载按钮布局
         download_layout = QHBoxLayout()
+        
         download_txt_btn = QPushButton("📄 下载计算书(TXT)")
         download_txt_btn.clicked.connect(self.download_txt_report)
         download_txt_btn.setStyleSheet("""
@@ -310,27 +355,12 @@ class HeatExchangerAreaCalculator(QWidget):
             }
         """)
 
-        clear_btn = QPushButton("🗑️ 清空")
-        clear_btn.clicked.connect(self.clear_inputs)
-        clear_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #95a5a6;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                padding: 8px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #7f8c8d;
-            }
-        """)
-
-        download_layout.addWidget(clear_btn)
-        download_layout.addStretch()
         download_layout.addWidget(download_txt_btn)
         download_layout.addWidget(download_pdf_btn)
         left_layout.addLayout(download_layout)
+        
+        # 7. 在底部添加拉伸因子，这样放大窗口时空白会出现在这里
+        left_layout.addStretch()
         
         # 右侧：结果显示区域 (占1/3宽度)
         right_widget = QWidget()
@@ -339,7 +369,7 @@ class HeatExchangerAreaCalculator(QWidget):
         right_layout.setSpacing(15)
         
         # 结果显示
-        self.result_group = QGroupBox("📊 计算结果")
+        self.result_group = QGroupBox("📤 计算结果")
         self.result_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -375,97 +405,385 @@ class HeatExchangerAreaCalculator(QWidget):
         main_layout.addWidget(left_widget, 2)  # 左侧占2/3
         main_layout.addWidget(right_widget, 1)  # 右侧占1/3
     
-    def on_mode_changed(self, index):
-        """处理计算模式变化"""
-        self.setup_calculation_mode(index)
+    def setup_mode_dependencies(self):
+        """设置计算模式的依赖关系"""
+        # 初始状态 - 直接计算模式
+        self.on_mode_changed("直接计算")
     
-    def setup_calculation_mode(self, mode_index):
-        """设置计算模式的输入界面"""
+    def on_mode_button_clicked(self, button):
+        """处理计算模式按钮点击"""
+        mode_text = button.text()
+        self.on_mode_changed(mode_text)
+    
+    def get_current_mode(self):
+        """获取当前选择的计算模式"""
+        checked_button = self.mode_button_group.checkedButton()
+        if checked_button:
+            return checked_button.text()
+        return "直接计算"
+    
+    def on_mode_changed(self, mode):
+        """处理计算模式变化"""
         # 清除现有输入控件
-        for widget in self.input_widgets.values():
-            widget.setParent(None)
+        self.clear_widgets(self.input_layout)
         self.input_widgets.clear()
         
-        # 清除布局中的所有项目
-        while self.input_layout.count():
-            item = self.input_layout.takeAt(0)
-            if item.widget():
-                item.widget().setParent(None)
+        # 标签样式
+        label_style = """
+            QLabel {
+                font-weight: bold;
+                padding-right: 10px;
+            }
+        """
+        
+        input_width = 400
+        combo_width = 250
         
         row = 0
         
-        # 根据模式设置输入界面
-        if mode_index == 0:  # 直接计算法
-            self.setup_mode_0_inputs(row)
-        elif mode_index == 1:  # 流体参数法
-            self.setup_mode_1_inputs(row)
-        elif mode_index == 2:  # 蒸汽加热法
-            self.setup_mode_2_inputs(row)
+        if mode == "直接计算":
+            self.setup_direct_calculation_mode(row, label_style, input_width, combo_width)
+        elif mode == "流体参数":
+            self.setup_fluid_parameters_mode(row, label_style, input_width, combo_width)
+        elif mode == "蒸汽加热":
+            self.setup_steam_heating_mode(row, label_style, input_width, combo_width)
+        elif mode == "智能选型":
+            self.setup_intelligent_selection_mode(row, label_style, input_width, combo_width)
     
-    def add_input_field(self, row, label_text, widget_type="lineedit", default_value="", placeholder="", validator=None):
-        """添加输入字段 - 与压降计算器保持一致的布局"""
-        # 标签 - 右对齐，第0列
-        label = QLabel(label_text)
+    def setup_direct_calculation_mode(self, row, label_style, input_width, combo_width):
+        """设置直接计算法界面"""
+        # 热负荷 Q (kW)
+        self.add_input_field(row, "热负荷 Q (kW):", "heat_load", "例如：1000", 
+                            QDoubleValidator(0.1, 1000000, 1), input_width, label_style)
+        row += 1
+
+        # 温度参数
+        temperatures = [
+            ("热流体进口T1 (°C):", "hot_in_temp", "例如：90"),
+            ("热流体出口T2 (°C):", "hot_out_temp", "例如：60"),
+            ("冷流体进口t1 (°C):", "cold_in_temp", "例如：20"),
+            ("冷流体出口t2 (°C):", "cold_out_temp", "例如：50")
+        ]
+        
+        for label_text, key, placeholder in temperatures:
+            self.add_input_field(row, label_text, key, placeholder,
+                                QDoubleValidator(-273, 1000, 1), input_width, label_style)
+            row += 1
+
+        # 总传热系数
+        self.add_k_value_section(row, input_width, combo_width, label_style)
+        row += 1
+        
+        # 流动方式
+        label = QLabel("流动方式:")
         label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        label.setStyleSheet("QLabel { font-weight: bold; padding-right: 10px; }")
-        label.setFixedWidth(200)  # 固定标签宽度
+        label.setStyleSheet(label_style)
         self.input_layout.addWidget(label, row, 0)
         
-        widget = None
-        
-        if widget_type == "lineedit":
-            widget = QLineEdit()
-            if default_value:
-                widget.setText(str(default_value))
-            if placeholder:
-                widget.setPlaceholderText(placeholder)
-            if validator:
-                widget.setValidator(validator)
-            widget.setFixedWidth(400)  # 固定输入框宽度
-            self.input_layout.addWidget(widget, row, 1)
-            
-        elif widget_type == "combobox":
-            widget = QComboBox()
-            widget.setFixedWidth(250)  # 固定下拉框宽度
-            self.input_layout.addWidget(widget, row, 2)  # 放在第2列
-        
-        # 存储控件引用
-        key = label_text.replace(":", "").replace("(", "").replace(")", "").replace(" ", "_").replace("·", "").replace("/", "_").lower()
-        self.input_widgets[key] = widget
-        
-        return widget
+        self.input_widgets["flow_arrangement"] = QComboBox()
+        for arrangement in self.flow_arrangements:
+            self.input_widgets["flow_arrangement"].addItem(arrangement.value)
+        self.input_widgets["flow_arrangement"].setCurrentText("逆流")
+        self.input_widgets["flow_arrangement"].setFixedWidth(combo_width)
+        self.input_layout.addWidget(self.input_widgets["flow_arrangement"], row, 1)
     
-    def add_cp_input_field(self, row, label_text):
-        """添加比热容输入字段 - 左侧输入框，右侧下拉菜单"""
-        # 标签 - 右对齐，第0列
-        label = QLabel(label_text)
+    def setup_fluid_parameters_mode(self, row, label_style, input_width, combo_width):
+        """设置流体参数法界面"""
+        # 热流体参数
+        hot_params = [
+            ("热流体流量W1 (kg/h):", "hot_flow", "例如：5000"),
+            ("热流体进口T1 (°C):", "hot_in_temp", "例如：90"),
+            ("热流体出口T2 (°C):", "hot_out_temp", "例如：60")
+        ]
+        
+        for label_text, key, placeholder in hot_params:
+            self.add_input_field(row, label_text, key, placeholder,
+                                QDoubleValidator(1, 1000000, 1) if "flow" in key else QDoubleValidator(-273, 1000, 1),
+                                input_width, label_style)
+            row += 1
+        
+        # 热流体比热容
+        self.add_cp_section(row, "热流体比热容 Cp1 (kJ/kg·K):", "hot_cp", "hot_cp_combo", 
+                           input_width, combo_width, label_style)
+        row += 1
+
+        # 冷流体参数
+        cold_params = [
+            ("冷流体流量W2 (kg/h):", "cold_flow", "例如：10000"),
+            ("冷流体进口t1 (°C):", "cold_in_temp", "例如：20"),
+            ("冷流体出口t2 (°C):", "cold_out_temp", "例如：50")
+        ]
+        
+        for label_text, key, placeholder in cold_params:
+            self.add_input_field(row, label_text, key, placeholder,
+                                QDoubleValidator(1, 1000000, 1) if "flow" in key else QDoubleValidator(-273, 1000, 1),
+                                input_width, label_style)
+            row += 1
+        
+        # 冷流体比热容
+        self.add_cp_section(row, "冷流体比热容 Cp2 (kJ/kg·K):", "cold_cp", "cold_cp_combo", 
+                           input_width, combo_width, label_style)
+        row += 1
+        
+        # 总传热系数
+        self.add_k_value_section(row, input_width, combo_width, label_style)
+        row += 1
+        
+        # 流动方式
+        label = QLabel("流动方式:")
         label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        label.setStyleSheet("QLabel { font-weight: bold; padding-right: 10px; }")
-        label.setFixedWidth(200)  # 固定标签宽度
+        label.setStyleSheet(label_style)
         self.input_layout.addWidget(label, row, 0)
         
-        # 输入框 - 第1列
-        lineedit = QLineEdit()
-        lineedit.setPlaceholderText("输入或选择后自动填充")
-        lineedit.setValidator(QDoubleValidator(0.1, 100.0, 2))
-        lineedit.setFixedWidth(400)
-        self.input_layout.addWidget(lineedit, row, 1)
+        self.input_widgets["flow_arrangement"] = QComboBox()
+        for arrangement in self.flow_arrangements:
+            self.input_widgets["flow_arrangement"].addItem(arrangement.value)
+        self.input_widgets["flow_arrangement"].setCurrentText("逆流")
+        self.input_widgets["flow_arrangement"].setFixedWidth(combo_width)
+        self.input_layout.addWidget(self.input_widgets["flow_arrangement"], row, 1)
+    
+    def setup_steam_heating_mode(self, row, label_style, input_width, combo_width):
+        """设置蒸汽加热法界面"""
+        # 计算类型选择
+        label = QLabel("计算类型:")
+        label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        label.setStyleSheet(label_style)
+        self.input_layout.addWidget(label, row, 0)
         
-        # 下拉菜单 - 第2列
-        combobox = QComboBox()
-        combobox.addItem("- 请选择流体比热容 -")
+        self.input_widgets["calculation_type"] = QComboBox()
+        self.input_widgets["calculation_type"].addItem("设计计算（计算蒸汽消耗）")
+        self.input_widgets["calculation_type"].addItem("校核计算（给定蒸汽流量）")
+        self.input_widgets["calculation_type"].setFixedWidth(combo_width)
+        self.input_widgets["calculation_type"].currentTextChanged.connect(self.on_steam_calc_type_changed)
+        self.input_layout.addWidget(self.input_widgets["calculation_type"], row, 1)
+        
+        row += 1
+        
+        # 蒸汽压力
+        label = QLabel("蒸汽压力 (MPa):")
+        label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        label.setStyleSheet(label_style)
+        self.input_layout.addWidget(label, row, 0)
+        
+        self.input_widgets["steam_pressure"] = QLineEdit()
+        self.input_widgets["steam_pressure"].setPlaceholderText("例如：0.3")
+        self.input_widgets["steam_pressure"].setValidator(QDoubleValidator(0.01, 5.0, 3))
+        self.input_widgets["steam_pressure"].setFixedWidth(input_width)
+        self.input_widgets["steam_pressure"].textChanged.connect(self.update_steam_properties_display)
+        self.input_layout.addWidget(self.input_widgets["steam_pressure"], row, 1)
+        
+        # 蒸汽温度显示
+        self.steam_temp_label = QLabel("饱和温度: -- °C")
+        self.steam_temp_label.setStyleSheet("color: #e74c3c; font-weight: bold;")
+        self.input_layout.addWidget(self.steam_temp_label, row, 2)
+        
+        row += 1
+        
+        # 蒸汽流量（仅校核计算时显示）
+        label = QLabel("蒸汽流量 (kg/h):")
+        label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        label.setStyleSheet(label_style)
+        self.input_layout.addWidget(label, row, 0)
+        
+        self.input_widgets["steam_flow"] = QLineEdit()
+        self.input_widgets["steam_flow"].setPlaceholderText("仅校核计算需要")
+        self.input_widgets["steam_flow"].setValidator(QDoubleValidator(1, 1000000, 1))
+        self.input_widgets["steam_flow"].setFixedWidth(input_width)
+        self.input_widgets["steam_flow"].setEnabled(False)
+        self.input_layout.addWidget(self.input_widgets["steam_flow"], row, 1)
+        
+        self.steam_flow_label = QLabel("（设计计算自动计算）")
+        self.steam_flow_label.setStyleSheet("color: #7f8c8d; font-style: italic;")
+        self.input_layout.addWidget(self.steam_flow_label, row, 2)
+        
+        row += 1
+
+        # 冷流体参数
+        cold_params = [
+            ("冷流体流量 (kg/h):", "cold_flow", "例如：270000"),
+            ("冷流体进口t1 (°C):", "cold_in_temp", "例如：37"),
+            ("冷流体出口t2 (°C):", "cold_out_temp", "例如：70")
+        ]
+        
+        for label_text, key, placeholder in cold_params:
+            self.add_input_field(row, label_text, key, placeholder,
+                                QDoubleValidator(1, 1000000, 1) if "flow" in key else QDoubleValidator(-273, 1000, 1),
+                                input_width, label_style)
+            row += 1
+        
+        # 冷流体比热容
+        self.add_cp_section(row, "冷流体比热容 Cp2 (kJ/kg·K):", "cold_cp", "cold_cp_combo", 
+                           input_width, combo_width, label_style)
+        row += 1
+        
+        # 总传热系数
+        self.add_k_value_section(row, input_width, combo_width, label_style)
+        
+    def on_steam_calc_type_changed(self, text):
+        """蒸汽计算类型变化处理"""
+        if "校核计算" in text:
+            self.input_widgets["steam_flow"].setEnabled(True)
+            self.input_widgets["steam_flow"].setPlaceholderText("请输入蒸汽流量")
+            if self.steam_flow_label:
+                self.steam_flow_label.setText("请输入蒸汽流量")
+        else:
+            self.input_widgets["steam_flow"].setEnabled(False)
+            self.input_widgets["steam_flow"].clear()
+            self.input_widgets["steam_flow"].setPlaceholderText("仅校核计算需要")
+            if self.steam_flow_label:
+                self.steam_flow_label.setText("（设计计算自动计算）")
+    
+    def update_steam_properties_display(self):
+        """更新蒸汽物性显示"""
+        try:
+            pressure_text = self.input_widgets["steam_pressure"].text().strip()
+            if pressure_text:
+                pressure_gauge = float(pressure_text)
+                
+                # 直接使用表压计算
+                props = self.calculate_steam_properties_from_gauge(pressure_gauge)
+                
+                # 更新显示
+                if self.steam_temp_label:
+                    self.steam_temp_label.setText(
+                        f"饱和温度: {props['saturation_temp']} °C\n"
+                        f"汽化潜热: {props['latent_heat']} kJ/kg"
+                    )
+                
+                # 保存供后续使用
+                self.steam_properties = props
+        except ValueError:
+            if self.steam_temp_label:
+                self.steam_temp_label.setText("饱和温度: -- °C\n汽化潜热: -- kJ/kg")
+    
+    def setup_intelligent_selection_mode(self, row, label_style, input_width, combo_width):
+        """设置智能选型模式界面"""
+        # 操作条件
+        conditions = [
+            ("操作压力 (MPa):", "operating_pressure", "例如：0.5"),
+            ("操作温度 (°C):", "operating_temperature", "例如：100"),
+            ("流量 (kg/h):", "flow_rate", "例如：5000")
+        ]
+        
+        for label_text, key, placeholder in conditions:
+            self.add_input_field(row, label_text, key, placeholder,
+                                QDoubleValidator(0.01, 35.0, 2) if "pressure" in key else 
+                                QDoubleValidator(1, 1000000, 1) if "flow" in key else 
+                                QDoubleValidator(-273, 1000, 1),
+                                input_width, label_style)
+            row += 1
+        
+        # 流体类型
+        label = QLabel("流体类型:")
+        label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        label.setStyleSheet(label_style)
+        self.input_layout.addWidget(label, row, 0)
+        
+        fluid_types = ["水/液体", "气体", "蒸汽", "粘稠流体", "腐蚀性流体"]
+        self.input_widgets["fluid_type"] = QComboBox()
+        for fluid in fluid_types:
+            self.input_widgets["fluid_type"].addItem(fluid)
+        self.input_widgets["fluid_type"].setFixedWidth(combo_width)
+        self.input_layout.addWidget(self.input_widgets["fluid_type"], row, 1)
+        
+        row += 1
+        
+        # 特殊条件
+        self.input_widgets["fouling_tendency"] = QCheckBox("易结垢")
+        self.input_widgets["fouling_tendency"].setStyleSheet("color: #2c3e50; padding: 5px;")
+        self.input_layout.addWidget(self.input_widgets["fouling_tendency"], row, 1)
+        
+        self.input_widgets["high_pressure"] = QCheckBox("高压操作")
+        self.input_widgets["high_pressure"].setStyleSheet("color: #2c3e50; padding: 5px;")
+        self.input_layout.addWidget(self.input_widgets["high_pressure"], row, 2)
+        
+        row += 1
+        
+        self.input_widgets["corrosive"] = QCheckBox("腐蚀性")
+        self.input_widgets["corrosive"].setStyleSheet("color: #2c3e50; padding: 5px;")
+        self.input_layout.addWidget(self.input_widgets["corrosive"], row, 1)
+        
+        self.input_widgets["phase_change"] = QCheckBox("相变过程")
+        self.input_widgets["phase_change"].setStyleSheet("color: #2c3e50; padding: 5px;")
+        self.input_layout.addWidget(self.input_widgets["phase_change"], row, 2)
+    
+    def add_input_field(self, row, label_text, key, placeholder, validator, width, style):
+        """添加输入字段辅助函数"""
+        label = QLabel(label_text)
+        label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        label.setStyleSheet(style)
+        self.input_layout.addWidget(label, row, 0)
+        
+        self.input_widgets[key] = QLineEdit()
+        self.input_widgets[key].setPlaceholderText(placeholder)
+        self.input_widgets[key].setValidator(validator)
+        self.input_widgets[key].setFixedWidth(width)
+        self.input_layout.addWidget(self.input_widgets[key], row, 1)
+        
+        # 添加提示标签
+        hint_label = QLabel("直接输入值")
+        hint_label.setStyleSheet("color: #7f8c8d; font-style: italic;")
+        hint_label.setFixedWidth(250)
+        self.input_layout.addWidget(hint_label, row, 2)
+    
+    def add_cp_section(self, row, label_text, cp_key, combo_key, input_width, combo_width, label_style):
+        """添加比热容选择部分"""
+        label = QLabel(label_text)
+        label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        label.setStyleSheet(label_style)
+        self.input_layout.addWidget(label, row, 0)
+        
+        self.input_widgets[cp_key] = QLineEdit()
+        self.input_widgets[cp_key].setPlaceholderText("输入或选择")
+        self.input_widgets[cp_key].setValidator(QDoubleValidator(0.1, 20.0, 3))
+        self.input_widgets[cp_key].setFixedWidth(input_width)
+        self.input_layout.addWidget(self.input_widgets[cp_key], row, 1)
+        
+        self.input_widgets[combo_key] = QComboBox()
+        self.input_widgets[combo_key].addItem("- 选择流体类型 -")
         for fluid in self.specific_heat_data.keys():
-            combobox.addItem(fluid)
-        combobox.setFixedWidth(250)
-        combobox.currentTextChanged.connect(lambda text, le=lineedit: self.on_cp_selected(text, le))
-        self.input_layout.addWidget(combobox, row, 2)
+            self.input_widgets[combo_key].addItem(fluid)
+        self.input_widgets[combo_key].setFixedWidth(combo_width)
+        self.input_widgets[combo_key].currentTextChanged.connect(
+            lambda text, cp_key=cp_key: self.on_cp_selected(text, self.input_widgets[cp_key])
+        )
+        self.input_layout.addWidget(self.input_widgets[combo_key], row, 2)
+    
+    def add_k_value_section(self, row, input_width, combo_width, label_style):
+        """添加K值选择部分"""
+        label = QLabel("总传热系数K (W/m²·K):")
+        label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        label.setStyleSheet(label_style)
+        self.input_layout.addWidget(label, row, 0)
         
-        # 存储控件引用
-        key = label_text.replace(":", "").replace("(", "").replace(")", "").replace(" ", "_").replace("·", "").replace("/", "_").lower()
-        self.input_widgets[key] = lineedit
-        self.input_widgets[f"{key}_combo"] = combobox
+        self.input_widgets["k_value"] = QLineEdit()
+        self.input_widgets["k_value"].setPlaceholderText("选择类型后推荐")
+        self.input_widgets["k_value"].setValidator(QDoubleValidator(10, 10000, 1))
+        self.input_widgets["k_value"].setFixedWidth(input_width)
+        self.input_layout.addWidget(self.input_widgets["k_value"], row, 1)
         
-        return lineedit, combobox
+        self.input_widgets["exchanger_type"] = QComboBox()
+        self.input_widgets["exchanger_type"].addItem("- 选择换热器类型 -")
+        for exchanger_type in self.exchanger_types_data.keys():
+            self.input_widgets["exchanger_type"].addItem(exchanger_type)
+        self.input_widgets["exchanger_type"].setFixedWidth(combo_width)
+        self.input_widgets["exchanger_type"].currentTextChanged.connect(self.on_exchanger_type_changed)
+        self.input_layout.addWidget(self.input_widgets["exchanger_type"], row, 2)
+    
+    def add_separator(self, row):
+        """添加分隔线"""
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+        line.setStyleSheet("color: #bdc3c7;")
+        self.input_layout.addWidget(line, row, 0, 1, 3)
+    
+    def clear_widgets(self, layout):
+        """清除布局中的所有控件"""
+        while layout.count():
+            item = layout.takeAt(0)
+            if item.widget():
+                item.widget().setParent(None)
     
     def on_cp_selected(self, text, lineedit):
         """处理比热容选择"""
@@ -474,244 +792,23 @@ class HeatExchangerAreaCalculator(QWidget):
         
         if text in self.specific_heat_data:
             cp_value = self.specific_heat_data[text]
-            lineedit.setText(f"{cp_value:.2f}")
+            lineedit.setText(f"{cp_value:.3f}")
     
-    def setup_mode_0_inputs(self, row):
-        """模式0：直接计算法"""
-        # 热负荷 Q (kW)
-        self.add_input_field(row, "热负荷 Q (kW):", "lineedit", "1000", "例如：1000", QDoubleValidator(0.1, 1000000, 1))
-        row += 1
-        
-        # 换热器类型选择
-        self.add_input_field(row, "换热器类型:", "combobox")
-        exchanger_type_combo = self.input_widgets["换热器类型"]
-        exchanger_type_combo.addItem("- 请选择换热器类型 -")
-        for exchanger_type in self.exchanger_types_data.keys():
-            exchanger_type_combo.addItem(exchanger_type)
-        exchanger_type_combo.currentTextChanged.connect(self.on_exchanger_type_selected)
-        row += 1
-        
-        # 总传热系数K W/K.㎡
-        self.setup_heat_transfer_coeff_combo(row)
-        row += 1
-        
-        # 热流体进口温度 T1 (°C)
-        self.add_input_field(row, "热流体进口T1 (°C):", "lineedit", "90", "例如：90", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 热流体出口温度 T2 (°C)
-        self.add_input_field(row, "热流体出口T2 (°C):", "lineedit", "60", "例如：60", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 冷流体进口温度 t1 (°C)
-        self.add_input_field(row, "冷流体进口t1 (°C):", "lineedit", "20", "例如：20", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 冷流体出口温度 t2 (°C)
-        self.add_input_field(row, "冷流体出口t2 (°C):", "lineedit", "50", "例如：50", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 安全系数
-        self.add_input_field(row, "安全系数:", "lineedit", "1.15", "例如：1.15", QDoubleValidator(1.0, 2.0, 2))
-        row += 1
-    
-    def setup_mode_1_inputs(self, row):
-        """模式1：流体参数法"""
-        # 热流体流量 W1 (kg/h)
-        self.add_input_field(row, "热流体流量W1 (kg/h):", "lineedit", "5000", "例如：5000", QDoubleValidator(1, 1000000, 1))
-        row += 1
-        
-        # 热流体比热容 Cp1 (kJ/kg·K)
-        self.add_cp_input_field(row, "热流体Cp1 (kJ/kg·K):")
-        row += 1
-        
-        # 热流体进口温度 T1 (°C)
-        self.add_input_field(row, "热流体进口T1 (°C):", "lineedit", "90", "例如：90", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 热流体出口温度 T2 (°C)
-        self.add_input_field(row, "热流体出口T2 (°C):", "lineedit", "60", "例如：60", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 冷流体流量 W2 (kg/h)
-        self.add_input_field(row, "冷流体流量W2 (kg/h):", "lineedit", "10000", "例如：10000", QDoubleValidator(1, 1000000, 1))
-        row += 1
-        
-        # 冷流体比热容 Cp2 (kJ/kg·K)
-        self.add_cp_input_field(row, "冷流体Cp2 (kJ/kg·K):")
-        row += 1
-        
-        # 冷流体进口温度 t1 (°C)
-        self.add_input_field(row, "冷流体进口t1 (°C):", "lineedit", "20", "例如：20", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 冷流体出口温度 t2 (°C)
-        self.add_input_field(row, "冷流体出口t2 (°C):", "lineedit", "50", "例如：50", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 换热器类型选择
-        self.add_input_field(row, "换热器类型:", "combobox")
-        exchanger_type_combo = self.input_widgets["换热器类型"]
-        exchanger_type_combo.addItem("- 请选择换热器类型 -")
-        for exchanger_type in self.exchanger_types_data.keys():
-            exchanger_type_combo.addItem(exchanger_type)
-        exchanger_type_combo.currentTextChanged.connect(self.on_exchanger_type_selected)
-        row += 1
-        
-        # 总传热系数K W/K.㎡
-        self.setup_heat_transfer_coeff_combo(row)
-        row += 1
-        
-        # 安全系数
-        self.add_input_field(row, "安全系数:", "lineedit", "1.15", "例如：1.15", QDoubleValidator(1.0, 2.0, 2))
-        row += 1
-    
-    def setup_mode_2_inputs(self, row):
-        """模式2：蒸汽加热法"""
-        # 蒸汽压力(G) MPa
-        self.add_input_field(row, "蒸汽压力(G) MPa:", "lineedit", "0.5", "例如：0.5", QDoubleValidator(0.01, 10.0, 2))
-        row += 1
-        
-        # 蒸汽流量 (kg/h)
-        self.add_input_field(row, "蒸汽流量 (kg/h):", "lineedit", "1000", "例如：1000", QDoubleValidator(1, 1000000, 1))
-        row += 1
-        
-        # 冷流体流量 W2 (kg/h)
-        self.add_input_field(row, "冷流体流量W2 (kg/h):", "lineedit", "10000", "例如：10000", QDoubleValidator(1, 1000000, 1))
-        row += 1
-        
-        # 冷流体比热容 Cp2 (kJ/kg·K)
-        self.add_cp_input_field(row, "冷流体Cp2 (kJ/kg·K):")
-        row += 1
-        
-        # 冷流体进口温度 t1 (°C)
-        self.add_input_field(row, "冷流体进口t1 (°C):", "lineedit", "20", "例如：20", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 冷流体出口温度 t2 (°C)
-        self.add_input_field(row, "冷流体出口t2 (°C):", "lineedit", "60", "例如：60", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 换热器类型选择
-        self.add_input_field(row, "换热器类型:", "combobox")
-        exchanger_type_combo = self.input_widgets["换热器类型"]
-        exchanger_type_combo.addItem("- 请选择换热器类型 -")
-        for exchanger_type in self.exchanger_types_data.keys():
-            exchanger_type_combo.addItem(exchanger_type)
-        exchanger_type_combo.currentTextChanged.connect(self.on_exchanger_type_selected)
-        row += 1
-        
-        # 总传热系数K W/K.㎡
-        self.setup_heat_transfer_coeff_combo(row)
-        row += 1
-        
-        # 安全系数
-        self.add_input_field(row, "安全系数:", "lineedit", "1.15", "例如：1.15", QDoubleValidator(1.0, 2.0, 2))
-        row += 1
-    
-    def on_exchanger_type_selected(self, text):
-        """处理换热器类型选择"""
+    def on_exchanger_type_changed(self, text):
+        """处理换热器类型选择变化"""
         if text.startswith("-") or not text.strip():
             return
         
         if text in self.exchanger_types_data:
-            exchanger_data = self.exchanger_types_data[text]
-            k_min, k_max = exchanger_data["k_range"]
+            k_range = self.exchanger_types_data[text]["k_range"]
+            recommended = (k_range[0] + k_range[1]) / 2
             
-            # 生成范围内的推荐K值
-            recommended_k = (k_min + k_max) / 2
-            
-            # 如果存在手动输入框，填充推荐值
-            if "k_manual" in self.input_widgets:
-                self.input_widgets["k_manual"].setText(f"{recommended_k:.1f}")
+            # 更新K值输入框
+            if "k_value" in self.input_widgets:
+                self.input_widgets["k_value"].setText(f"{recommended:.0f}")
     
-    def setup_heat_transfer_coeff_combo(self, row):
-        """设置传热系数下拉菜单"""
-        # 标签
-        label = QLabel("总传热系数K (W/m²·K):")
-        label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        label.setStyleSheet("QLabel { font-weight: bold; padding-right: 10px; }")
-        label.setFixedWidth(200)
-        self.input_layout.addWidget(label, row, 0)
-        
-        # 输入框
-        manual_input = QLineEdit()
-        manual_input.setPlaceholderText("输入或选择后自动填充")
-        manual_input.setValidator(QDoubleValidator(1, 10000, 1))
-        manual_input.setFixedWidth(400)
-        self.input_layout.addWidget(manual_input, row, 1)
-        self.input_widgets["k_manual"] = manual_input
-        
-        # 下拉框
-        combo = QComboBox()
-        combo.addItem("- 请选择流体组合 -")
-        
-        # 添加传热系数选项
-        for item in self.heat_transfer_coeff_data:
-            hot_fluid = item["hot_fluid"]
-            cold_fluid = item["cold_fluid"]
-            min_val = item["range"][0]
-            max_val = item["range"][1]
-            exchanger = item["exchanger"]
-            
-            option_text = f"{hot_fluid} → {cold_fluid} | {min_val:.1f}~{max_val:.1f} W/m²·K | {exchanger}"
-            combo.addItem(option_text)
-        
-        combo.setFixedWidth(250)
-        combo.currentTextChanged.connect(self.on_heat_transfer_coeff_selected)
-        self.input_layout.addWidget(combo, row, 2)
-        self.input_widgets["k_combo"] = combo
-        
-        return combo
-    
-    def on_heat_transfer_coeff_selected(self, text):
-        """处理传热系数选择"""
-        if text.startswith("-") or not text.strip():
-            return
-        
-        # 从选项文本中提取范围
-        try:
-            # 查找范围部分
-            match = re.search(r'(\d+\.?\d*)~(\d+\.?\d*)', text)
-            if match:
-                min_val = float(match.group(1))
-                max_val = float(match.group(2))
-                
-                # 生成范围内的随机数
-                random_k = random.uniform(min_val, max_val)
-                
-                # 如果存在手动输入框，填充随机值
-                if "k_manual" in self.input_widgets:
-                    self.input_widgets["k_manual"].setText(f"{random_k:.1f}")
-        except Exception as e:
-            print(f"解析传热系数范围失败: {e}")
-    
-    def get_steam_latent_heat(self, pressure_mpa):
-        """根据蒸汽压力获取汽化潜热"""
-        # 简化计算：压力(MPa)对应的汽化潜热(kJ/kg)
-        if pressure_mpa <= 0.1:
-            return 2257.0
-        elif pressure_mpa <= 0.2:
-            return 2202.0
-        elif pressure_mpa <= 0.3:
-            return 2164.0
-        elif pressure_mpa <= 0.4:
-            return 2133.0
-        elif pressure_mpa <= 0.5:
-            return 2108.0
-        elif pressure_mpa <= 0.6:
-            return 2085.0
-        elif pressure_mpa <= 0.7:
-            return 2065.0
-        elif pressure_mpa <= 0.8:
-            return 2047.0
-        elif pressure_mpa <= 0.9:
-            return 2030.0
-        else:  # 1.0 MPa
-            return 2015.0
-    
-    def get_input_value(self, key, default=0.0):
-        """获取输入值"""
+    def get_widget_value(self, key, default=None):
+        """获取控件值"""
         if key in self.input_widgets:
             widget = self.input_widgets[key]
             if isinstance(widget, QLineEdit):
@@ -720,25 +817,58 @@ class HeatExchangerAreaCalculator(QWidget):
                     try:
                         return float(text)
                     except:
-                        return default
+                        return text
             elif isinstance(widget, QComboBox):
-                text = widget.currentText()
-                if text in self.specific_heat_data:
-                    return self.specific_heat_data[text]
+                return widget.currentText()
+            elif isinstance(widget, QCheckBox):
+                return widget.isChecked()
         return default
+    
+    def get_advanced_value(self, key, default=None):
+        """获取高级参数值"""
+        if key == "safety_factor":
+            text = self.safety_factor_input.text().strip()
+            if text:
+                try:
+                    return float(text)
+                except:
+                    return default
+            return default
+        elif key == "fouling_factor":
+            text = self.fouling_factor_input.text().strip()
+            if text:
+                try:
+                    return float(text)
+                except:
+                    return default
+            return default
+        return default
+    
+    def validate_inputs(self, inputs, required_fields):
+        """验证输入参数是否完整"""
+        missing_fields = []
+        for field in required_fields:
+            value = inputs.get(field)
+            if value is None or value == "":
+                missing_fields.append(field)
+        
+        if missing_fields:
+            return False, f"请填写以下必需参数：{', '.join(missing_fields)}"
+        return True, ""
     
     def calculate(self):
         """执行计算"""
         try:
-            # 获取当前选中的模式索引
-            mode = self.mode_combo.currentIndex()
+            mode = self.get_current_mode()
             
-            if mode == 0:  # 直接计算法
+            if mode == "直接计算":
                 self.calculate_mode_0()
-            elif mode == 1:  # 流体参数法
+            elif mode == "流体参数":
                 self.calculate_mode_1()
-            elif mode == 2:  # 蒸汽加热法
+            elif mode == "蒸汽加热":
                 self.calculate_mode_2()
+            elif mode == "智能选型":
+                self.perform_intelligent_selection()
             else:
                 QMessageBox.warning(self, "计算错误", "请选择计算模式")
                 
@@ -752,528 +882,664 @@ class HeatExchangerAreaCalculator(QWidget):
     def calculate_mode_0(self):
         """模式0：直接计算法"""
         # 获取输入值
-        Q_heat = self.get_input_value("热负荷_q_kw", 1000)
-        T1 = self.get_input_value("热流体进口t1_°c", 90)
-        T2 = self.get_input_value("热流体出口t2_°c", 60)
-        t1 = self.get_input_value("冷流体进口t1_°c", 20)
-        t2 = self.get_input_value("冷流体出口t2_°c", 50)
-        K = self.get_input_value("k_manual", 1000)
-        safety_factor = self.get_input_value("安全系数", 1.15)
+        Q_heat = self.get_widget_value("heat_load")  # kW
+        K = self.get_widget_value("k_value")  # W/m²·K
+        T1 = self.get_widget_value("hot_in_temp")  # °C
+        T2 = self.get_widget_value("hot_out_temp")  # °C
+        t1 = self.get_widget_value("cold_in_temp")  # °C
+        t2 = self.get_widget_value("cold_out_temp")  # °C
+        flow_arrangement = self.get_widget_value("flow_arrangement", "逆流")
+        safety_factor = self.get_advanced_value("safety_factor", 1.15)
         
         # 验证输入
-        if T2 >= T1:
-            QMessageBox.warning(self, "输入错误", "热流体出口温度必须小于进口温度")
+        required_fields = ["heat_load", "k_value", "hot_in_temp", "hot_out_temp", 
+                          "cold_in_temp", "cold_out_temp"]
+        inputs = {
+            "heat_load": Q_heat, "k_value": K, "hot_in_temp": T1, 
+            "hot_out_temp": T2, "cold_in_temp": t1, "cold_out_temp": t2
+        }
+        
+        is_valid, error_msg = self.validate_inputs(inputs, required_fields)
+        if not is_valid:
+            QMessageBox.warning(self, "输入错误", error_msg)
             return
         
-        if t2 <= t1:
-            QMessageBox.warning(self, "输入错误", "冷流体出口温度必须大于进口温度")
-            return
-        
-        # 计算对数平均温差
-        delta_T1 = T1 - t2
-        delta_T2 = T2 - t1
-        
-        if delta_T1 <= 0 or delta_T2 <= 0:
-            QMessageBox.warning(self, "输入错误", "温差计算出现负值，请检查温度参数")
-            return
-        
-        if abs(delta_T1 - delta_T2) < 1e-6:
-            LMTD = delta_T1
-        else:
-            LMTD = (delta_T1 - delta_T2) / math.log(delta_T1 / delta_T2)
-        
-        # 计算换热面积 (m²)
-        # 公式: A = Q * 1000 / (K * ΔTm)   [Q从kW转为W]
-        A_theoretical = Q_heat * 1000 / (K * LMTD)
-        
-        # 考虑安全系数
-        A_actual = A_theoretical * safety_factor
-        
-        # 显示结果
-        result = f"""
-═══════════════════════════════════════════════════
+        # 数学公式计算
+        try:
+            # 热负荷单位转换: kW → W
+            Q = Q_heat * 1000
+            
+            # 计算对数平均温差
+            if flow_arrangement == "逆流":
+                ΔT1 = T1 - t2
+                ΔT2 = T2 - t1
+            else:  # 并流
+                ΔT1 = T1 - t1
+                ΔT2 = T2 - t2
+            
+            if ΔT1 <= 0 or ΔT2 <= 0:
+                raise ValueError(f"温度差出现负值：ΔT1={ΔT1:.1f}°C，ΔT2={ΔT2:.1f}°C")
+            
+            # 对数平均温差
+            if abs(ΔT1 - ΔT2) < 1e-10:
+                ΔT_m = ΔT1
+            else:
+                ΔT_m = (ΔT1 - ΔT2) / math.log(ΔT1 / ΔT2)
+            
+            # 传热面积
+            A_theoretical = Q / (K * ΔT_m)
+            A_design = A_theoretical * safety_factor
+            
+            # 计算面积裕度
+            margin_percent = ((A_design / A_theoretical) - 1) * 100
+            
+            # 准备结果
+            result_text = f"""═══════════
 📋 输入参数
-═══════════════════════════════════════════════════
+══════════
 
-计算模式: {self.mode_combo.currentText()}
-热负荷: {Q_heat:.1f} kW
-总传热系数: {K:.1f} W/(m²·K)
-热流体进口温度: {T1:.1f} °C
-热流体出口温度: {T2:.1f} °C
-冷流体进口温度: {t1:.1f} °C
-冷流体出口温度: {t2:.1f} °C
-安全系数: {safety_factor:.2f}
+    计算模式: 直接计算法
+    热负荷: {Q_heat:.1f} kW
+    总传热系数: {K:.0f} W/(m²·K)
+    热流体温度: {T1:.1f} → {T2:.1f} °C
+    冷流体温度: {t1:.1f} → {t2:.1f} °C
+    流动方式: {flow_arrangement}
+    安全系数: {safety_factor:.2f}
 
-═══════════════════════════════════════════════════
+══════════
 📊 计算结果
-═══════════════════════════════════════════════════
+══════════
 
-热负荷: {Q_heat:.1f} kW
-对数平均温差(LMTD): {LMTD:.1f} °C
-理论换热面积: {A_theoretical:.2f} m²
-考虑安全系数的实际面积: {A_actual:.2f} m²
-面积裕量: {(A_actual - A_theoretical):.2f} m²
+    温差分析:
+    • ΔT1 = {ΔT1:.1f} °C
+    • ΔT2 = {ΔT2:.1f} °C
+    • 对数平均温差 ΔT_m = {ΔT_m:.1f} °C
 
-═══════════════════════════════════════════════════
+    面积计算:
+    • 理论传热面积: {A_theoretical:.3f} m²
+    • 设计传热面积: {A_design:.3f} m²
+    • 面积裕量: {A_design - A_theoretical:.3f} m²
+    • 面积裕度: {margin_percent:.1f}%
+
+    单位换算:
+    • 理论面积: {A_theoretical * 10.7639:.1f} ft²
+    • 设计面积: {A_design * 10.7639:.1f} ft²
+
+══════════
 💡 计算说明
-═══════════════════════════════════════════════════
+══════════
 
-计算公式:
-1. 对数平均温差: ΔTm = (ΔT1 - ΔT2) / ln(ΔT1/ΔT2)
-   其中: ΔT1 = T1 - t2, ΔT2 = T2 - t1
-2. 换热面积: A = Q × 1000 / (K × ΔTm) [m²]
-   其中: Q - 热负荷(kW), K - 总传热系数(W/m²·K)
-3. 实际面积: A_actual = A × 安全系数
-
-工程建议:
-• 安全系数通常取1.1~1.25，根据流体腐蚀性、污垢情况调整
-• 实际设计中还需考虑管径、管长、管间距等结构参数
-• 重要工程应进行详细的热力计算和结构设计"""
-        
-        self.result_text.setText(result)
+    • 使用对数平均温差法计算
+    • 设计面积已考虑{safety_factor:.2f}倍安全系数
+    • 面积裕度{margin_percent:.1f}%确保长期运行可靠性
+    • 结果仅供参考，实际选型需考虑设备制造标准
+"""
+            
+            self.result_text.setText(result_text)
+            
+        except ValueError as e:
+            QMessageBox.warning(self, "计算错误", str(e))
     
     def calculate_mode_1(self):
         """模式1：流体参数法"""
         # 获取输入值
-        W1 = self.get_input_value("热流体流量w1_kg/h", 5000)
-        Cp1 = self.get_input_value("热流体cp1_kj/kg·k", 4.19)
-        T1 = self.get_input_value("热流体进口t1_°c", 90)
-        T2 = self.get_input_value("热流体出口t2_°c", 60)
-        W2 = self.get_input_value("冷流体流量w2_kg/h", 10000)
-        Cp2 = self.get_input_value("冷流体cp2_kj/kg·k", 4.19)
-        t1 = self.get_input_value("冷流体进口t1_°c", 20)
-        t2 = self.get_input_value("冷流体出口t2_°c", 50)
-        K = self.get_input_value("k_manual", 1000)
-        safety_factor = self.get_input_value("安全系数", 1.15)
+        W1 = self.get_widget_value("hot_flow")  # kg/h
+        T1 = self.get_widget_value("hot_in_temp")  # °C
+        T2 = self.get_widget_value("hot_out_temp")  # °C
+        Cp1 = self.get_widget_value("hot_cp")  # kJ/kg·K
+        W2 = self.get_widget_value("cold_flow")  # kg/h
+        t1 = self.get_widget_value("cold_in_temp")  # °C
+        t2 = self.get_widget_value("cold_out_temp")  # °C
+        Cp2 = self.get_widget_value("cold_cp")  # kJ/kg·K
+        K = self.get_widget_value("k_value")  # W/m²·K
+        flow_arrangement = self.get_widget_value("flow_arrangement", "逆流")
+        safety_factor = self.get_advanced_value("safety_factor", 1.15)
         
         # 验证输入
-        if T2 >= T1:
-            QMessageBox.warning(self, "输入错误", "热流体出口温度必须小于进口温度")
+        required_fields = ["hot_flow", "hot_in_temp", "hot_out_temp", "hot_cp",
+                          "cold_flow", "cold_in_temp", "cold_out_temp", "cold_cp", "k_value"]
+        inputs = {
+            "hot_flow": W1, "hot_in_temp": T1, "hot_out_temp": T2, "hot_cp": Cp1,
+            "cold_flow": W2, "cold_in_temp": t1, "cold_out_temp": t2, "cold_cp": Cp2, 
+            "k_value": K
+        }
+        
+        is_valid, error_msg = self.validate_inputs(inputs, required_fields)
+        if not is_valid:
+            QMessageBox.warning(self, "输入错误", error_msg)
             return
         
-        if t2 <= t1:
-            QMessageBox.warning(self, "输入错误", "冷流体出口温度必须大于进口温度")
-            return
-        
-        # 计算热负荷 (kW)
-        # Q = W * Cp * ΔT / 3600  [kg/h * kJ/kg·K * °C / 3600 = kW]
-        Q_hot = W1 * Cp1 * (T1 - T2) / 3600
-        Q_cold = W2 * Cp2 * (t2 - t1) / 3600
-        
-        # 检查热平衡（理论上应相等，实际可能有误差）
-        Q_heat = (Q_hot + Q_cold) / 2  # 取平均值
-        
-        # 计算对数平均温差
-        delta_T1 = T1 - t2
-        delta_T2 = T2 - t1
-        
-        if delta_T1 <= 0 or delta_T2 <= 0:
-            QMessageBox.warning(self, "输入错误", "温差计算出现负值，请检查温度参数")
-            return
-        
-        if abs(delta_T1 - delta_T2) < 1e-6:
-            LMTD = delta_T1
-        else:
-            LMTD = (delta_T1 - delta_T2) / math.log(delta_T1 / delta_T2)
-        
-        # 计算换热面积 (m²)
-        A_theoretical = Q_heat * 1000 / (K * LMTD)
-        
-        # 考虑安全系数
-        A_actual = A_theoretical * safety_factor
-        
-        # 计算热效率
-        efficiency = (t2 - t1) / (T1 - t1) * 100
-        
-        # 显示结果
-        result = f"""
-═══════════════════════════════════════════════════
+        # 数学公式计算
+        try:
+            # 单位转换
+            W1_kg_s = W1 / 3600  # kg/h → kg/s
+            W2_kg_s = W2 / 3600
+            Cp1_J = Cp1 * 1000  # kJ/kg·K → J/kg·K
+            Cp2_J = Cp2 * 1000
+            
+            # 热负荷计算
+            Q_hot = W1_kg_s * Cp1_J * (T1 - T2)  # W
+            Q_cold = W2_kg_s * Cp2_J * (t2 - t1)  # W
+            
+            # 检查能量平衡
+            if Q_hot > 0 and Q_cold > 0:
+                balance_error = abs(Q_hot - Q_cold) / max(Q_hot, Q_cold) * 100
+            else:
+                balance_error = 100.0
+            
+            # 热平衡警告
+            if balance_error > 15:
+                reply = QMessageBox.warning(
+                    self, 
+                    "热负荷不平衡",
+                    f"热平衡误差较大: {balance_error:.1f}%\n"
+                    f"热侧放热: {Q_hot/1000:.1f} kW\n"
+                    f"冷侧吸热: {Q_cold/1000:.1f} kW\n\n"
+                    "是否继续计算？",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No
+                )
+                if reply == QMessageBox.No:
+                    return
+            
+            # 设计热负荷取较小值（安全原则）
+            Q_design = min(Q_hot, Q_cold)
+            
+            # 计算对数平均温差
+            if flow_arrangement == "逆流":
+                ΔT1 = T1 - t2
+                ΔT2 = T2 - t1
+            else:  # 并流
+                ΔT1 = T1 - t1
+                ΔT2 = T2 - t2
+            
+            if ΔT1 <= 0 or ΔT2 <= 0:
+                raise ValueError("温度差出现负值，请检查进出口温度设置")
+            
+            # 对数平均温差
+            if abs(ΔT1 - ΔT2) < 1e-10:
+                ΔT_m = ΔT1
+            else:
+                ΔT_m = (ΔT1 - ΔT2) / math.log(ΔT1 / ΔT2)
+            
+            # 传热面积
+            A_theoretical = Q_design / (K * ΔT_m)
+            A_design = A_theoretical * safety_factor
+            
+            # 准备结果
+            result_text = f"""═══════════
 📋 输入参数
-═══════════════════════════════════════════════════
+══════════
 
-计算模式: {self.mode_combo.currentText()}
-热流体流量: {W1:.0f} kg/h
-热流体比热容: {Cp1:.2f} kJ/(kg·K)
-热流体进口温度: {T1:.1f} °C
-热流体出口温度: {T2:.1f} °C
-冷流体流量: {W2:.0f} kg/h
-冷流体比热容: {Cp2:.2f} kJ/(kg·K)
-冷流体进口温度: {t1:.1f} °C
-冷流体出口温度: {t2:.1f} °C
-总传热系数: {K:.1f} W/(m²·K)
-安全系数: {safety_factor:.2f}
+    计算模式: 流体参数法
+    热流体流量: {W1:.0f} kg/h
+    热流体温度: {T1:.1f} → {T2:.1f} °C
+    热流体比热容: {Cp1:.3f} kJ/(kg·K)
+    冷流体流量: {W2:.0f} kg/h
+    冷流体温度: {t1:.1f} → {t2:.1f} °C
+    冷流体比热容: {Cp2:.3f} kJ/(kg·K)
+    总传热系数: {K:.0f} W/(m²·K)
+    流动方式: {flow_arrangement}
+    安全系数: {safety_factor:.2f}
 
-═══════════════════════════════════════════════════
+══════════
 📊 计算结果
-═══════════════════════════════════════════════════
+══════════
 
-热负荷分析:
-• 热流体放热量: {Q_hot:.1f} kW
-• 冷流体吸热量: {Q_cold:.1f} kW
-• 平均热负荷: {Q_heat:.1f} kW
-• 热平衡误差: {abs(Q_hot - Q_cold)/Q_heat*100:.1f} %
+    热负荷分析:
+    • 热流体放热量: {Q_hot/1000:.2f} kW
+    • 冷流体吸热量: {Q_cold/1000:.2f} kW
+    • 设计热负荷: {Q_design/1000:.2f} kW
+    • 热平衡误差: {balance_error:.1f}%
 
-温差分析:
-• 热流体温降: {T1 - T2:.1f} °C
-• 冷流体温升: {t2 - t1:.1f} °C
-• 对数平均温差(LMTD): {LMTD:.1f} °C
+    温差分析:
+    • ΔT1 = {ΔT1:.1f} °C
+    • ΔT2 = {ΔT2:.1f} °C
+    • 对数平均温差 ΔT_m = {ΔT_m:.1f} °C
 
-面积计算:
-• 理论换热面积: {A_theoretical:.2f} m²
-• 考虑安全系数的实际面积: {A_actual:.2f} m²
-• 面积裕量: {(A_actual - A_theoretical):.2f} m²
+    面积计算:
+    • 理论传热面积: {A_theoretical:.3f} m²
+    • 设计传热面积: {A_design:.3f} m²
+    • 面积裕量: {A_design - A_theoretical:.3f} m²
 
-性能指标:
-• 换热效率: {efficiency:.1f} %
-• 单位面积热负荷: {Q_heat/A_theoretical:.1f} kW/m²
-
-═══════════════════════════════════════════════════
+══════════
 💡 计算说明
-═══════════════════════════════════════════════════
+══════════
 
-计算公式:
-1. 热负荷: Q = W × Cp × ΔT / 3600 [kW]
-2. 对数平均温差: ΔTm = (ΔT1 - ΔT2) / ln(ΔT1/ΔT2)
-3. 换热面积: A = Q × 1000 / (K × ΔTm) [m²]
-4. 热效率: η = (t2 - t1) / (T1 - t1) × 100%
-
-工程建议:
-• 热平衡误差应小于5%，否则需检查输入参数
-• 换热效率一般在60%~90%之间
-• 根据流体性质选择合适的传热系数和安全系数"""
-        
-        self.result_text.setText(result)
+    • 采用较小热负荷值进行设计以确保安全
+    • 安全系数{safety_factor:.2f}考虑污垢及运行波动
+    • 推荐定期清洗维护以保证换热效率
+"""
+            
+            self.result_text.setText(result_text)
+            
+        except ValueError as e:
+            QMessageBox.warning(self, "计算错误", str(e))
     
     def calculate_mode_2(self):
-        """模式2：蒸汽加热法"""
+        """模式2：蒸汽加热法 - 修正逻辑"""
+        try:
+            # 获取计算类型
+            calculation_type = self.get_widget_value("calculation_type", "设计计算（计算蒸汽消耗）")
+            is_design_calculation = "设计计算" in calculation_type
+            
+            # 获取输入值
+            steam_pressure = self.get_widget_value("steam_pressure")  # MPa（表压）
+            
+            if not is_design_calculation:
+                # 校核计算：获取蒸汽流量
+                steam_flow = self.get_widget_value("steam_flow")
+                if steam_flow is None:
+                    QMessageBox.warning(self, "输入错误", "校核计算需要输入蒸汽流量")
+                    return
+            
+            W2 = self.get_widget_value("cold_flow")  # kg/h
+            t1 = self.get_widget_value("cold_in_temp")  # °C
+            t2 = self.get_widget_value("cold_out_temp")  # °C
+            Cp2 = self.get_widget_value("cold_cp")  # kJ/kg·K
+            K = self.get_widget_value("k_value")  # W/m²·K
+            safety_factor = self.get_advanced_value("safety_factor", 1.15)
+            
+            # 验证输入
+            required_fields = ["steam_pressure", "cold_flow", "cold_in_temp", 
+                            "cold_out_temp", "cold_cp", "k_value"]
+            
+            if not is_design_calculation:
+                required_fields.append("steam_flow")
+            
+            inputs = {
+                "steam_pressure": steam_pressure, 
+                "cold_flow": W2, "cold_in_temp": t1, "cold_out_temp": t2, 
+                "cold_cp": Cp2, "k_value": K
+            }
+            
+            if not is_design_calculation:
+                inputs["steam_flow"] = steam_flow
+            
+            is_valid, error_msg = self.validate_inputs(inputs, required_fields)
+            if not is_valid:
+                QMessageBox.warning(self, "输入错误", error_msg)
+                return
+            
+            # 1. 计算蒸汽物性（使用表压）
+            steam_props = self.calculate_steam_properties_from_gauge(steam_pressure)
+            T_steam = steam_props["saturation_temp"]
+            steam_latent_heat = steam_props["latent_heat"]  # kJ/kg
+            
+            # 2. 单位转换
+            W2_kg_s = W2 / 3600  # kg/h → kg/s
+            Cp2_J = Cp2 * 1000  # kJ/kg·K → J/kg·K
+            steam_latent_heat_J = steam_latent_heat * 1000  # kJ/kg → J/kg
+            
+            # 3. 计算冷流体热负荷
+            Q_cold = W2_kg_s * Cp2_J * (t2 - t1)  # W
+            
+            if is_design_calculation:
+                # 设计计算：计算理论蒸汽消耗量
+                steam_consumption = Q_cold * 3600 / steam_latent_heat_J  # kg/h
+                Q_steam = steam_consumption / 3600 * steam_latent_heat_J  # W
+                balance_error = 0.0  # 设计计算时假设完美平衡
+                design_q = Q_cold
+                steam_flow_used = steam_consumption
+                calculation_note = "✅ 设计计算：根据冷流体需求计算蒸汽消耗"
+            else:
+                # 校核计算：使用输入的蒸汽流量
+                steam_flow_kg_s = steam_flow / 3600  # kg/h → kg/s
+                Q_steam = steam_flow_kg_s * steam_latent_heat_J  # W
+                steam_consumption = steam_flow  # 使用输入的蒸汽流量
+                
+                # 计算热平衡误差
+                if Q_steam > 0 and Q_cold > 0:
+                    balance_error = abs(Q_steam - Q_cold) / max(Q_steam, Q_cold) * 100
+                else:
+                    balance_error = 100.0
+                
+                # 设计热负荷取较小值（安全原则）
+                design_q = min(Q_steam, Q_cold)
+                steam_flow_used = steam_flow
+                calculation_note = f"🔍 校核计算：给定蒸汽流量{steam_flow:.0f} kg/h"
+            
+            # 4. 检查冷流体出口温度
+            if t2 >= T_steam:
+                QMessageBox.warning(self, "温度错误", 
+                    f"冷流体出口温度{t2:.1f}°C不能高于蒸汽饱和温度{T_steam:.1f}°C")
+                return
+            
+            # 5. 温差计算
+            ΔT1 = T_steam - t1
+            ΔT2 = T_steam - t2
+            
+            # 对数平均温差
+            if abs(ΔT1 - ΔT2) < 1e-10:
+                ΔT_m = ΔT1
+            else:
+                ΔT_m = (ΔT1 - ΔT2) / math.log(ΔT1 / ΔT2)
+            
+            # 6. 传热面积计算
+            A_theoretical = design_q / (K * ΔT_m)
+            A_design = A_theoretical * safety_factor
+            
+            # 7. 准备结果
+            mode_text = "蒸汽加热法（设计计算）" if is_design_calculation else "蒸汽加热法（校核计算）"
+            P_abs = steam_pressure + 0.101325  # 表压转绝对压力
+            
+            result_text = f"""═══════════
+📋 输入参数
+══════════
+
+    计算模式: {mode_text}
+    蒸汽压力: {steam_pressure:.3f} MPa（表压）
+    蒸汽绝对压力: {P_abs:.3f} MPa（绝对）
+{f"    蒸汽流量: {steam_flow_used:.0f} kg/h" if not is_design_calculation else ""}
+    冷流体流量: {W2:.0f} kg/h
+    冷流体温度: {t1:.1f} → {t2:.1f} °C
+    冷流体比热容: {Cp2:.3f} kJ/(kg·K)
+    总传热系数: {K:.0f} W/(m²·K)
+    安全系数: {safety_factor:.2f}
+
+══════════
+📊 计算结果
+══════════
+
+    蒸汽参数:
+    • 饱和温度: {T_steam:.1f} °C
+    • 汽化潜热: {steam_latent_heat:.0f} kJ/kg
+
+    热负荷分析:
+    • 冷流体吸热量: {Q_cold/1000:.2f} kW
+    • 蒸汽放热量: {Q_steam/1000:.2f} kW
+    • 设计热负荷: {design_q/1000:.2f} kW
+{f"    • 热平衡误差: {balance_error:.1f}%" if not is_design_calculation else ""}
+    • 理论蒸汽消耗: {steam_consumption:.0f} kg/h
+
+    温差分析:
+    • ΔT1 (蒸汽-冷流体进口): {ΔT1:.1f} °C
+    • ΔT2 (蒸汽-冷流体出口): {ΔT2:.1f} °C
+    • 对数平均温差 ΔT_m = {ΔT_m:.1f} °C
+
+    面积计算:
+    • 理论传热面积: {A_theoretical:.3f} m²
+    • 设计传热面积: {A_design:.3f} m²
+    • 面积裕量: {A_design - A_theoretical:.3f} m²
+    • 面积裕度: {((A_design/A_theoretical)-1)*100:.1f}%
+
+══════════
+💡 计算说明
+══════════
+
+    • 蒸汽压力为表压，绝对压力 = 表压 + 0.101325 MPa
+    • 设计面积已考虑{safety_factor:.2f}倍安全系数
+    • 面积裕度{((A_design/A_theoretical)-1)*100:.1f}%确保长期运行可靠性
+    • 蒸汽加热器设计时需考虑冷凝水排放问题
+"""
+            
+            self.result_text.setText(result_text)
+            
+        except ValueError as e:
+            QMessageBox.warning(self, "计算错误", str(e))
+        except Exception as e:
+            QMessageBox.critical(self, "计算错误", f"蒸汽加热计算失败: {str(e)}")
+    
+    def perform_intelligent_selection(self):
+        """智能选型"""
         # 获取输入值
-        steam_pressure = self.get_input_value("蒸汽压力g_mpa", 0.5)
-        steam_flow = self.get_input_value("蒸汽流量_kg/h", 1000)
-        W2 = self.get_input_value("冷流体流量w2_kg/h", 10000)
-        Cp2 = self.get_input_value("冷流体cp2_kj/kg·k", 4.19)
-        t1 = self.get_input_value("冷流体进口t1_°c", 20)
-        t2 = self.get_input_value("冷流体出口t2_°c", 60)
-        K = self.get_input_value("k_manual", 2000)
-        safety_factor = self.get_input_value("安全系数", 1.15)
+        pressure = self.get_widget_value("operating_pressure")  # MPa
+        temperature = self.get_widget_value("operating_temperature")  # °C
+        flow_rate = self.get_widget_value("flow_rate")  # kg/h
+        fluid_type = self.get_widget_value("fluid_type", "水/液体")
+        fouling_tendency = self.get_widget_value("fouling_tendency", False)
+        high_pressure = self.get_widget_value("high_pressure", False)
+        corrosive = self.get_widget_value("corrosive", False)
+        phase_change = self.get_widget_value("phase_change", False)
         
         # 验证输入
-        if t2 <= t1:
-            QMessageBox.warning(self, "输入错误", "冷流体出口温度必须大于进口温度")
+        required_fields = ["operating_pressure", "operating_temperature", "flow_rate"]
+        inputs = {
+            "operating_pressure": pressure, 
+            "operating_temperature": temperature, 
+            "flow_rate": flow_rate
+        }
+        
+        is_valid, error_msg = self.validate_inputs(inputs, required_fields)
+        if not is_valid:
+            QMessageBox.warning(self, "输入错误", error_msg)
             return
         
-        # 获取蒸汽汽化潜热
-        latent_heat = self.get_steam_latent_heat(steam_pressure)
+        # 智能选型逻辑
+        recommendations = []
         
-        # 计算热负荷 (kW)
-        # 蒸汽放热量 = 蒸汽流量 × 汽化潜热 / 3600
-        Q_steam = steam_flow * latent_heat / 3600
+        for ex_type, data in self.exchanger_types_data.items():
+            score = 0
+            reasons = []
+            
+            # 压力适应性评分
+            k_min, k_max = data["k_range"]
+            pressure_limit = 10.0 if ex_type in ["管壳式换热器", "套管式换热器"] else 2.5
+            
+            if pressure <= pressure_limit:
+                score += 3
+                reasons.append(f"压力适应性好")
+            elif pressure <= pressure_limit * 1.5:
+                score += 1
+                reasons.append(f"压力适应性一般")
+            
+            # 温度适应性评分
+            temp_limit = 500 if ex_type == "管壳式换热器" else 200
+            if temperature <= temp_limit:
+                score += 3
+                reasons.append(f"温度适应性好")
+            
+            # 流体类型匹配
+            if "蒸汽" in fluid_type and "容积式" in ex_type:
+                score += 2
+                reasons.append("蒸汽加热专用")
+            
+            if "液体" in fluid_type and ex_type in ["板式换热器", "螺旋板式换热器"]:
+                score += 1
+                reasons.append("液体传热效率高")
+            
+            # 特殊条件处理
+            if fouling_tendency and ex_type in ["螺旋板式换热器", "套管式换热器"]:
+                score += 2
+                reasons.append("防结垢设计")
+            
+            if high_pressure and ex_type in ["管壳式换热器", "套管式换热器"]:
+                score += 2
+                reasons.append("耐高压结构")
+            
+            if corrosive and ex_type in ["板式换热器"]:
+                score += 1
+                reasons.append("可选用耐蚀材料")
+            
+            if phase_change and ex_type == "管壳式换热器":
+                score += 2
+                reasons.append("相变传热适用")
+            
+            recommendations.append({
+                "type": ex_type,
+                "score": score,
+                "reasons": reasons,
+                "k_range": data["k_range"],
+                "description": data["desc"]
+            })
         
-        # 冷流体吸热量
-        Q_cold = W2 * Cp2 * (t2 - t1) / 3600
+        # 排序并筛选
+        recommendations.sort(key=lambda x: x["score"], reverse=True)
+        top_recommendations = [r for r in recommendations if r["score"] > 0][:4]
         
-        # 取较小值作为设计热负荷（保守设计）
-        Q_heat = min(Q_steam, Q_cold)
+        # 准备结果
+        result_text = f"""═══════════
+📋 输入工况
+══════════
+
+    操作压力: {pressure:.2f} MPa
+    操作温度: {temperature:.0f} °C
+    流量: {flow_rate:.0f} kg/h
+    流体类型: {fluid_type}
+    特殊条件: {f"易结垢 " if fouling_tendency else ""}{f"高压 " if high_pressure else ""}{f"腐蚀性 " if corrosive else ""}{f"相变 " if phase_change else ""}
+
+══════════
+🏆 推荐换热器类型
+══════════
+
+"""
         
-        # 蒸汽温度（假设为饱和温度，简化计算）
-        # 蒸汽饱和温度与压力的关系：简化计算，实际应查蒸汽表
-        if steam_pressure <= 0.1:
-            T_steam = 100
-        elif steam_pressure <= 0.2:
-            T_steam = 120
-        elif steam_pressure <= 0.3:
-            T_steam = 133
-        elif steam_pressure <= 0.4:
-            T_steam = 144
-        elif steam_pressure <= 0.5:
-            T_steam = 152
-        elif steam_pressure <= 0.6:
-            T_steam = 159
-        elif steam_pressure <= 0.7:
-            T_steam = 165
-        elif steam_pressure <= 0.8:
-            T_steam = 170
-        elif steam_pressure <= 0.9:
-            T_steam = 175
-        else:  # 1.0 MPa
-            T_steam = 180
-        
-        # 对数平均温差（蒸汽冷凝温度近似不变）
-        delta_T1 = T_steam - t1
-        delta_T2 = T_steam - t2
-        
-        if abs(delta_T1 - delta_T2) < 1e-6:
-            LMTD = delta_T1
+        if not top_recommendations:
+            result_text += "❌ 未找到合适的换热器类型，请调整工况条件。\n"
         else:
-            LMTD = (delta_T1 - delta_T2) / math.log(delta_T1 / delta_T2)
+            for i, rec in enumerate(top_recommendations, 1):
+                score_percent = rec["score"] / 12 * 100
+                result_text += f"{i}. {rec['type']} (匹配度: {score_percent:.0f}%)\n"
+                result_text += f"   📊 传热系数范围: {rec['k_range'][0]}-{rec['k_range'][1]} W/(m²·K)\n"
+                result_text += f"   📝 特点: {rec['description']}\n"
+                if rec['reasons']:
+                    result_text += f"   ✅ 推荐理由: {', '.join(rec['reasons'])}\n"
+                result_text += "\n"
         
-        # 计算换热面积 (m²)
-        A_theoretical = Q_heat * 1000 / (K * LMTD)
+        result_text += """══════════
+💡 选型建议
+══════════
+
+    通用原则:
+    • 匹配度>80%的类型可作为首选
+    • 考虑设备投资和运行维护成本
+    • 腐蚀性介质需特别关注材料选择
+    • 易结垢流体优先选择易清洗结构
+
+    下一步:
+    • 根据推荐类型返回相应模式进行详细计算
+    • 咨询设备制造商获取具体技术参数
+    • 考虑安装空间和管道布置限制
+"""
         
-        # 考虑安全系数
-        A_actual = A_theoretical * safety_factor
-        
-        # 计算蒸汽消耗率
-        steam_consumption = Q_heat * 3600 / latent_heat
-        
-        # 显示结果
-        result = f"""
-═══════════════════════════════════════════════════
-📋 输入参数
-═══════════════════════════════════════════════════
-
-计算模式: {self.mode_combo.currentText()}
-蒸汽压力: {steam_pressure:.2f} MPa
-蒸汽流量: {steam_flow:.0f} kg/h
-冷流体流量: {W2:.0f} kg/h
-冷流体比热容: {Cp2:.2f} kJ/(kg·K)
-冷流体进口温度: {t1:.1f} °C
-冷流体出口温度: {t2:.1f} °C
-总传热系数: {K:.1f} W/(m²·K)
-安全系数: {safety_factor:.2f}
-
-═══════════════════════════════════════════════════
-📊 计算结果
-═══════════════════════════════════════════════════
-
-蒸汽参数:
-• 蒸汽饱和温度: {T_steam:.1f} °C
-• 蒸汽汽化潜热: {latent_heat:.1f} kJ/kg
-• 蒸汽放热量: {Q_steam:.1f} kW
-
-热负荷分析:
-• 冷流体吸热量: {Q_cold:.1f} kW
-• 设计热负荷: {Q_heat:.1f} kW
-• 蒸汽消耗率: {steam_consumption:.1f} kg/h
-
-温差分析:
-• 蒸汽-冷流体温差: {T_steam - t1:.1f} ~ {T_steam - t2:.1f} °C
-• 对数平均温差(LMTD): {LMTD:.1f} °C
-
-面积计算:
-• 理论换热面积: {A_theoretical:.2f} m²
-• 考虑安全系数的实际面积: {A_actual:.2f} m²
-• 面积裕量: {(A_actual - A_theoretical):.2f} m²
-
-性能指标:
-• 单位面积热负荷: {Q_heat/A_theoretical:.1f} kW/m²
-• 蒸汽利用率: {Q_heat/Q_steam*100:.1f} %
-
-═══════════════════════════════════════════════════
-💡 计算说明
-═══════════════════════════════════════════════════
-
-计算公式:
-1. 蒸汽放热量: Q_steam = W_steam × r / 3600 [kW]
-2. 冷流体吸热量: Q_cold = W_cold × Cp_cold × (t2 - t1) / 3600 [kW]
-3. 设计热负荷: Q = min(Q_steam, Q_cold) [kW]
-4. 对数平均温差: ΔTm = (ΔT1 - ΔT2) / ln(ΔT1/ΔT2)
-5. 换热面积: A = Q × 1000 / (K × ΔTm) [m²]
-
-工程建议:
-• 蒸汽加热器通常采用管壳式或板式换热器
-• 蒸汽侧应考虑冷凝水排出和空气排除
-• 对于腐蚀性流体，应选用耐腐蚀材料
-• 蒸汽压力较高时，需考虑设备承压能力"""
-        
-        self.result_text.setText(result)
+        self.result_text.setText(result_text)
     
-    def clear_inputs(self):
-        """清空输入"""
-        for widget in self.input_widgets.values():
-            if isinstance(widget, QLineEdit):
-                widget.clear()
-            elif isinstance(widget, QComboBox):
-                widget.setCurrentIndex(0)
-            elif isinstance(widget, QDoubleSpinBox):
-                widget.setValue(0.0)
-        
-        self.result_text.clear()
+    # ==================== 报告生成功能 ====================
     
     def get_project_info(self):
         """获取工程信息"""
         try:
-            class ProjectInfoDialog(QDialog):
-                def __init__(self, parent=None, default_info=None, report_number=""):
-                    super().__init__(parent)
-                    self.default_info = default_info or {}
-                    self.report_number = report_number
-                    self.setWindowTitle("工程信息")
-                    self.setFixedSize(400, 350)
-                    self.setup_ui()
-                    
-                def setup_ui(self):
-                    layout = QVBoxLayout(self)
-                    
-                    # 标题
-                    title_label = QLabel("请输入工程信息")
-                    title_label.setStyleSheet("font-weight: bold; font-size: 14px; margin: 10px;")
-                    layout.addWidget(title_label)
-                    
-                    # 公司名称
-                    company_layout = QHBoxLayout()
-                    company_label = QLabel("公司名称:")
-                    company_label.setFixedWidth(80)
-                    self.company_input = QLineEdit()
-                    self.company_input.setPlaceholderText("例如：XX建筑工程有限公司")
-                    self.company_input.setText(self.default_info.get('company_name', ''))
-                    company_layout.addWidget(company_label)
-                    company_layout.addWidget(self.company_input)
-                    layout.addLayout(company_layout)
-                    
-                    # 工程编号
-                    number_layout = QHBoxLayout()
-                    number_label = QLabel("工程编号:")
-                    number_label.setFixedWidth(80)
-                    self.project_number_input = QLineEdit()
-                    self.project_number_input.setPlaceholderText("例如：2024-HEAT-001")
-                    self.project_number_input.setText(self.default_info.get('project_number', ''))
-                    number_layout.addWidget(number_label)
-                    number_layout.addWidget(self.project_number_input)
-                    layout.addLayout(number_layout)
-                    
-                    # 工程名称
-                    project_layout = QHBoxLayout()
-                    project_label = QLabel("工程名称:")
-                    project_label.setFixedWidth(80)
-                    self.project_input = QLineEdit()
-                    self.project_input.setPlaceholderText("例如：化工厂换热系统设计")
-                    self.project_input.setText(self.default_info.get('project_name', ''))
-                    project_layout.addWidget(project_label)
-                    project_layout.addWidget(self.project_input)
-                    layout.addLayout(project_layout)
-                    
-                    # 子项名称
-                    subproject_layout = QHBoxLayout()
-                    subproject_label = QLabel("子项名称:")
-                    subproject_label.setFixedWidth(80)
-                    self.subproject_input = QLineEdit()
-                    self.subproject_input.setPlaceholderText("例如：主生产区换热器设计")
-                    self.subproject_input.setText(self.default_info.get('subproject_name', ''))
-                    subproject_layout.addWidget(subproject_label)
-                    subproject_layout.addWidget(self.subproject_input)
-                    layout.addLayout(subproject_layout)
-                    
-                    # 计算书编号
-                    report_number_layout = QHBoxLayout()
-                    report_number_label = QLabel("计算书编号:")
-                    report_number_label.setFixedWidth(80)
-                    self.report_number_input = QLineEdit()
-                    self.report_number_input.setText(self.report_number)
-                    report_number_layout.addWidget(report_number_label)
-                    report_number_layout.addWidget(self.report_number_input)
-                    layout.addLayout(report_number_layout)
-                    
-                    # 按钮
-                    button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-                    button_box.accepted.connect(self.accept)
-                    button_box.rejected.connect(self.reject)
-                    layout.addWidget(button_box)
-                    
-                def get_info(self):
-                    return {
-                        'company_name': self.company_input.text().strip(),
-                        'project_number': self.project_number_input.text().strip(),
-                        'project_name': self.project_input.text().strip(),
-                        'subproject_name': self.subproject_input.text().strip(),
-                        'report_number': self.report_number_input.text().strip()
-                    }
+            # 简化的工程信息对话框
+            dialog = QDialog(self)
+            dialog.setWindowTitle("工程信息")
+            dialog.setFixedSize(400, 300)
             
-            # 从数据管理器获取共享的项目信息
-            saved_info = {}
-            if self.data_manager:
-                saved_info = self.data_manager.get_project_info()
+            layout = QVBoxLayout(dialog)
             
-            # 获取下一个报告编号
-            report_number = ""
-            if self.data_manager:
-                report_number = self.data_manager.get_next_report_number("HEAT")
+            title = QLabel("请输入工程信息")
+            title.setStyleSheet("font-weight: bold; font-size: 14px; margin: 10px;")
+            layout.addWidget(title)
             
-            dialog = ProjectInfoDialog(self, saved_info, report_number)
+            company_layout = QHBoxLayout()
+            company_label = QLabel("公司名称:")
+            company_label.setFixedWidth(80)
+            company_input = QLineEdit()
+            company_input.setPlaceholderText("例如：XX工程公司")
+            company_layout.addWidget(company_label)
+            company_layout.addWidget(company_input)
+            layout.addLayout(company_layout)
+            
+            project_layout = QHBoxLayout()
+            project_label = QLabel("项目名称:")
+            project_label.setFixedWidth(80)
+            project_input = QLineEdit()
+            project_input.setPlaceholderText("例如：化工厂换热系统")
+            project_layout.addWidget(project_label)
+            project_layout.addWidget(project_input)
+            layout.addLayout(project_layout)
+            
+            designer_layout = QHBoxLayout()
+            designer_label = QLabel("设计人员:")
+            designer_label.setFixedWidth(80)
+            designer_input = QLineEdit()
+            designer_input.setPlaceholderText("例如：张工")
+            designer_layout.addWidget(designer_label)
+            designer_layout.addWidget(designer_input)
+            layout.addLayout(designer_layout)
+            
+            date_layout = QHBoxLayout()
+            date_label = QLabel("计算日期:")
+            date_label.setFixedWidth(80)
+            date_input = QLineEdit()
+            date_input.setText(datetime.now().strftime('%Y-%m-%d'))
+            date_input.setReadOnly(True)
+            date_layout.addWidget(date_label)
+            date_layout.addWidget(date_input)
+            layout.addLayout(date_layout)
+            
+            button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+            button_box.accepted.connect(dialog.accept)
+            button_box.rejected.connect(dialog.reject)
+            layout.addWidget(button_box)
+            
             if dialog.exec() == QDialog.Accepted:
-                info = dialog.get_info()
-                # 验证必填字段
-                if not info['project_name']:
-                    QMessageBox.warning(self, "输入错误", "工程名称不能为空")
-                    return self.get_project_info()  # 重新弹出对话框
-                
-                # 保存项目信息到数据管理器
-                if self.data_manager:
-                    info_to_save = {
-                        'company_name': info['company_name'],
-                        'project_number': info['project_number'],
-                        'project_name': info['project_name'],
-                        'subproject_name': info['subproject_name']
-                    }
-                    self.data_manager.update_project_info(info_to_save)
-                    print("项目信息已保存")
-                
-                return info
+                return {
+                    'company_name': company_input.text().strip() or "未填写",
+                    'project_name': project_input.text().strip() or "换热器设计",
+                    'designer': designer_input.text().strip() or "设计人员",
+                    'date': date_input.text()
+                }
             else:
-                return None  # 用户取消了
+                return None
                     
         except Exception as e:
             print(f"获取工程信息失败: {e}")
-            return None
+            return {
+                'company_name': "换热器设计",
+                'project_name': "换热器计算",
+                'designer': "设计人员",
+                'date': datetime.now().strftime('%Y-%m-%d')
+            }
     
     def generate_report(self):
         """生成计算书"""
         try:
-            # 获取当前结果文本
             result_text = self.result_text.toPlainText()
             
-            # 更宽松的检查条件
-            if not result_text or ("计算结果" not in result_text and "输入参数" not in result_text):
+            if not result_text or "计算结果" not in result_text:
                 QMessageBox.warning(self, "生成失败", "请先进行计算再生成计算书")
                 return None
                 
-            # 获取工程信息
             project_info = self.get_project_info()
             if not project_info:
-                return None  # 用户取消了输入
+                return None
             
-            # 获取当前计算模式
-            current_mode = self.mode_combo.currentText()
+            current_mode = self.get_current_mode()
             
-            # 添加报告头信息
             report = f"""工程计算书 - 换热器面积计算
 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 计算工具: TofuSoft 工程计算模块
-计算模式: {current_mode}
 ========================================
 
 """
             report += result_text
             
             # 添加工程信息部分
-            report += f"""
-══════════
+            report += f"""══════════
 📋 工程信息
 ══════════
 
     公司名称: {project_info['company_name']}
-    工程编号: {project_info['project_number']}
-    工程名称: {project_info['project_name']}
-    子项名称: {project_info['subproject_name']}
-    计算日期: {datetime.now().strftime('%Y-%m-%d')}
+    项目名称: {project_info['project_name']}
+    设计人员: {project_info['designer']}
+    计算日期: {project_info['date']}
 
 ══════════
 🏷️ 计算书标识
 ══════════
 
-    计算书编号: {project_info['report_number']}
+    计算书编号: HE-{datetime.now().strftime('%Y%m%d')}-001
     版本: 1.0
-    状态: 设计计算书
+    状态: 正式计算书
 
 ══════════
 📝 备注说明
 ══════════
 
-    1. 本计算书基于换热器设计原理及相关标准规范
+    1. 本计算书基于《传热技术、设备与工业应用》原理
     2. 计算结果仅供参考，实际设计需考虑详细工况
     3. 重要工程参数应经专业工程师审核确认
     4. 计算条件变更时应重新进行计算
-    5. 换热器选型应考虑流体性质、压力等级、材料等因素
-    6. 安全系数选择应根据流体腐蚀性、污垢情况等确定
 
 ---
 生成于 TofuSoft 工程计算模块
@@ -1283,18 +1549,20 @@ class HeatExchangerAreaCalculator(QWidget):
         except Exception as e:
             print(f"生成计算书失败: {e}")
             return None
-    
+
     def download_txt_report(self):
         """下载TXT格式计算书"""
         try:
+            import os
+            
+            # 直接调用 generate_report，它内部会进行检查
             report_content = self.generate_report()
-            if report_content is None:
+            if report_content is None:  # 如果返回None，说明检查失败或用户取消
                 return
                 
+            # 选择保存路径
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             default_name = f"换热器面积计算书_{timestamp}.txt"
-            
-            from PySide6.QtWidgets import QFileDialog
             file_path, _ = QFileDialog.getSaveFileName(
                 self, "保存计算书", default_name, "Text Files (*.txt)"
             )
@@ -1306,7 +1574,7 @@ class HeatExchangerAreaCalculator(QWidget):
                 
         except Exception as e:
             QMessageBox.critical(self, "下载失败", f"保存计算书时发生错误: {str(e)}")
-    
+
     def generate_pdf_report(self):
         """生成PDF格式计算书"""
         try:
@@ -1450,33 +1718,13 @@ class HeatExchangerAreaCalculator(QWidget):
             "💡": "",
             "📤": "",
             "📥": "",
-            "⚠️": "",
-            "🔬": "",
-            "📏": "",
-            "🌪️": "",
-            "💨": "",
-            "🌫️": "",
-            "⚡": "",
-            "💧": "",
-            "🔄": "",
-            "🌬️": "",
-            "🔧": "",
-            "🚒": "",
-            "⚖️": "",
-            "🧊": "",
-            "🧪": "",
-            "🔩": "",
-            "🛡️": "",
-            "🔥": "",
-            "⚗️": "",
-            "🚨": "",
-            "⚛️": "",
-            "❄️": "",
-            "📄": "",
-            "📊": "",
-            "•": "",
+            "⚙️": "",
             "🏷️": "",
-            "📝": ""
+            "📝": "",
+            "🏆": "",
+            "❌": "",
+            "✅": "",
+            "🔍": ""
         }
         
         # 替换表情图标
@@ -1484,18 +1732,15 @@ class HeatExchangerAreaCalculator(QWidget):
             content = content.replace(emoji, text)
         
         # 替换单位符号
-        content = content.replace("m³", "m3")
-        content = content.replace("g/100g", "g/100g")
-        content = content.replace("kg/m³", "kg/m3")
-        content = content.replace("Nm³/h", "Nm3/h")
-        content = content.replace("Pa·s", "Pa.s")
-        content = content.replace("kJ/(kg·K)", "kJ/(kg.K)")
-        content = content.replace("W/(K·m²)", "W/(K.m2)")
+        content = content.replace("m²", "m2")
+        content = content.replace("W/(m²·K)", "W/(m2·K)")
+        content = content.replace("kJ/(kg·K)", "kJ/(kg·K)")
         
         return content
 
 
 if __name__ == "__main__":
+    # 测试代码
     import sys
     from PySide6.QtWidgets import QApplication
     
@@ -1503,7 +1748,7 @@ if __name__ == "__main__":
     
     calculator = HeatExchangerAreaCalculator()
     calculator.resize(1200, 800)
-    calculator.setWindowTitle("换热器面积计算器")
+    calculator.setWindowTitle("换热器面积计算器 v2.0")
     calculator.show()
     
     sys.exit(app.exec())

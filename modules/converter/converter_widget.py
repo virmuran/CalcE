@@ -49,7 +49,6 @@ for module_path, class_name in calculators_to_import:
     try:
         module = __import__(module_path, fromlist=[class_name])
         globals()[class_name] = getattr(module, class_name)
-        print(f"✅ {class_name} 导入成功")
     except Exception as e:
         print(f"❌ {class_name} 导入失败: {e}")
         globals()[class_name] = None
@@ -133,7 +132,6 @@ class ConverterWidget(QWidget):
                 try:
                     widget = calculator_class()
                     self.add_page(title, widget)
-                    print(f"✅ {title} 页面创建成功")
                 except Exception as e:
                     print(f"❌ {title} 页面创建失败: {e}")
                     traceback.print_exc()

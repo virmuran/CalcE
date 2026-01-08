@@ -1,4 +1,4 @@
-# debug_data.py - 数据文件诊断工具
+# TofuApp/debug_data.py
 import os
 import json
 import sys

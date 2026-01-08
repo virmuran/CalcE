@@ -44,7 +44,7 @@ from pathlib import Path
 # 尝试导入工艺设计相关模块
 try:
     from ..process_design_manager import ProcessDesignManager
-    from ..process_design_data import MSDSDocument, MaterialProperty
+    from ..data.data_models import MSDSDocument, MaterialProperty
     print("✅ 成功导入 ProcessDesignManager 和 MSDSDocument")
 except ImportError as e:
     print(f"❌ 导入失败: {e}")
@@ -111,12 +111,15 @@ class MSDSManagerTab(QWidget):
         self.setup_shortcuts()
     
     def setup_ui(self):
-        """设置UI"""
+        """设置UI - 改进版：最大化表格区域，其他区域固定高度"""
         main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(2, 2, 2, 2)  # 减少外边距
+        main_layout.setSpacing(2)  # 减少控件间距
         
-        # 工具栏
+        # 工具栏 - 固定高度
         toolbar = QToolBar()
         toolbar.setIconSize(QSize(16, 16))
+        toolbar.setFixedHeight(36)  # 固定工具栏高度
         
         # 工具栏动作
         self.add_action = QAction("添加MSDS", self)
@@ -160,34 +163,47 @@ class MSDSManagerTab(QWidget):
         
         main_layout.addWidget(toolbar)
         
-        # 搜索和过滤区域
+        # 搜索和过滤区域 - 固定高度
         filter_frame = QFrame()
+        filter_frame.setFixedHeight(50)  # 固定搜索区域高度
         filter_frame.setFrameStyle(QFrame.StyledPanel)
         filter_layout = QHBoxLayout(filter_frame)
+        filter_layout.setContentsMargins(8, 4, 8, 4)  # 紧凑的内边距
+        filter_layout.setSpacing(8)
         
-        # 搜索框
+        # 搜索框 - 简化版本
         search_layout = QHBoxLayout()
+        search_layout.setSpacing(4)
         search_label = QLabel("搜索:")
+        
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("物料名称、CAS号或供应商...")
+        self.search_input.setFixedHeight(28)
         self.search_input.textChanged.connect(self.on_search_changed)
         self.search_input.returnPressed.connect(self.perform_search)
         
-        search_layout.addWidget(search_label)
-        search_layout.addWidget(self.search_input)
+        # 清空搜索按钮
+        self.clear_search_btn = QPushButton("清空")
+        self.clear_search_btn.setFixedHeight(28)
+        self.clear_search_btn.clicked.connect(self.clear_search)
         
         # 高级搜索按钮
         self.advanced_search_btn = QPushButton("高级搜索")
+        self.advanced_search_btn.setFixedHeight(28)
         self.advanced_search_btn.clicked.connect(self.open_advanced_search)
+        
+        search_layout.addWidget(search_label)
+        search_layout.addWidget(self.search_input)
+        search_layout.addWidget(self.clear_search_btn)
         search_layout.addWidget(self.advanced_search_btn)
         
         filter_layout.addLayout(search_layout)
-        
-        # 过滤器
         filter_layout.addStretch()
         
+        # 过滤器 - 简化版本
         # 危险类别过滤器
         self.hazard_filter = QComboBox()
+        self.hazard_filter.setFixedHeight(28)
         self.hazard_filter.addItem("所有类别")
         self.hazard_filter.addItems(["易燃", "有毒", "腐蚀性", "爆炸性", "氧化剂", "环境危害", "无"])
         self.hazard_filter.currentTextChanged.connect(self.apply_filters)
@@ -196,6 +212,7 @@ class MSDSManagerTab(QWidget):
         
         # 状态过滤器
         self.status_filter = QComboBox()
+        self.status_filter.setFixedHeight(28)
         self.status_filter.addItem("所有状态")
         self.status_filter.addItems(["有效", "过期", "待审核"])
         self.status_filter.currentTextChanged.connect(self.apply_filters)
@@ -204,24 +221,32 @@ class MSDSManagerTab(QWidget):
         
         main_layout.addWidget(filter_frame)
         
-        # 分割器：左侧表格，右侧详情
+        # 主要区域：使用分割器，占据剩余空间
         splitter = QSplitter(Qt.Horizontal)
+        splitter.setChildrenCollapsible(False)  # 防止子部件被压缩消失
         
-        # 左侧：MSDS表格
-        table_widget = QWidget()
-        table_layout = QVBoxLayout(table_widget)
+        # 左侧：MSDS表格区域 - 使用拉伸因子
+        table_container = QWidget()
+        table_layout = QVBoxLayout(table_container)
+        table_layout.setContentsMargins(0, 0, 0, 0)
+        table_layout.setSpacing(2)
         
-        # 表格上方信息栏
-        info_layout = QHBoxLayout()
+        # 表格上方的信息区域 - 固定高度
+        info_frame = QFrame()
+        info_frame.setFixedHeight(30)
+        info_layout = QHBoxLayout(info_frame)
+        info_layout.setContentsMargins(8, 4, 8, 4)
+        
         self.info_label = QLabel("总计: 0 个MSDS")
         info_layout.addWidget(self.info_label)
         info_layout.addStretch()
         
         self.selected_label = QLabel("已选择: 0 个")
         info_layout.addWidget(self.selected_label)
-        table_layout.addLayout(info_layout)
         
-        # MSDS表格
+        table_layout.addWidget(info_frame)
+        
+        # MSDS表格 - 设置为可拉伸，占据剩余空间
         self.msds_table = QTableWidget()
         self.msds_table.setColumnCount(12)
         self.msds_table.setHorizontalHeaderLabels([
@@ -239,6 +264,13 @@ class MSDSManagerTab(QWidget):
         header.setSectionResizeMode(2, QHeaderView.Stretch)  # 名称列拉伸
         header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # CAS号
         header.setSectionResizeMode(4, QHeaderView.ResizeToContents)  # 供应商
+        header.setSectionResizeMode(5, QHeaderView.ResizeToContents)  # 版本
+        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)  # 生效日期
+        header.setSectionResizeMode(7, QHeaderView.ResizeToContents)  # 有效期
+        header.setSectionResizeMode(8, QHeaderView.ResizeToContents)  # 危险类别
+        header.setSectionResizeMode(9, QHeaderView.ResizeToContents)  # 状态
+        header.setSectionResizeMode(10, QHeaderView.ResizeToContents)  # 文件大小
+        header.setSectionResizeMode(11, QHeaderView.ResizeToContents)  # 上次更新
         
         # 启用排序
         self.msds_table.setSortingEnabled(True)
@@ -251,13 +283,18 @@ class MSDSManagerTab(QWidget):
         self.msds_table.itemDoubleClicked.connect(self.on_msds_double_clicked)
         self.msds_table.itemSelectionChanged.connect(self.on_selection_changed)
         
-        table_layout.addWidget(self.msds_table)
+        # 表格添加到布局，使用拉伸因子1，使其占据剩余空间
+        table_layout.addWidget(self.msds_table, 1)
         
-        splitter.addWidget(table_widget)
+        splitter.addWidget(table_container)
         
-        # 右侧：MSDS详情
-        detail_widget = QWidget()
-        detail_layout = QVBoxLayout(detail_widget)
+        # 右侧：MSDS详情区域 - 按比例分配高度
+        detail_container = QWidget()
+        detail_container.setMinimumWidth(300)
+        detail_container.setMaximumWidth(500)
+        detail_layout = QVBoxLayout(detail_container)
+        detail_layout.setContentsMargins(5, 0, 5, 0)
+        detail_layout.setSpacing(2)
         
         # 详情标签页
         detail_tab = QTabWidget()
@@ -269,8 +306,7 @@ class MSDSManagerTab(QWidget):
         # 基本信息显示区域
         self.basic_info_text = QTextEdit()
         self.basic_info_text.setReadOnly(True)
-        self.basic_info_text.setMaximumHeight(200)
-        basic_layout.addWidget(self.basic_info_text)
+        basic_layout.addWidget(self.basic_info_text, 1)  # 使用拉伸因子1
         
         detail_tab.addTab(basic_tab, "基本信息")
         
@@ -280,7 +316,7 @@ class MSDSManagerTab(QWidget):
         
         self.hazard_info_text = QTextEdit()
         self.hazard_info_text.setReadOnly(True)
-        hazard_layout.addWidget(self.hazard_info_text)
+        hazard_layout.addWidget(self.hazard_info_text, 1)
         
         detail_tab.addTab(hazard_tab, "危险信息")
         
@@ -290,7 +326,7 @@ class MSDSManagerTab(QWidget):
         
         self.emergency_info_text = QTextEdit()
         self.emergency_info_text.setReadOnly(True)
-        emergency_layout.addWidget(self.emergency_info_text)
+        emergency_layout.addWidget(self.emergency_info_text, 1)
         
         detail_tab.addTab(emergency_tab, "应急处理")
         
@@ -300,11 +336,11 @@ class MSDSManagerTab(QWidget):
         
         self.storage_info_text = QTextEdit()
         self.storage_info_text.setReadOnly(True)
-        storage_layout.addWidget(self.storage_info_text)
+        storage_layout.addWidget(self.storage_info_text, 1)
         
         detail_tab.addTab(storage_tab, "存储运输")
         
-        detail_layout.addWidget(detail_tab)
+        detail_layout.addWidget(detail_tab, 2)  # 详情标签页占2/5
         
         # 文件信息区域
         file_frame = QGroupBox("文件信息")
@@ -312,7 +348,7 @@ class MSDSManagerTab(QWidget):
         
         self.file_info_text = QTextEdit()
         self.file_info_text.setReadOnly(True)
-        self.file_info_text.setMaximumHeight(100)
+        self.file_info_text.setMaximumHeight(80)
         file_layout.addWidget(self.file_info_text)
         
         # 文件操作按钮
@@ -329,47 +365,63 @@ class MSDSManagerTab(QWidget):
         file_btn_layout.addWidget(self.save_file_btn)
         file_layout.addLayout(file_btn_layout)
         
-        detail_layout.addWidget(file_frame)
+        detail_layout.addWidget(file_frame, 1)  # 文件信息占1/5
         
-        splitter.addWidget(detail_widget)
-        splitter.setSizes([700, 300])  # 设置初始大小比例
+        # 在详情区域添加一个拉伸，防止控件过度拉伸
+        detail_layout.addStretch()
         
-        main_layout.addWidget(splitter)
+        splitter.addWidget(detail_container)
         
-        # 批量操作按钮（初始隐藏）
+        # 设置分割器的初始大小比例
+        splitter.setSizes([700, 300])
+        
+        # 将分割器添加到主布局，使用拉伸因子1，使其占据剩余空间
+        main_layout.addWidget(splitter, 1)
+        
+        # 批量操作按钮（初始隐藏）- 固定高度
         self.batch_panel = QFrame()
         self.batch_panel.setFrameStyle(QFrame.StyledPanel)
         self.batch_panel.setVisible(False)
+        self.batch_panel.setMaximumHeight(50)  # 限制最大高度
         batch_layout = QHBoxLayout(self.batch_panel)
+        batch_layout.setContentsMargins(8, 4, 8, 4)
         
         self.batch_edit_btn = QPushButton("批量编辑")
         self.batch_edit_btn.clicked.connect(self.batch_edit_msds)
+        self.batch_edit_btn.setFixedHeight(28)
         batch_layout.addWidget(self.batch_edit_btn)
         
         self.batch_export_btn = QPushButton("批量导出")
         self.batch_export_btn.clicked.connect(self.batch_export_msds)
+        self.batch_export_btn.setFixedHeight(28)
         batch_layout.addWidget(self.batch_export_btn)
         
         self.batch_download_btn = QPushButton("批量下载")
         self.batch_download_btn.clicked.connect(self.batch_download_msds)
+        self.batch_download_btn.setFixedHeight(28)
         batch_layout.addWidget(self.batch_download_btn)
         
         self.batch_delete_btn = QPushButton("批量删除")
         self.batch_delete_btn.clicked.connect(self.batch_delete_msds)
+        self.batch_delete_btn.setFixedHeight(28)
         batch_layout.addWidget(self.batch_delete_btn)
         
         batch_layout.addStretch()
         
         self.clear_batch_btn = QPushButton("清除选择")
         self.clear_batch_btn.clicked.connect(self.clear_batch_selection)
+        self.clear_batch_btn.setFixedHeight(28)
         batch_layout.addWidget(self.clear_batch_btn)
         
         main_layout.addWidget(self.batch_panel)
         
-        # 状态栏
+        # 状态栏 - 固定高度
         self.status_bar = QLabel()
-        self.status_bar.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
+        self.status_bar.setFixedHeight(25)
         main_layout.addWidget(self.status_bar)
+        
+        # 设置窗口的最小尺寸
+        self.setMinimumSize(800, 600)
     
     def setup_shortcuts(self):
         """设置快捷键"""
@@ -487,6 +539,13 @@ class MSDSManagerTab(QWidget):
             self.status_bar.setText(f"搜索到 {len(msds_docs)} 条记录")
         except Exception as e:
             self.status_bar.setText(f"搜索失败: {str(e)}")
+    
+    def clear_search(self):
+        """清空搜索"""
+        self.search_input.clear()
+        self.hazard_filter.setCurrentIndex(0)
+        self.status_filter.setCurrentIndex(0)
+        self.load_msds_documents()
     
     def apply_filters(self):
         """应用过滤器"""
@@ -980,7 +1039,7 @@ class MSDSManagerTab(QWidget):
             QMessageBox.No
         )
         
-        if reply == QMessageBox.Yes:
+        if reply == QDialog.Accepted and self.process_manager:
             success_count = 0
             for msds_id in selected_ids:
                 if self.process_manager.delete_msds(msds_id):
@@ -1114,7 +1173,7 @@ class MSDSManagerTab(QWidget):
             QMessageBox.No
         )
         
-        if reply == QMessageBox.Yes and self.process_manager:
+        if reply == QDialog.Accepted and self.process_manager:
             if self.process_manager.delete_msds(msds_id):
                 self.load_msds_documents()
                 self.msds_list_updated.emit()
@@ -1582,7 +1641,7 @@ class MSDSDialog(QDialog):
     
     def get_msds(self):
         """获取MSDS对象"""
-        from ..process_design_data import MSDSDocument
+        from ..data.data_models import MSDSDocument
         
         msds_id = self.msds_id_input.text().strip()
         material_name = self.material_name_input.text().strip()

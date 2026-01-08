@@ -1,7 +1,8 @@
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QLabel, QLineEdit, QPushButton,
-    QComboBox, QGridLayout, QTextEdit, QTabWidget, QMessageBox, QDialog, 
-    QDialogButtonBox, QScrollArea, QDoubleSpinBox, QRadioButton, QButtonGroup
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
+    QGroupBox, QTextEdit, QComboBox, QMessageBox, QFrame,
+    QScrollArea, QDialog, QSpinBox, QButtonGroup, QGridLayout,
+    QFileDialog, QDialogButtonBox
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QDoubleValidator
@@ -12,7 +13,7 @@ from datetime import datetime
 
 
 class HeatExchangerSimpleCalculator(QWidget):
-    """换热器简单计算器 - 左右布局优化版，与压降计算器保持一致"""
+    """换热器计算器（统一UI风格版）"""
     
     def __init__(self, parent=None, data_manager=None):
         super().__init__(parent)
@@ -20,14 +21,13 @@ class HeatExchangerSimpleCalculator(QWidget):
         # 使用传入的数据管理器或创建新的
         if data_manager is not None:
             self.data_manager = data_manager
-            print("使用共享的数据管理器")
         else:
             self.init_data_manager()
         
         # 流体比热容数据
         self.specific_heat_data = self.setup_specific_heat_data()
         
-        # 传热系数数据（来自图片）
+        # 传热系数数据
         self.heat_transfer_coeff_data = self.setup_heat_transfer_coeff_data()
         
         # 初始化输入控件字典
@@ -78,7 +78,7 @@ class HeatExchangerSimpleCalculator(QWidget):
         }
     
     def setup_heat_transfer_coeff_data(self):
-        """设置传热系数数据 - 从图片中提取"""
+        """设置传热系数数据"""
         data = []
         
         # 板式换热器数据
@@ -123,24 +123,19 @@ class HeatExchangerSimpleCalculator(QWidget):
         
         # 左侧：输入参数区域 (占2/3宽度)
         left_widget = QWidget()
-        left_widget.setMaximumWidth(900)  # 限制最大宽度
+        left_widget.setMaximumWidth(900)
         left_layout = QVBoxLayout(left_widget)
         left_layout.setSpacing(15)
         
-        # 标题
-        title_label = QLabel("🔥 换热器计算器")
-        title_label.setFont(QFont("Arial", 16, QFont.Bold))
-        title_label.setAlignment(Qt.AlignCenter)
-        title_label.setStyleSheet("color: #2c3e50; margin: 10px;")
-        left_layout.addWidget(title_label)
+        # 1. 首先添加说明文本
+        description = QLabel(
+            "换热器计算器 - 支持多种计算模式，包含流体比热容和传热系数选择，可用于热负荷、流量、温度等参数计算。"
+        )
+        description.setWordWrap(True)
+        description.setStyleSheet("color: #7f8c8d; font-size: 12px; padding: 5px;")
+        left_layout.addWidget(description)
         
-        # 说明文本
-        desc_label = QLabel("换热器计算器 - 支持多种计算模式，包含流体比热容和传热系数选择")
-        desc_label.setWordWrap(True)
-        desc_label.setStyleSheet("color: #7f8c8d; font-size: 12px; padding: 5px;")
-        left_layout.addWidget(desc_label)
-        
-        # 计算模式选择 - 改为下拉菜单
+        # 2. 计算模式选择
         mode_group = QGroupBox("计算模式")
         mode_group.setStyleSheet("""
             QGroupBox {
@@ -176,7 +171,6 @@ class HeatExchangerSimpleCalculator(QWidget):
         
         for mode_name, tooltip in modes:
             self.mode_combo.addItem(mode_name)
-            # 设置tooltip为最后一项
             self.mode_combo.setItemData(self.mode_combo.count()-1, tooltip, Qt.ToolTipRole)
         
         self.mode_combo.setCurrentIndex(0)
@@ -187,18 +181,18 @@ class HeatExchangerSimpleCalculator(QWidget):
                 border: 1px solid #bdc3c7;
                 border-radius: 4px;
                 background-color: white;
+                min-width: 350px;
             }
             QComboBox:hover {
                 border-color: #3498db;
             }
         """)
-        self.mode_combo.setFixedWidth(350)
         
         mode_layout.addWidget(self.mode_combo)
         mode_layout.addStretch()
         left_layout.addWidget(mode_group)
         
-        # 输入参数组 - 使用GridLayout实现整齐的布局
+        # 3. 输入参数组 - 使用GridLayout实现整齐的布局
         input_group = QGroupBox("📥 输入参数")
         input_group.setStyleSheet("""
             QGroupBox {
@@ -228,9 +222,13 @@ class HeatExchangerSimpleCalculator(QWidget):
             }
         """
         
+        # 输入框和下拉菜单的固定宽度
+        input_width = 400
+        combo_width = 250
+        
         left_layout.addWidget(input_group)
         
-        # 计算按钮
+        # 4. 计算按钮
         calculate_btn = QPushButton("🧮 计算")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate)
@@ -250,8 +248,28 @@ class HeatExchangerSimpleCalculator(QWidget):
         calculate_btn.setMinimumHeight(50)
         left_layout.addWidget(calculate_btn)
         
-        # 下载按钮布局
+        # 5. 下载按钮布局
         download_layout = QHBoxLayout()
+        
+        clear_btn = QPushButton("🗑️ 清空")
+        clear_btn.clicked.connect(self.clear_inputs)
+        clear_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #95a5a6;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #7f8c8d;
+            }
+        """)
+        download_layout.addWidget(clear_btn)
+        
+        download_layout.addStretch()
+        
         download_txt_btn = QPushButton("📄 下载计算书(TXT)")
         download_txt_btn.clicked.connect(self.download_txt_report)
         download_txt_btn.setStyleSheet("""
@@ -284,27 +302,12 @@ class HeatExchangerSimpleCalculator(QWidget):
             }
         """)
 
-        clear_btn = QPushButton("🗑️ 清空")
-        clear_btn.clicked.connect(self.clear_inputs)
-        clear_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #95a5a6;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                padding: 8px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #7f8c8d;
-            }
-        """)
-
-        download_layout.addWidget(clear_btn)
-        download_layout.addStretch()
         download_layout.addWidget(download_txt_btn)
         download_layout.addWidget(download_pdf_btn)
         left_layout.addLayout(download_layout)
+        
+        # 6. 在底部添加拉伸因子
+        left_layout.addStretch()
         
         # 右侧：结果显示区域 (占1/3宽度)
         right_widget = QWidget()
@@ -313,7 +316,7 @@ class HeatExchangerSimpleCalculator(QWidget):
         right_layout.setSpacing(15)
         
         # 结果显示
-        self.result_group = QGroupBox("📊 计算结果")
+        self.result_group = QGroupBox("📤 计算结果")
         self.result_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -357,7 +360,8 @@ class HeatExchangerSimpleCalculator(QWidget):
         """设置计算模式的输入界面"""
         # 清除现有输入控件
         for widget in self.input_widgets.values():
-            widget.setParent(None)
+            if widget and widget.parent():
+                widget.setParent(None)
         self.input_widgets.clear()
         
         # 清除布局中的所有项目
@@ -366,50 +370,55 @@ class HeatExchangerSimpleCalculator(QWidget):
             if item.widget():
                 item.widget().setParent(None)
         
-        row = 0
+        # 标签样式
+        label_style = """
+            QLabel {
+                font-weight: bold;
+                padding-right: 10px;
+            }
+        """
         
         # 根据模式设置输入界面
         if mode_index == 0:  # 求饱和蒸汽流量
-            self.setup_mode_0_inputs(row)
+            self.setup_mode_0_inputs()
         elif mode_index == 1:  # 求冷流体流量（蒸汽加热）
-            self.setup_mode_1_inputs(row)
+            self.setup_mode_1_inputs()
         elif mode_index == 2:  # 求冷流体出口温度t2（蒸汽加热）
-            self.setup_mode_2_inputs(row)
+            self.setup_mode_2_inputs()
         elif mode_index == 3:  # 求冷流体出口温度t2
-            self.setup_mode_3_inputs(row)
+            self.setup_mode_3_inputs()
         elif mode_index == 4:  # 求热流体出口温度t2
-            self.setup_mode_4_inputs(row)
+            self.setup_mode_4_inputs()
         elif mode_index == 5:  # 求冷流体流量
-            self.setup_mode_5_inputs(row)
+            self.setup_mode_5_inputs()
         elif mode_index == 6:  # 求热流体流量
-            self.setup_mode_6_inputs(row)
+            self.setup_mode_6_inputs()
     
-    def add_input_field(self, row, label_text, widget_type="lineedit", default_value="", placeholder="", validator=None):
-        """添加输入字段 - 与压降计算器保持一致的布局"""
+    def add_input_field(self, row, label_text, default_value="", placeholder="", validator=None):
+        """添加输入字段"""
         # 标签 - 右对齐，第0列
         label = QLabel(label_text)
         label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         label.setStyleSheet("QLabel { font-weight: bold; padding-right: 10px; }")
-        label.setFixedWidth(200)  # 固定标签宽度
+        label.setFixedWidth(200)
         self.input_layout.addWidget(label, row, 0)
         
-        widget = None
+        # 输入框 - 第1列
+        widget = QLineEdit()
+        if default_value:
+            widget.setText(str(default_value))
+        if placeholder:
+            widget.setPlaceholderText(placeholder)
+        if validator:
+            widget.setValidator(validator)
+        widget.setFixedWidth(400)
+        self.input_layout.addWidget(widget, row, 1)
         
-        if widget_type == "lineedit":
-            widget = QLineEdit()
-            if default_value:
-                widget.setText(str(default_value))
-            if placeholder:
-                widget.setPlaceholderText(placeholder)
-            if validator:
-                widget.setValidator(validator)
-            widget.setFixedWidth(400)  # 固定输入框宽度
-            self.input_layout.addWidget(widget, row, 1)
-            
-        elif widget_type == "combobox":
-            widget = QComboBox()
-            widget.setFixedWidth(250)  # 固定下拉框宽度
-            self.input_layout.addWidget(widget, row, 2)  # 放在第2列
+        # 提示标签 - 第2列
+        hint_label = QLabel("直接输入数值")
+        hint_label.setStyleSheet("color: #7f8c8d; font-style: italic;")
+        hint_label.setFixedWidth(250)
+        self.input_layout.addWidget(hint_label, row, 2)
         
         # 存储控件引用
         key = label_text.replace(":", "").replace("(", "").replace(")", "").replace(" ", "_").replace("·", "").replace("/", "_").lower()
@@ -417,17 +426,19 @@ class HeatExchangerSimpleCalculator(QWidget):
         
         return widget
     
-    def add_cp_input_field(self, row, label_text):
+    def add_cp_input_field(self, row, label_text, default_value=""):
         """添加比热容输入字段 - 左侧输入框，右侧下拉菜单"""
         # 标签 - 右对齐，第0列
         label = QLabel(label_text)
         label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         label.setStyleSheet("QLabel { font-weight: bold; padding-right: 10px; }")
-        label.setFixedWidth(200)  # 固定标签宽度
+        label.setFixedWidth(200)
         self.input_layout.addWidget(label, row, 0)
         
         # 输入框 - 第1列
         lineedit = QLineEdit()
+        if default_value:
+            lineedit.setText(str(default_value))
         lineedit.setPlaceholderText("输入或选择后自动填充")
         lineedit.setValidator(QDoubleValidator(0.1, 100.0, 2))
         lineedit.setFixedWidth(400)
@@ -449,232 +460,16 @@ class HeatExchangerSimpleCalculator(QWidget):
         
         return lineedit, combobox
     
-    def on_cp_selected(self, text, lineedit):
-        """处理比热容选择"""
-        if text.startswith("-") or not text.strip():
-            return
-        
-        if text in self.specific_heat_data:
-            cp_value = self.specific_heat_data[text]
-            lineedit.setText(f"{cp_value:.2f}")
-    
-    def setup_mode_0_inputs(self, row):
-        """模式0：求饱和蒸汽流量"""
-        # 蒸汽压力(G) MPa
-        self.add_input_field(row, "蒸汽压力(G) MPa:", "lineedit", "0.5", "例如：0.5", QDoubleValidator(0.01, 10.0, 2))
-        row += 1
-        
-        # 冷流体W kg/h
-        self.add_input_field(row, "冷流体W kg/h:", "lineedit", "10000", "例如：10000", QDoubleValidator(1, 1000000, 1))
-        row += 1
-        
-        # 冷流体Cp kJ/kg.K
-        self.add_cp_input_field(row, "冷流体Cp kJ/(kg·K):")
-        row += 1
-        
-        # 冷流体t1 ℃
-        self.add_input_field(row, "冷流体t1 ℃:", "lineedit", "20", "例如：20", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 冷流体t2 ℃
-        self.add_input_field(row, "冷流体t2 ℃:", "lineedit", "60", "例如：60", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 总传热系数K W/K.㎡
-        self.setup_heat_transfer_coeff_combo(row)
-    
-    def setup_mode_1_inputs(self, row):
-        """模式1：求冷流体流量（蒸汽加热）"""
-        # 蒸汽压力(G) MPa
-        self.add_input_field(row, "蒸汽压力(G) MPa:", "lineedit", "0.5", "例如：0.5", QDoubleValidator(0.01, 10.0, 2))
-        row += 1
-        
-        # 蒸汽流量 kg/h
-        self.add_input_field(row, "蒸汽流量 kg/h:", "lineedit", "1000", "例如：1000", QDoubleValidator(1, 1000000, 1))
-        row += 1
-        
-        # 冷流体Cp kJ/kg.K
-        self.add_cp_input_field(row, "冷流体Cp kJ/(kg·K):")
-        row += 1
-        
-        # 冷流体t1 ℃
-        self.add_input_field(row, "冷流体t1 ℃:", "lineedit", "20", "例如：20", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 冷流体t2 ℃
-        self.add_input_field(row, "冷流体t2 ℃:", "lineedit", "60", "例如：60", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 总传热系数K W/K.㎡
-        self.setup_heat_transfer_coeff_combo(row)
-    
-    def setup_mode_2_inputs(self, row):
-        """模式2：求冷流体出口温度t2（蒸汽加热）"""
-        # 蒸汽压力(G) MPa
-        self.add_input_field(row, "蒸汽压力(G) MPa:", "lineedit", "0.5", "例如：0.5", QDoubleValidator(0.01, 10.0, 2))
-        row += 1
-        
-        # 蒸汽流量 kg/h
-        self.add_input_field(row, "蒸汽流量 kg/h:", "lineedit", "1000", "例如：1000", QDoubleValidator(1, 1000000, 1))
-        row += 1
-        
-        # 冷流体W kg/h
-        self.add_input_field(row, "冷流体W kg/h:", "lineedit", "10000", "例如：10000", QDoubleValidator(1, 1000000, 1))
-        row += 1
-        
-        # 冷流体Cp kJ/kg.K
-        self.add_cp_input_field(row, "冷流体Cp kJ/(kg·K):")
-        row += 1
-        
-        # 冷流体t1 ℃
-        self.add_input_field(row, "冷流体t1 ℃:", "lineedit", "20", "例如：20", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 总传热系数K W/K.㎡
-        self.setup_heat_transfer_coeff_combo(row)
-    
-    def setup_mode_3_inputs(self, row):
-        """模式3：求冷流体出口温度t2"""
-        # 热流体W kg/h
-        self.add_input_field(row, "热流体W kg/h:", "lineedit", "5000", "例如：5000", QDoubleValidator(1, 1000000, 1))
-        row += 1
-        
-        # 热流体Cp kJ/kg.K
-        self.add_cp_input_field(row, "热流体Cp kJ/(kg·K):")
-        row += 1
-        
-        # 热流体t1 ℃
-        self.add_input_field(row, "热流体t1 ℃:", "lineedit", "90", "例如：90", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 热流体t2 ℃
-        self.add_input_field(row, "热流体t2 ℃:", "lineedit", "60", "例如：60", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 冷流体W kg/h
-        self.add_input_field(row, "冷流体W kg/h:", "lineedit", "10000", "例如：10000", QDoubleValidator(1, 1000000, 1))
-        row += 1
-        
-        # 冷流体Cp kJ/kg.K
-        self.add_cp_input_field(row, "冷流体Cp kJ/(kg·K):")
-        row += 1
-        
-        # 冷流体t1 ℃
-        self.add_input_field(row, "冷流体t1 ℃:", "lineedit", "20", "例如：20", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 总传热系数K W/K.㎡
-        self.setup_heat_transfer_coeff_combo(row)
-    
-    def setup_mode_4_inputs(self, row):
-        """模式4：求热流体出口温度t2"""
-        # 热流体W kg/h
-        self.add_input_field(row, "热流体W kg/h:", "lineedit", "5000", "例如：5000", QDoubleValidator(1, 1000000, 1))
-        row += 1
-        
-        # 热流体Cp kJ/kg.K
-        self.add_cp_input_field(row, "热流体Cp kJ/(kg·K):")
-        row += 1
-        
-        # 热流体t1 ℃
-        self.add_input_field(row, "热流体t1 ℃:", "lineedit", "90", "例如：90", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 冷流体W kg/h
-        self.add_input_field(row, "冷流体W kg/h:", "lineedit", "10000", "例如：10000", QDoubleValidator(1, 1000000, 1))
-        row += 1
-        
-        # 冷流体Cp kJ/kg.K
-        self.add_cp_input_field(row, "冷流体Cp kJ/(kg·K):")
-        row += 1
-        
-        # 冷流体t1 ℃
-        self.add_input_field(row, "冷流体t1 ℃:", "lineedit", "20", "例如：20", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 冷流体t2 ℃
-        self.add_input_field(row, "冷流体t2 ℃:", "lineedit", "50", "例如：50", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 总传热系数K W/K.㎡
-        self.setup_heat_transfer_coeff_combo(row)
-    
-    def setup_mode_5_inputs(self, row):
-        """模式5：求冷流体流量"""
-        # 热流体W kg/h
-        self.add_input_field(row, "热流体W kg/h:", "lineedit", "5000", "例如：5000", QDoubleValidator(1, 1000000, 1))
-        row += 1
-        
-        # 热流体Cp kJ/kg.K
-        self.add_cp_input_field(row, "热流体Cp kJ/(kg·K):")
-        row += 1
-        
-        # 热流体t1 ℃
-        self.add_input_field(row, "热流体t1 ℃:", "lineedit", "90", "例如：90", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 热流体t2 ℃
-        self.add_input_field(row, "热流体t2 ℃:", "lineedit", "60", "例如：60", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 冷流体Cp kJ/kg.K
-        self.add_cp_input_field(row, "冷流体Cp kJ/(kg·K):")
-        row += 1
-        
-        # 冷流体t1 ℃
-        self.add_input_field(row, "冷流体t1 ℃:", "lineedit", "20", "例如：20", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 冷流体t2 ℃
-        self.add_input_field(row, "冷流体t2 ℃:", "lineedit", "50", "例如：50", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 总传热系数K W/K.㎡
-        self.setup_heat_transfer_coeff_combo(row)
-    
-    def setup_mode_6_inputs(self, row):
-        """模式6：求热流体流量"""
-        # 热流体Cp kJ/kg.K
-        self.add_cp_input_field(row, "热流体Cp kJ/(kg·K):")
-        row += 1
-        
-        # 热流体t1 ℃
-        self.add_input_field(row, "热流体t1 ℃:", "lineedit", "90", "例如：90", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 热流体t2 ℃
-        self.add_input_field(row, "热流体t2 ℃:", "lineedit", "60", "例如：60", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 冷流体W kg/h
-        self.add_input_field(row, "冷流体W kg/h:", "lineedit", "10000", "例如：10000", QDoubleValidator(1, 1000000, 1))
-        row += 1
-        
-        # 冷流体Cp kJ/kg.K
-        self.add_cp_input_field(row, "冷流体Cp kJ/(kg·K):")
-        row += 1
-        
-        # 冷流体t1 ℃
-        self.add_input_field(row, "冷流体t1 ℃:", "lineedit", "20", "例如：20", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 冷流体t2 ℃
-        self.add_input_field(row, "冷流体t2 ℃:", "lineedit", "50", "例如：50", QDoubleValidator(-273, 1000, 1))
-        row += 1
-        
-        # 总传热系数K W/K.㎡
-        self.setup_heat_transfer_coeff_combo(row)
-    
-    def setup_heat_transfer_coeff_combo(self, row):
-        """设置传热系数下拉菜单"""
-        # 标签
-        label = QLabel("总传热系数K W/(K·m²):")
+    def add_k_input_field(self, row, label_text):
+        """添加传热系数输入字段"""
+        # 标签 - 右对齐，第0列
+        label = QLabel(label_text)
         label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         label.setStyleSheet("QLabel { font-weight: bold; padding-right: 10px; }")
         label.setFixedWidth(200)
         self.input_layout.addWidget(label, row, 0)
         
-        # 输入框
+        # 输入框 - 第1列
         manual_input = QLineEdit()
         manual_input.setPlaceholderText("输入或选择后自动填充")
         manual_input.setValidator(QDoubleValidator(1, 10000, 1))
@@ -682,7 +477,7 @@ class HeatExchangerSimpleCalculator(QWidget):
         self.input_layout.addWidget(manual_input, row, 1)
         self.input_widgets["k_manual"] = manual_input
         
-        # 下拉框
+        # 下拉框 - 第2列
         combo = QComboBox()
         combo.addItem("- 请选择流体组合 -")
         
@@ -703,6 +498,236 @@ class HeatExchangerSimpleCalculator(QWidget):
         self.input_widgets["k_combo"] = combo
         
         return combo
+    
+    def setup_mode_0_inputs(self):
+        """模式0：求饱和蒸汽流量"""
+        row = 0
+        
+        # 蒸汽压力(G) MPa
+        self.add_input_field(row, "蒸汽压力(G) MPa:", "0.5", "例如：0.5", QDoubleValidator(0.01, 10.0, 2))
+        row += 1
+        
+        # 冷流体W kg/h
+        self.add_input_field(row, "冷流体W kg/h:", "10000", "例如：10000", QDoubleValidator(1, 1000000, 1))
+        row += 1
+        
+        # 冷流体Cp kJ/kg.K
+        self.add_cp_input_field(row, "冷流体Cp kJ/(kg·K):", "4.19")
+        row += 1
+        
+        # 冷流体t1 ℃
+        self.add_input_field(row, "冷流体t1 ℃:", "20", "例如：20", QDoubleValidator(-273, 1000, 1))
+        row += 1
+        
+        # 冷流体t2 ℃
+        self.add_input_field(row, "冷流体t2 ℃:", "60", "例如：60", QDoubleValidator(-273, 1000, 1))
+        row += 1
+        
+        # 总传热系数K W/K.㎡
+        self.add_k_input_field(row, "总传热系数K W/(K·m²):")
+    
+    def setup_mode_1_inputs(self):
+        """模式1：求冷流体流量（蒸汽加热）"""
+        row = 0
+        
+        # 蒸汽压力(G) MPa
+        self.add_input_field(row, "蒸汽压力(G) MPa:", "0.5", "例如：0.5", QDoubleValidator(0.01, 10.0, 2))
+        row += 1
+        
+        # 蒸汽流量 kg/h
+        self.add_input_field(row, "蒸汽流量 kg/h:", "1000", "例如：1000", QDoubleValidator(1, 1000000, 1))
+        row += 1
+        
+        # 冷流体Cp kJ/kg.K
+        self.add_cp_input_field(row, "冷流体Cp kJ/(kg·K):", "4.19")
+        row += 1
+        
+        # 冷流体t1 ℃
+        self.add_input_field(row, "冷流体t1 ℃:", "20", "例如：20", QDoubleValidator(-273, 1000, 1))
+        row += 1
+        
+        # 冷流体t2 ℃
+        self.add_input_field(row, "冷流体t2 ℃:", "60", "例如：60", QDoubleValidator(-273, 1000, 1))
+        row += 1
+        
+        # 总传热系数K W/K.㎡
+        self.add_k_input_field(row, "总传热系数K W/(K·m²):")
+    
+    def setup_mode_2_inputs(self):
+        """模式2：求冷流体出口温度t2（蒸汽加热）"""
+        row = 0
+        
+        # 蒸汽压力(G) MPa
+        self.add_input_field(row, "蒸汽压力(G) MPa:", "0.5", "例如：0.5", QDoubleValidator(0.01, 10.0, 2))
+        row += 1
+        
+        # 蒸汽流量 kg/h
+        self.add_input_field(row, "蒸汽流量 kg/h:", "1000", "例如：1000", QDoubleValidator(1, 1000000, 1))
+        row += 1
+        
+        # 冷流体W kg/h
+        self.add_input_field(row, "冷流体W kg/h:", "10000", "例如：10000", QDoubleValidator(1, 1000000, 1))
+        row += 1
+        
+        # 冷流体Cp kJ/kg.K
+        self.add_cp_input_field(row, "冷流体Cp kJ/(kg·K):", "4.19")
+        row += 1
+        
+        # 冷流体t1 ℃
+        self.add_input_field(row, "冷流体t1 ℃:", "20", "例如：20", QDoubleValidator(-273, 1000, 1))
+        row += 1
+        
+        # 总传热系数K W/K.㎡
+        self.add_k_input_field(row, "总传热系数K W/(K·m²):")
+    
+    def setup_mode_3_inputs(self):
+        """模式3：求冷流体出口温度t2"""
+        row = 0
+        
+        # 热流体W kg/h
+        self.add_input_field(row, "热流体W kg/h:", "5000", "例如：5000", QDoubleValidator(1, 1000000, 1))
+        row += 1
+        
+        # 热流体Cp kJ/kg.K
+        self.add_cp_input_field(row, "热流体Cp kJ/(kg·K):", "4.19")
+        row += 1
+        
+        # 热流体t1 ℃
+        self.add_input_field(row, "热流体t1 ℃:", "90", "例如：90", QDoubleValidator(-273, 1000, 1))
+        row += 1
+        
+        # 热流体t2 ℃
+        self.add_input_field(row, "热流体t2 ℃:", "60", "例如：60", QDoubleValidator(-273, 1000, 1))
+        row += 1
+        
+        # 冷流体W kg/h
+        self.add_input_field(row, "冷流体W kg/h:", "10000", "例如：10000", QDoubleValidator(1, 1000000, 1))
+        row += 1
+        
+        # 冷流体Cp kJ/kg.K
+        self.add_cp_input_field(row, "冷流体Cp kJ/(kg·K):", "4.19")
+        row += 1
+        
+        # 冷流体t1 ℃
+        self.add_input_field(row, "冷流体t1 ℃:", "20", "例如：20", QDoubleValidator(-273, 1000, 1))
+        row += 1
+        
+        # 总传热系数K W/K.㎡
+        self.add_k_input_field(row, "总传热系数K W/(K·m²):")
+    
+    def setup_mode_4_inputs(self):
+        """模式4：求热流体出口温度t2"""
+        row = 0
+        
+        # 热流体W kg/h
+        self.add_input_field(row, "热流体W kg/h:", "5000", "例如：5000", QDoubleValidator(1, 1000000, 1))
+        row += 1
+        
+        # 热流体Cp kJ/kg.K
+        self.add_cp_input_field(row, "热流体Cp kJ/(kg·K):", "4.19")
+        row += 1
+        
+        # 热流体t1 ℃
+        self.add_input_field(row, "热流体t1 ℃:", "90", "例如：90", QDoubleValidator(-273, 1000, 1))
+        row += 1
+        
+        # 冷流体W kg/h
+        self.add_input_field(row, "冷流体W kg/h:", "10000", "例如：10000", QDoubleValidator(1, 1000000, 1))
+        row += 1
+        
+        # 冷流体Cp kJ/kg.K
+        self.add_cp_input_field(row, "冷流体Cp kJ/(kg·K):", "4.19")
+        row += 1
+        
+        # 冷流体t1 ℃
+        self.add_input_field(row, "冷流体t1 ℃:", "20", "例如：20", QDoubleValidator(-273, 1000, 1))
+        row += 1
+        
+        # 冷流体t2 ℃
+        self.add_input_field(row, "冷流体t2 ℃:", "50", "例如：50", QDoubleValidator(-273, 1000, 1))
+        row += 1
+        
+        # 总传热系数K W/K.㎡
+        self.add_k_input_field(row, "总传热系数K W/(K·m²):")
+    
+    def setup_mode_5_inputs(self):
+        """模式5：求冷流体流量"""
+        row = 0
+        
+        # 热流体W kg/h
+        self.add_input_field(row, "热流体W kg/h:", "5000", "例如：5000", QDoubleValidator(1, 1000000, 1))
+        row += 1
+        
+        # 热流体Cp kJ/kg.K
+        self.add_cp_input_field(row, "热流体Cp kJ/(kg·K):", "4.19")
+        row += 1
+        
+        # 热流体t1 ℃
+        self.add_input_field(row, "热流体t1 ℃:", "90", "例如：90", QDoubleValidator(-273, 1000, 1))
+        row += 1
+        
+        # 热流体t2 ℃
+        self.add_input_field(row, "热流体t2 ℃:", "60", "例如：60", QDoubleValidator(-273, 1000, 1))
+        row += 1
+        
+        # 冷流体Cp kJ/kg.K
+        self.add_cp_input_field(row, "冷流体Cp kJ/(kg·K):", "4.19")
+        row += 1
+        
+        # 冷流体t1 ℃
+        self.add_input_field(row, "冷流体t1 ℃:", "20", "例如：20", QDoubleValidator(-273, 1000, 1))
+        row += 1
+        
+        # 冷流体t2 ℃
+        self.add_input_field(row, "冷流体t2 ℃:", "50", "例如：50", QDoubleValidator(-273, 1000, 1))
+        row += 1
+        
+        # 总传热系数K W/K.㎡
+        self.add_k_input_field(row, "总传热系数K W/(K·m²):")
+    
+    def setup_mode_6_inputs(self):
+        """模式6：求热流体流量"""
+        row = 0
+        
+        # 热流体Cp kJ/kg.K
+        self.add_cp_input_field(row, "热流体Cp kJ/(kg·K):", "4.19")
+        row += 1
+        
+        # 热流体t1 ℃
+        self.add_input_field(row, "热流体t1 ℃:", "90", "例如：90", QDoubleValidator(-273, 1000, 1))
+        row += 1
+        
+        # 热流体t2 ℃
+        self.add_input_field(row, "热流体t2 ℃:", "60", "例如：60", QDoubleValidator(-273, 1000, 1))
+        row += 1
+        
+        # 冷流体W kg/h
+        self.add_input_field(row, "冷流体W kg/h:", "10000", "例如：10000", QDoubleValidator(1, 1000000, 1))
+        row += 1
+        
+        # 冷流体Cp kJ/kg.K
+        self.add_cp_input_field(row, "冷流体Cp kJ/(kg·K):", "4.19")
+        row += 1
+        
+        # 冷流体t1 ℃
+        self.add_input_field(row, "冷流体t1 ℃:", "20", "例如：20", QDoubleValidator(-273, 1000, 1))
+        row += 1
+        
+        # 冷流体t2 ℃
+        self.add_input_field(row, "冷流体t2 ℃:", "50", "例如：50", QDoubleValidator(-273, 1000, 1))
+        row += 1
+        
+        # 总传热系数K W/K.㎡
+        self.add_k_input_field(row, "总传热系数K W/(K·m²):")
+    
+    def on_cp_selected(self, text, lineedit):
+        """处理比热容选择"""
+        if text.startswith("-") or not text.strip():
+            return
+        
+        if text in self.specific_heat_data:
+            cp_value = self.specific_heat_data[text]
+            lineedit.setText(f"{cp_value:.2f}")
     
     def on_heat_transfer_coeff_selected(self, text):
         """处理传热系数选择"""
@@ -822,35 +847,35 @@ class HeatExchangerSimpleCalculator(QWidget):
         
         # 显示结果
         result = f"""
-═══════════════════════════════════════════════════
+═══════════
 📋 输入参数
-═══════════════════════════════════════════════════
+═══════════
 
-计算模式: {self.mode_combo.currentText()}
-蒸汽压力: {steam_pressure:.2f} MPa
-冷流体流量: {cold_flow:.0f} kg/h
-冷流体比热容: {cold_cp:.2f} kJ/(kg·K)
-冷流体进口温度: {cold_t1:.1f} °C
-冷流体出口温度: {cold_t2:.1f} °C
+    计算模式: {self.mode_combo.currentText()}
+    蒸汽压力: {steam_pressure:.2f} MPa
+    冷流体流量: {cold_flow:.0f} kg/h
+    冷流体比热容: {cold_cp:.2f} kJ/(kg·K)
+    冷流体进口温度: {cold_t1:.1f} °C
+    冷流体出口温度: {cold_t2:.1f} °C
 
-═══════════════════════════════════════════════════
+══════════
 📊 计算结果
-═══════════════════════════════════════════════════
+══════════
 
-蒸汽汽化潜热: {latent_heat:.1f} kJ/kg
-冷流体吸热量: {Q_cold:.1f} kW
-所需饱和蒸汽流量: {steam_flow:.1f} kg/h
+    蒸汽汽化潜热: {latent_heat:.1f} kJ/kg
+    冷流体吸热量: {Q_cold:.1f} kW
+    所需饱和蒸汽流量: {steam_flow:.1f} kg/h
 
-═══════════════════════════════════════════════════
+══════════
 💡 计算说明
-═══════════════════════════════════════════════════
+══════════
 
-计算公式:
-1. 冷流体吸热量: Q = W_cold × Cp_cold × (t2 - t1) / 3600 [kW]
-2. 蒸汽流量: W_steam = Q × 3600 / r [kg/h]
-其中: r - 蒸汽汽化潜热 (kJ/kg)
+    计算公式:
+    1. 冷流体吸热量: Q = W_cold × Cp_cold × (t2 - t1) / 3600 [kW]
+    2. 蒸汽流量: W_steam = Q × 3600 / r [kg/h]
+    其中: r - 蒸汽汽化潜热 (kJ/kg)
 
-注意: 实际应用应考虑换热效率和安全系数"""
+    注意: 实际应用应考虑换热效率和安全系数"""
         
         self.result_text.setText(result)
     
@@ -879,35 +904,35 @@ class HeatExchangerSimpleCalculator(QWidget):
         
         # 显示结果
         result = f"""
-═══════════════════════════════════════════════════
+═══════════
 📋 输入参数
-═══════════════════════════════════════════════════
+═══════════
 
-计算模式: {self.mode_combo.currentText()}
-蒸汽压力: {steam_pressure:.2f} MPa
-蒸汽流量: {steam_flow:.0f} kg/h
-冷流体比热容: {cold_cp:.2f} kJ/(kg·K)
-冷流体进口温度: {cold_t1:.1f} °C
-冷流体出口温度: {cold_t2:.1f} °C
+    计算模式: {self.mode_combo.currentText()}
+    蒸汽压力: {steam_pressure:.2f} MPa
+    蒸汽流量: {steam_flow:.0f} kg/h
+    冷流体比热容: {cold_cp:.2f} kJ/(kg·K)
+    冷流体进口温度: {cold_t1:.1f} °C
+    冷流体出口温度: {cold_t2:.1f} °C
 
-═══════════════════════════════════════════════════
+══════════
 📊 计算结果
-═══════════════════════════════════════════════════
+══════════
 
-蒸汽汽化潜热: {latent_heat:.1f} kJ/kg
-蒸汽放热量: {Q_steam:.1f} kW
-冷流体流量: {cold_flow:.1f} kg/h
+    蒸汽汽化潜热: {latent_heat:.1f} kJ/kg
+    蒸汽放热量: {Q_steam:.1f} kW
+    冷流体流量: {cold_flow:.1f} kg/h
 
-═══════════════════════════════════════════════════
+══════════
 💡 计算说明
-═══════════════════════════════════════════════════
+══════════
 
-计算公式:
-1. 蒸汽放热量: Q = W_steam × r / 3600 [kW]
-2. 冷流体流量: W_cold = Q × 3600 / [Cp_cold × (t2 - t1)] [kg/h]
-其中: r - 蒸汽汽化潜热 (kJ/kg)
+    计算公式:
+    1. 蒸汽放热量: Q = W_steam × r / 3600 [kW]
+    2. 冷流体流量: W_cold = Q × 3600 / [Cp_cold × (t2 - t1)] [kg/h]
+    其中: r - 蒸汽汽化潜热 (kJ/kg)
 
-注意: 实际应用应考虑换热效率和安全系数"""
+    注意: 实际应用应考虑换热效率和安全系数"""
         
         self.result_text.setText(result)
     
@@ -931,36 +956,36 @@ class HeatExchangerSimpleCalculator(QWidget):
         
         # 显示结果
         result = f"""
-═══════════════════════════════════════════════════
+═══════════
 📋 输入参数
-═══════════════════════════════════════════════════
+═══════════
 
-计算模式: {self.mode_combo.currentText()}
-蒸汽压力: {steam_pressure:.2f} MPa
-蒸汽流量: {steam_flow:.0f} kg/h
-冷流体流量: {cold_flow:.0f} kg/h
-冷流体比热容: {cold_cp:.2f} kJ/(kg·K)
-冷流体进口温度: {cold_t1:.1f} °C
+    计算模式: {self.mode_combo.currentText()}
+    蒸汽压力: {steam_pressure:.2f} MPa
+    蒸汽流量: {steam_flow:.0f} kg/h
+    冷流体流量: {cold_flow:.0f} kg/h
+    冷流体比热容: {cold_cp:.2f} kJ/(kg·K)
+    冷流体进口温度: {cold_t1:.1f} °C
 
-═══════════════════════════════════════════════════
+══════════
 📊 计算结果
-═══════════════════════════════════════════════════
+══════════
 
-蒸汽汽化潜热: {latent_heat:.1f} kJ/kg
-蒸汽放热量: {Q_steam:.1f} kW
-冷流体出口温度: {cold_t2:.1f} °C
-冷流体温升: {cold_t2 - cold_t1:.1f} °C
+    蒸汽汽化潜热: {latent_heat:.1f} kJ/kg
+    蒸汽放热量: {Q_steam:.1f} kW
+    冷流体出口温度: {cold_t2:.1f} °C
+    冷流体温升: {cold_t2 - cold_t1:.1f} °C
 
-═══════════════════════════════════════════════════
+══════════
 💡 计算说明
-═══════════════════════════════════════════════════
+══════════
 
-计算公式:
-1. 蒸汽放热量: Q = W_steam × r / 3600 [kW]
-2. 冷流体出口温度: t2 = t1 + (Q × 3600) / (W_cold × Cp_cold) [°C]
-其中: r - 蒸汽汽化潜热 (kJ/kg)
+    计算公式:
+    1. 蒸汽放热量: Q = W_steam × r / 3600 [kW]
+    2. 冷流体出口温度: t2 = t1 + (Q × 3600) / (W_cold × Cp_cold) [°C]
+    其中: r - 蒸汽汽化潜热 (kJ/kg)
 
-注意: 实际应用应考虑换热效率和安全系数"""
+    注意: 实际应用应考虑换热效率和安全系数"""
         
         self.result_text.setText(result)
     
@@ -996,38 +1021,38 @@ class HeatExchangerSimpleCalculator(QWidget):
         
         # 显示结果
         result = f"""
-═══════════════════════════════════════════════════
+═══════════
 📋 输入参数
-═══════════════════════════════════════════════════
+═══════════
 
-计算模式: {self.mode_combo.currentText()}
-热流体流量: {hot_flow:.0f} kg/h
-热流体比热容: {hot_cp:.2f} kJ/(kg·K)
-热流体进口温度: {hot_t1:.1f} °C
-热流体出口温度: {hot_t2:.1f} °C
-冷流体流量: {cold_flow:.0f} kg/h
-冷流体比热容: {cold_cp:.2f} kJ/(kg·K)
-冷流体进口温度: {cold_t1:.1f} °C
+    计算模式: {self.mode_combo.currentText()}
+    热流体流量: {hot_flow:.0f} kg/h
+    热流体比热容: {hot_cp:.2f} kJ/(kg·K)
+    热流体进口温度: {hot_t1:.1f} °C
+    热流体出口温度: {hot_t2:.1f} °C
+    冷流体流量: {cold_flow:.0f} kg/h
+    冷流体比热容: {cold_cp:.2f} kJ/(kg·K)
+    冷流体进口温度: {cold_t1:.1f} °C
 
-═══════════════════════════════════════════════════
+══════════
 📊 计算结果
-═══════════════════════════════════════════════════
+══════════
 
-热流体放热量: {Q_hot:.1f} kW
-冷流体出口温度: {cold_t2:.1f} °C
-冷流体温升: {cold_t2 - cold_t1:.1f} °C
-对数平均温差(LMTD): {lmtd:.1f} °C
+    热流体放热量: {Q_hot:.1f} kW
+    冷流体出口温度: {cold_t2:.1f} °C
+    冷流体温升: {cold_t2 - cold_t1:.1f} °C
+    对数平均温差(LMTD): {lmtd:.1f} °C
 
-═══════════════════════════════════════════════════
+══════════
 💡 计算说明
-═══════════════════════════════════════════════════
+══════════
 
-计算公式:
-1. 热流体放热量: Q = W_hot × Cp_hot × (t1_hot - t2_hot) / 3600 [kW]
-2. 冷流体出口温度: t2_cold = t1_cold + (Q × 3600) / (W_cold × Cp_cold) [°C]
-3. 对数平均温差: LMTD = (ΔT1 - ΔT2) / ln(ΔT1/ΔT2)
+    计算公式:
+    1. 热流体放热量: Q = W_hot × Cp_hot × (t1_hot - t2_hot) / 3600 [kW]
+    2. 冷流体出口温度: t2_cold = t1_cold + (Q × 3600) / (W_cold × Cp_cold) [°C]
+    3. 对数平均温差: LMTD = (ΔT1 - ΔT2) / ln(ΔT1/ΔT2)
 
-注意: 实际应用应考虑换热效率和安全系数"""
+    注意: 实际应用应考虑换热效率和安全系数"""
         
         self.result_text.setText(result)
     
@@ -1063,38 +1088,38 @@ class HeatExchangerSimpleCalculator(QWidget):
         
         # 显示结果
         result = f"""
-═══════════════════════════════════════════════════
+═══════════
 📋 输入参数
-═══════════════════════════════════════════════════
+═══════════
 
-计算模式: {self.mode_combo.currentText()}
-热流体流量: {hot_flow:.0f} kg/h
-热流体比热容: {hot_cp:.2f} kJ/(kg·K)
-热流体进口温度: {hot_t1:.1f} °C
-冷流体流量: {cold_flow:.0f} kg/h
-冷流体比热容: {cold_cp:.2f} kJ/(kg·K)
-冷流体进口温度: {cold_t1:.1f} °C
-冷流体出口温度: {cold_t2:.1f} °C
+    计算模式: {self.mode_combo.currentText()}
+    热流体流量: {hot_flow:.0f} kg/h
+    热流体比热容: {hot_cp:.2f} kJ/(kg·K)
+    热流体进口温度: {hot_t1:.1f} °C
+    冷流体流量: {cold_flow:.0f} kg/h
+    冷流体比热容: {cold_cp:.2f} kJ/(kg·K)
+    冷流体进口温度: {cold_t1:.1f} °C
+    冷流体出口温度: {cold_t2:.1f} °C
 
-═══════════════════════════════════════════════════
+══════════
 📊 计算结果
-═══════════════════════════════════════════════════
+══════════
 
-冷流体吸热量: {Q_cold:.1f} kW
-热流体出口温度: {hot_t2:.1f} °C
-热流体温降: {hot_t1 - hot_t2:.1f} °C
-对数平均温差(LMTD): {lmtd:.1f} °C
+    冷流体吸热量: {Q_cold:.1f} kW
+    热流体出口温度: {hot_t2:.1f} °C
+    热流体温降: {hot_t1 - hot_t2:.1f} °C
+    对数平均温差(LMTD): {lmtd:.1f} °C
 
-═══════════════════════════════════════════════════
+══════════
 💡 计算说明
-═══════════════════════════════════════════════════
+══════════
 
-计算公式:
-1. 冷流体吸热量: Q = W_cold × Cp_cold × (t2_cold - t1_cold) / 3600 [kW]
-2. 热流体出口温度: t2_hot = t1_hot - (Q × 3600) / (W_hot × Cp_hot) [°C]
-3. 对数平均温差: LMTD = (ΔT1 - ΔT2) / ln(ΔT1/ΔT2)
+    计算公式:
+    1. 冷流体吸热量: Q = W_cold × Cp_cold × (t2_cold - t1_cold) / 3600 [kW]
+    2. 热流体出口温度: t2_hot = t1_hot - (Q × 3600) / (W_hot × Cp_hot) [°C]
+    3. 对数平均温差: LMTD = (ΔT1 - ΔT2) / ln(ΔT1/ΔT2)
 
-注意: 实际应用应考虑换热效率和安全系数"""
+    注意: 实际应用应考虑换热效率和安全系数"""
         
         self.result_text.setText(result)
     
@@ -1134,37 +1159,37 @@ class HeatExchangerSimpleCalculator(QWidget):
         
         # 显示结果
         result = f"""
-═══════════════════════════════════════════════════
+═══════════
 📋 输入参数
-═══════════════════════════════════════════════════
+═══════════
 
-计算模式: {self.mode_combo.currentText()}
-热流体流量: {hot_flow:.0f} kg/h
-热流体比热容: {hot_cp:.2f} kJ/(kg·K)
-热流体进口温度: {hot_t1:.1f} °C
-热流体出口温度: {hot_t2:.1f} °C
-冷流体比热容: {cold_cp:.2f} kJ/(kg·K)
-冷流体进口温度: {cold_t1:.1f} °C
-冷流体出口温度: {cold_t2:.1f} °C
+    计算模式: {self.mode_combo.currentText()}
+    热流体流量: {hot_flow:.0f} kg/h
+    热流体比热容: {hot_cp:.2f} kJ/(kg·K)
+    热流体进口温度: {hot_t1:.1f} °C
+    热流体出口温度: {hot_t2:.1f} °C
+    冷流体比热容: {cold_cp:.2f} kJ/(kg·K)
+    冷流体进口温度: {cold_t1:.1f} °C
+    冷流体出口温度: {cold_t2:.1f} °C
 
-═══════════════════════════════════════════════════
+══════════
 📊 计算结果
-═══════════════════════════════════════════════════
+══════════
 
-热流体放热量: {Q_hot:.1f} kW
-冷流体流量: {cold_flow:.1f} kg/h
-对数平均温差(LMTD): {lmtd:.1f} °C
+    热流体放热量: {Q_hot:.1f} kW
+    冷流体流量: {cold_flow:.1f} kg/h
+    对数平均温差(LMTD): {lmtd:.1f} °C
 
-═══════════════════════════════════════════════════
+══════════
 💡 计算说明
-═══════════════════════════════════════════════════
+══════════
 
-计算公式:
-1. 热流体放热量: Q = W_hot × Cp_hot × (t1_hot - t2_hot) / 3600 [kW]
-2. 冷流体流量: W_cold = Q × 3600 / [Cp_cold × (t2_cold - t1_cold)] [kg/h]
-3. 对数平均温差: LMTD = (ΔT1 - ΔT2) / ln(ΔT1/ΔT2)
+    计算公式:
+    1. 热流体放热量: Q = W_hot × Cp_hot × (t1_hot - t2_hot) / 3600 [kW]
+    2. 冷流体流量: W_cold = Q × 3600 / [Cp_cold × (t2_cold - t1_cold)] [kg/h]
+    3. 对数平均温差: LMTD = (ΔT1 - ΔT2) / ln(ΔT1/ΔT2)
 
-注意: 实际应用应考虑换热效率和安全系数"""
+    注意: 实际应用应考虑换热效率和安全系数"""
         
         self.result_text.setText(result)
     
@@ -1204,37 +1229,37 @@ class HeatExchangerSimpleCalculator(QWidget):
         
         # 显示结果
         result = f"""
-═══════════════════════════════════════════════════
+═══════════
 📋 输入参数
-═══════════════════════════════════════════════════
+═══════════
 
-计算模式: {self.mode_combo.currentText()}
-热流体比热容: {hot_cp:.2f} kJ/(kg·K)
-热流体进口温度: {hot_t1:.1f} °C
-热流体出口温度: {hot_t2:.1f} °C
-冷流体流量: {cold_flow:.0f} kg/h
-冷流体比热容: {cold_cp:.2f} kJ/(kg·K)
-冷流体进口温度: {cold_t1:.1f} °C
-冷流体出口温度: {cold_t2:.1f} °C
+    计算模式: {self.mode_combo.currentText()}
+    热流体比热容: {hot_cp:.2f} kJ/(kg·K)
+    热流体进口温度: {hot_t1:.1f} °C
+    热流体出口温度: {hot_t2:.1f} °C
+    冷流体流量: {cold_flow:.0f} kg/h
+    冷流体比热容: {cold_cp:.2f} kJ/(kg·K)
+    冷流体进口温度: {cold_t1:.1f} °C
+    冷流体出口温度: {cold_t2:.1f} °C
 
-═══════════════════════════════════════════════════
+══════════
 📊 计算结果
-═══════════════════════════════════════════════════
+══════════
 
-冷流体吸热量: {Q_cold:.1f} kW
-热流体流量: {hot_flow:.1f} kg/h
-对数平均温差(LMTD): {lmtd:.1f} °C
+    冷流体吸热量: {Q_cold:.1f} kW
+    热流体流量: {hot_flow:.1f} kg/h
+    对数平均温差(LMTD): {lmtd:.1f} °C
 
-═══════════════════════════════════════════════════
+══════════
 💡 计算说明
-═══════════════════════════════════════════════════
+══════════
 
-计算公式:
-1. 冷流体吸热量: Q = W_cold × Cp_cold × (t2_cold - t1_cold) / 3600 [kW]
-2. 热流体流量: W_hot = Q × 3600 / [Cp_hot × (t1_hot - t2_hot)] [kg/h]
-3. 对数平均温差: LMTD = (ΔT1 - ΔT2) / ln(ΔT1/ΔT2)
+    计算公式:
+    1. 冷流体吸热量: Q = W_cold × Cp_cold × (t2_cold - t1_cold) / 3600 [kW]
+    2. 热流体流量: W_hot = Q × 3600 / [Cp_hot × (t1_hot - t2_hot)] [kg/h]
+    3. 对数平均温差: LMTD = (ΔT1 - ΔT2) / ln(ΔT1/ΔT2)
 
-注意: 实际应用应考虑换热效率和安全系数"""
+    注意: 实际应用应考虑换热效率和安全系数"""
         
         self.result_text.setText(result)
     
@@ -1245,13 +1270,11 @@ class HeatExchangerSimpleCalculator(QWidget):
                 widget.clear()
             elif isinstance(widget, QComboBox):
                 widget.setCurrentIndex(0)
-            elif isinstance(widget, QDoubleSpinBox):
-                widget.setValue(0.0)
         
         self.result_text.clear()
     
     def get_project_info(self):
-        """获取工程信息"""
+        """获取工程信息 - 使用共享的项目信息"""
         try:
             class ProjectInfoDialog(QDialog):
                 def __init__(self, parent=None, default_info=None, report_number=""):
@@ -1406,8 +1429,7 @@ class HeatExchangerSimpleCalculator(QWidget):
             report += result_text
             
             # 添加工程信息部分
-            report += f"""
-══════════
+            report += f"""══════════
 📋 工程信息
 ══════════
 
@@ -1454,7 +1476,6 @@ class HeatExchangerSimpleCalculator(QWidget):
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             default_name = f"换热器计算书_{timestamp}.txt"
             
-            from PySide6.QtWidgets import QFileDialog
             file_path, _ = QFileDialog.getSaveFileName(
                 self, "保存计算书", default_name, "Text Files (*.txt)"
             )
@@ -1499,14 +1520,11 @@ class HeatExchangerSimpleCalculator(QWidget):
                 try:
                     # 尝试注册常见的中文字体
                     font_paths = [
-                        # Windows 字体路径
-                        "C:/Windows/Fonts/simhei.ttf",  # 黑体
-                        "C:/Windows/Fonts/simsun.ttc",  # 宋体
-                        "C:/Windows/Fonts/msyh.ttc",    # 微软雅黑
-                        # macOS 字体路径
+                        "C:/Windows/Fonts/simhei.ttf",
+                        "C:/Windows/Fonts/simsun.ttc",
+                        "C:/Windows/Fonts/msyh.ttc",
                         "/Library/Fonts/Arial Unicode.ttf",
                         "/System/Library/Fonts/Arial.ttf",
-                        # Linux 字体路径
                         "/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
                         "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
                     ]
@@ -1523,7 +1541,7 @@ class HeatExchangerSimpleCalculator(QWidget):
                                     pdfmetrics.registerFont(TTFont('ChineseFont', font_path))
                                     chinese_font_registered = True
                                     break
-                                elif "msyh" in font_path.lower() or "microsoftyahei" in font_path.lower():
+                                elif "msyh" in font_path.lower():
                                     pdfmetrics.registerFont(TTFont('ChineseFont', font_path))
                                     chinese_font_registered = True
                                     break
@@ -1535,10 +1553,8 @@ class HeatExchangerSimpleCalculator(QWidget):
                                 continue
                     
                     if not chinese_font_registered:
-                        # 如果没有找到系统字体，尝试使用 ReportLab 的默认字体（可能不支持中文）
                         pdfmetrics.registerFont(TTFont('ChineseFont', 'Helvetica'))
                 except:
-                    # 字体注册失败，使用默认字体
                     pass
                 
                 # 创建PDF文档

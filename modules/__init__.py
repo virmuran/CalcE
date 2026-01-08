@@ -1,10 +1,10 @@
-# modules/__init__.py
+# TofuApp/modules/__init__.py
 """
 TofuApp 功能模块包 - 包含数据库初始化功能
 """
 
-__version__ = "1.0.0"
-__author__ = "TofuApp Team"
+__version__ = "V2.1 标准版"
+__author__ = "Tofu Team"
 
 import os
 import sys
@@ -31,12 +31,8 @@ def init_database(data_file=None):
         # 获取数据管理器实例
         data_manager = DataManager.get_instance(data_file)
         
-        print("✅ 数据库初始化完成")
-        print(f"   数据文件位置: {data_manager.data_file}")
-        
         # 检查是否有默认的工艺设计数据
         if "process_design" not in data_manager.data:
-            print("⚠️  正在初始化工艺设计数据...")
             data_manager.data["process_design"] = {
                 "projects": [],
                 "materials": [],
@@ -77,7 +73,6 @@ def init_database(data_file=None):
             
             data_manager.data["process_design"]["materials"] = example_materials
             data_manager._save_data()
-            print("✅ 工艺设计数据初始化完成")
         
         return data_manager
         
@@ -124,7 +119,6 @@ def init_process_design_modules():
             "utils": True
         }
         
-        print("✅ 工艺设计模块导入成功")
         return modules_status
         
     except ImportError as e:

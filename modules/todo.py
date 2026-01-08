@@ -1,4 +1,4 @@
-# todo.py
+# TofuApp/modules/todo.py
 from datetime import datetime
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,

@@ -18,15 +18,17 @@ for path in paths_to_add:
     if path not in sys.path:
         sys.path.insert(0, path)
 
-# 导入 Qt 相关 - 修复：使用 Signal 而不是 pyqtSignal
+# 导入 Qt 相关
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem,
     QPushButton, QLineEdit, QLabel, QHeaderView, QMessageBox, QDialog,
     QFormLayout, QDoubleSpinBox, QComboBox, QTextEdit, QGroupBox,
     QCheckBox, QFileDialog, QProgressDialog, QSplitter, QTabWidget,
-    QMenu, QApplication, QFrame, QToolBar, QSizePolicy
+    QMenu, QApplication, QFrame, QToolBar, QDialogButtonBox,
+    QSpinBox, QScrollArea, QListWidget, QListWidgetItem,
+    QSizePolicy, QGridLayout
 )
-from PySide6.QtCore import Qt, Signal, QTimer, QThread, QSize
+from PySide6.QtCore import Qt, Signal, QTimer, QThread, QSize, QEvent
 from PySide6.QtGui import QAction, QKeySequence, QClipboard
 
 # 导入其他库
@@ -40,7 +42,7 @@ from datetime import datetime
 # 尝试导入工艺设计相关模块
 try:
     from ..process_design_manager import ProcessDesignManager
-    from ..process_design_data import MaterialProperty
+    from ..data.data_models import MaterialProperty
     print("✅ 成功导入 ProcessDesignManager 和 MaterialProperty")
 except ImportError as e:
     print(f"❌ 导入失败: {e}")
@@ -70,7 +72,7 @@ except ImportError as e:
                 setattr(self, key, value)
 
 class MaterialDatabaseTab(QWidget):
-    """物料数据库标签页 - 增强版"""
+    """物料数据库标签页 - 优化布局，主要区域最大化"""
     
     material_selected = Signal(str)  # 物料选择信号
     material_list_updated = Signal()  # 物料列表更新信号
@@ -96,135 +98,120 @@ class MaterialDatabaseTab(QWidget):
         self.setup_ui()
         self.load_materials()
         self.setup_shortcuts()
+        
+        # 添加延迟初始化，确保UI完全加载
+        QTimer.singleShot(100, self.finalize_initialization)
+
+    def finalize_initialization(self):
+        """完成初始化，确保表格正确显示"""
+        # 确保表格正确排序
+        self.material_table.sortItems(1, Qt.AscendingOrder)  # 按物料ID排序
+        # 强制重绘
+        self.material_table.viewport().update()
+        self.status_bar.setText("就绪 - 初始化完成")
     
     def setup_ui(self):
-        """设置UI"""
+        """设置UI - 优化布局，主要区域最大化"""
         main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(2, 2, 2, 2)  # 减少外边距
+        main_layout.setSpacing(2)  # 减少控件间距
         
-        # 工具栏
-        toolbar = QToolBar()
-        toolbar.setIconSize(QSize(16, 16))
+        # ========== 工具栏 - 固定高度 ==========
+        self.setup_toolbar()
+        main_layout.addWidget(self.toolbar)
         
-        # 工具栏动作
-        self.add_action = QAction("添加", self)
-        self.add_action.triggered.connect(self.add_material)
-        toolbar.addAction(self.add_action)
-        
-        self.edit_action = QAction("编辑", self)
-        self.edit_action.triggered.connect(self.edit_material)
-        toolbar.addAction(self.edit_action)
-        
-        self.delete_action = QAction("删除", self)
-        self.delete_action.triggered.connect(self.delete_material)
-        toolbar.addAction(self.delete_action)
-        
-        toolbar.addSeparator()
-        
-        self.import_action = QAction("导入", self)
-        self.import_action.triggered.connect(self.import_materials)
-        toolbar.addAction(self.import_action)
-        
-        self.export_action = QAction("导出", self)
-        self.export_action.triggered.connect(self.export_materials)
-        toolbar.addAction(self.export_action)
-        
-        toolbar.addSeparator()
-        
-        self.copy_action = QAction("复制", self)
-        self.copy_action.triggered.connect(self.copy_selected)
-        toolbar.addAction(self.copy_action)
-        
-        self.paste_action = QAction("粘贴", self)
-        self.paste_action.triggered.connect(self.paste_material)
-        toolbar.addAction(self.paste_action)
-        
-        toolbar.addSeparator()
-        
-        self.batch_toggle_action = QAction("批量模式", self)
-        self.batch_toggle_action.setCheckable(True)
-        self.batch_toggle_action.toggled.connect(self.toggle_batch_mode)
-        toolbar.addAction(self.batch_toggle_action)
-        
-        main_layout.addWidget(toolbar)
-        
-        # 搜索和过滤区域
+        # ========== 搜索和过滤区域 - 固定高度 ==========
         filter_frame = QFrame()
-        filter_frame.setFrameStyle(QFrame.StyledPanel)
+        filter_frame.setFixedHeight(50)  # 固定搜索区域高度
         filter_layout = QHBoxLayout(filter_frame)
+        filter_layout.setContentsMargins(8, 4, 8, 4)  # 紧凑的内边距
+        filter_layout.setSpacing(8)
         
-        # 搜索框
+        # 搜索部分 - 简化版本
         search_layout = QHBoxLayout()
+        search_layout.setSpacing(4)
         search_label = QLabel("搜索:")
+        
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("物料名称、CAS号或分子式...")
+        self.search_input.setPlaceholderText("输入物料名称、CAS号或分子式...")
+        self.search_input.setFixedHeight(28)
         self.search_input.textChanged.connect(self.on_search_changed)
         self.search_input.returnPressed.connect(self.perform_search)
         
+        # 清空搜索按钮
+        self.clear_search_btn = QPushButton("清空")
+        self.clear_search_btn.setFixedHeight(28)
+        self.clear_search_btn.clicked.connect(self.clear_search)
+        
         search_layout.addWidget(search_label)
         search_layout.addWidget(self.search_input)
-        
-        # 高级搜索按钮
-        self.advanced_search_btn = QPushButton("高级搜索")
-        self.advanced_search_btn.clicked.connect(self.open_advanced_search)
-        search_layout.addWidget(self.advanced_search_btn)
+        search_layout.addWidget(self.clear_search_btn)
         
         filter_layout.addLayout(search_layout)
-        
-        # 过滤器
         filter_layout.addStretch()
         
-        # 相态过滤器
-        self.phase_filter = QComboBox()
-        self.phase_filter.addItem("所有相态")
-        self.phase_filter.addItems(["liquid", "solid", "gas"])
-        self.phase_filter.currentTextChanged.connect(self.apply_filters)
-        filter_layout.addWidget(QLabel("相态:"))
-        filter_layout.addWidget(self.phase_filter)
-        
-        # 危险类别过滤器
-        self.hazard_filter = QComboBox()
-        self.hazard_filter.addItem("所有类别")
-        self.hazard_filter.addItems(["易燃", "有毒", "腐蚀性", "爆炸性", "氧化剂", "无"])
-        self.hazard_filter.currentTextChanged.connect(self.apply_filters)
-        filter_layout.addWidget(QLabel("危险类别:"))
-        filter_layout.addWidget(self.hazard_filter)
+        # 快速过滤器
+        self.filter_combo = QComboBox()
+        self.filter_combo.addItems(["全部物料", "液体物料", "固体物料", "气体物料", "危险物料"])
+        self.filter_combo.setFixedHeight(28)
+        self.filter_combo.currentIndexChanged.connect(self.apply_quick_filter)
+        filter_layout.addWidget(QLabel("筛选:"))
+        filter_layout.addWidget(self.filter_combo)
         
         main_layout.addWidget(filter_frame)
         
-        # 分割器：左侧表格，右侧详情
+        # ========== 主要区域：使用分割器，占据剩余空间 ==========
         splitter = QSplitter(Qt.Horizontal)
+        splitter.setChildrenCollapsible(False)  # 防止子部件被压缩消失
         
-        # 左侧：物料表格
-        table_widget = QWidget()
-        table_layout = QVBoxLayout(table_widget)
+        # ========== 左侧：表格区域 - 使用拉伸因子 ==========
+        table_container = QWidget()
+        table_layout = QVBoxLayout(table_container)
+        table_layout.setContentsMargins(0, 0, 0, 0)
+        table_layout.setSpacing(2)
         
-        # 表格上方信息栏
-        info_layout = QHBoxLayout()
+        # 表格上方的信息区域 - 固定高度
+        info_frame = QFrame()
+        info_frame.setFixedHeight(30)
+        info_layout = QHBoxLayout(info_frame)
+        info_layout.setContentsMargins(8, 4, 8, 4)
+        
         self.info_label = QLabel("总计: 0 个物料")
         info_layout.addWidget(self.info_label)
         info_layout.addStretch()
         
         self.selected_label = QLabel("已选择: 0 个")
         info_layout.addWidget(self.selected_label)
-        table_layout.addLayout(info_layout)
         
-        # 物料表格
+        # 批量模式切换按钮
+        self.batch_toggle_btn = QPushButton("批量模式")
+        self.batch_toggle_btn.setCheckable(True)
+        self.batch_toggle_btn.setFixedHeight(24)
+        self.batch_toggle_btn.toggled.connect(self.toggle_batch_mode)
+        info_layout.addWidget(self.batch_toggle_btn)
+        
+        table_layout.addWidget(info_frame)
+        
+        # ========== 物料表格 - 设置为可拉伸，占据剩余空间 ==========
         self.material_table = QTableWidget()
-        self.material_table.setColumnCount(11)  # 增加列数
+        self.material_table.setColumnCount(10)  # 优化列数，移除选择框列
         self.material_table.setHorizontalHeaderLabels([
-            "",  # 选择框
             "物料ID", "名称", "CAS号", "分子式", "分子量", 
             "相态", "密度", "沸点", "熔点", "危险类别"
         ])
         
         # 设置表头
         header = self.material_table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.Fixed)  # 选择列固定宽度
-        header.resizeSection(0, 30)
-        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)  # ID列自适应
-        header.setSectionResizeMode(2, QHeaderView.Stretch)  # 名称列拉伸
-        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # CAS号
-        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)  # 分子式
+        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)  # 物料ID列自适应
+        header.setSectionResizeMode(1, QHeaderView.Stretch)          # 名称列拉伸
+        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # CAS号
+        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # 分子式
+        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)  # 分子量
+        header.setSectionResizeMode(5, QHeaderView.ResizeToContents)  # 相态
+        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)  # 密度
+        header.setSectionResizeMode(7, QHeaderView.ResizeToContents)  # 沸点
+        header.setSectionResizeMode(8, QHeaderView.ResizeToContents)  # 熔点
+        header.setSectionResizeMode(9, QHeaderView.Stretch)          # 危险类别
         
         # 启用排序
         self.material_table.setSortingEnabled(True)
@@ -237,73 +224,149 @@ class MaterialDatabaseTab(QWidget):
         self.material_table.itemDoubleClicked.connect(self.on_material_double_clicked)
         self.material_table.itemSelectionChanged.connect(self.on_selection_changed)
         
-        table_layout.addWidget(self.material_table)
+        # 表格添加到布局，使用拉伸因子1，使其占据剩余空间
+        table_layout.addWidget(self.material_table, 1)
         
-        splitter.addWidget(table_widget)
+        splitter.addWidget(table_container)
         
-        # 右侧：物料详情
-        detail_widget = QWidget()
-        detail_layout = QVBoxLayout(detail_widget)
-        
-        # 详情标签
+        # ========== 右侧：详情区域 - 按比例分配高度 ==========
+        detail_container = QWidget()
+        detail_container.setMinimumWidth(300)
+        detail_container.setMaximumWidth(500)
+        detail_layout = QVBoxLayout(detail_container)
+        detail_layout.setContentsMargins(5, 0, 5, 0)
+        detail_layout.setSpacing(2)
+
+        # 物料详情区域
         detail_label = QLabel("物料详情")
-        detail_label.setStyleSheet("font-weight: bold; font-size: 14px;")
+        detail_label.setStyleSheet("font-weight: bold; font-size: 14px; margin: 5px 0;")
         detail_layout.addWidget(detail_label)
-        
-        # 详情显示区域
+
         self.detail_text = QTextEdit()
         self.detail_text.setReadOnly(True)
-        self.detail_text.setMaximumHeight(300)
-        detail_layout.addWidget(self.detail_text)
-        
-        # 物性标签
+        self.detail_text.setMinimumHeight(150)
+        detail_layout.addWidget(self.detail_text, 3)  # 物料详情占3/5
+
+        # 物性参数区域
         property_label = QLabel("物理化学性质")
-        property_label.setStyleSheet("font-weight: bold; font-size: 14px;")
+        property_label.setStyleSheet("font-weight: bold; font-size: 14px; margin: 10px 0 5px 0;")
         detail_layout.addWidget(property_label)
-        
-        # 物性表格
+
         self.property_table = QTableWidget()
         self.property_table.setColumnCount(2)
         self.property_table.setHorizontalHeaderLabels(["属性", "值"])
         self.property_table.horizontalHeader().setStretchLastSection(True)
         self.property_table.setEditTriggers(QTableWidget.NoEditTriggers)
-        detail_layout.addWidget(self.property_table)
+        self.property_table.setMinimumHeight(120)
+        detail_layout.addWidget(self.property_table, 2)  # 物性参数占2/5
         
-        splitter.addWidget(detail_widget)
-        splitter.setSizes([700, 300])  # 设置初始大小比例
+        # 在详情区域添加一个拉伸，防止控件过度拉伸
+        detail_layout.addStretch()
         
-        main_layout.addWidget(splitter)
+        splitter.addWidget(detail_container)
         
-        # 批量操作按钮（初始隐藏）
+        # 设置分割器的初始大小比例
+        splitter.setSizes([700, 300])
+        
+        # 将分割器添加到主布局，使用拉伸因子1，使其占据剩余空间
+        main_layout.addWidget(splitter, 1)
+        
+        # ========== 批量操作面板 - 初始隐藏 ==========
         self.batch_panel = QFrame()
         self.batch_panel.setFrameStyle(QFrame.StyledPanel)
         self.batch_panel.setVisible(False)
         batch_layout = QHBoxLayout(self.batch_panel)
+        batch_layout.setContentsMargins(5, 5, 5, 5)
         
         self.batch_edit_btn = QPushButton("批量编辑")
         self.batch_edit_btn.clicked.connect(self.batch_edit_materials)
+        self.batch_edit_btn.setFixedHeight(30)
         batch_layout.addWidget(self.batch_edit_btn)
         
         self.batch_export_btn = QPushButton("批量导出")
         self.batch_export_btn.clicked.connect(self.batch_export_materials)
+        self.batch_export_btn.setFixedHeight(30)
         batch_layout.addWidget(self.batch_export_btn)
         
         self.batch_delete_btn = QPushButton("批量删除")
         self.batch_delete_btn.clicked.connect(self.batch_delete_materials)
+        self.batch_delete_btn.setFixedHeight(30)
         batch_layout.addWidget(self.batch_delete_btn)
         
         batch_layout.addStretch()
         
         self.clear_batch_btn = QPushButton("清除选择")
         self.clear_batch_btn.clicked.connect(self.clear_batch_selection)
+        self.clear_batch_btn.setFixedHeight(30)
         batch_layout.addWidget(self.clear_batch_btn)
         
         main_layout.addWidget(self.batch_panel)
         
-        # 状态栏
+        # ========== 状态栏 - 固定高度 ==========
         self.status_bar = QLabel()
-        self.status_bar.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
+        self.status_bar.setFixedHeight(25)
+        self.status_bar.setText("就绪")
         main_layout.addWidget(self.status_bar)
+        
+        # 设置窗口的最小尺寸
+        self.setMinimumSize(800, 600)
+
+    def setup_toolbar(self):
+        """设置工具栏"""
+        self.toolbar = QToolBar()
+        self.toolbar.setIconSize(QSize(16, 16))
+        self.toolbar.setFixedHeight(36)  # 固定工具栏高度
+        
+        # 工具栏动作
+        self.add_action = QAction("添加", self)
+        self.add_action.triggered.connect(self.add_material)
+        self.toolbar.addAction(self.add_action)
+        
+        self.edit_action = QAction("编辑", self)
+        self.edit_action.triggered.connect(self.edit_material)
+        self.toolbar.addAction(self.edit_action)
+        
+        self.delete_action = QAction("删除", self)
+        self.delete_action.triggered.connect(self.delete_material)
+        self.toolbar.addAction(self.delete_action)
+        
+        self.toolbar.addSeparator()
+        
+        self.import_action = QAction("导入", self)
+        self.import_action.triggered.connect(self.import_materials)
+        self.toolbar.addAction(self.import_action)
+        
+        self.export_action = QAction("导出", self)
+        self.export_action.triggered.connect(self.export_materials)
+        self.toolbar.addAction(self.export_action)
+        
+        self.toolbar.addSeparator()
+        
+        self.copy_action = QAction("复制", self)
+        self.copy_action.triggered.connect(self.copy_selected)
+        self.toolbar.addAction(self.copy_action)
+        
+        self.toolbar.addSeparator()
+        
+        self.select_all_action = QAction("全选", self)
+        self.select_all_action.triggered.connect(self.select_all_materials)
+        self.toolbar.addAction(self.select_all_action)
+        
+        self.clear_selection_action = QAction("清除选择", self)
+        self.clear_selection_action.triggered.connect(self.clear_selection)
+        self.toolbar.addAction(self.clear_selection_action)
+        
+        self.toolbar.addSeparator()
+        
+        self.refresh_action = QAction("刷新", self)
+        self.refresh_action.triggered.connect(self.force_refresh)
+        self.toolbar.addAction(self.refresh_action)
+        
+        self.toolbar.addSeparator()
+        
+        self.help_action = QAction("帮助", self)
+        self.help_action.triggered.connect(self.show_help)
+        self.toolbar.addAction(self.help_action)
     
     def setup_shortcuts(self):
         """设置快捷键"""
@@ -311,19 +374,79 @@ class MaterialDatabaseTab(QWidget):
         self.copy_action.setShortcut(QKeySequence.Copy)
         self.copy_action.setShortcutContext(Qt.WidgetShortcut)
         
-        # 粘贴快捷键
-        self.paste_action.setShortcut(QKeySequence.Paste)
-        self.paste_action.setShortcutContext(Qt.WidgetShortcut)
-        
         # 删除快捷键
         self.delete_action.setShortcut(QKeySequence.Delete)
         self.delete_action.setShortcutContext(Qt.WidgetShortcut)
         
         # 刷新快捷键
-        self.refresh_action = QAction("刷新", self)
         self.refresh_action.setShortcut(QKeySequence.Refresh)
-        self.refresh_action.triggered.connect(self.load_materials)
-        self.addAction(self.refresh_action)
+        self.refresh_action.setShortcutContext(Qt.WidgetShortcut)
+        
+        # 全选快捷键
+        self.select_all_action.setShortcut(QKeySequence.SelectAll)
+        self.select_all_action.setShortcutContext(Qt.WidgetShortcut)
+        
+        # 导出快捷键
+        self.export_action.setShortcut("Ctrl+E")
+        self.export_action.setShortcutContext(Qt.WidgetShortcut)
+    
+    def force_refresh(self):
+        """强制刷新物料列表"""
+        self.status_bar.setText("正在刷新...")
+        QApplication.processEvents()  # 处理挂起的事件
+        
+        try:
+            # 保存当前选中的行
+            selected_rows = self.material_table.selectionModel().selectedRows()
+            selected_ids = [self.material_table.item(row.row(), 0).text() 
+                          for row in selected_rows if self.material_table.item(row.row(), 0)]
+            
+            # 执行刷新
+            self.load_materials()
+            
+            # 尝试恢复选择
+            if selected_ids:
+                self.select_materials_by_ids(selected_ids)
+            
+            self.status_bar.setText("刷新完成")
+            
+        except Exception as e:
+            self.status_bar.setText(f"刷新失败: {str(e)}")
+            QMessageBox.warning(self, "刷新错误", f"刷新过程中发生错误:\n{str(e)}")
+    
+    def select_materials_by_ids(self, material_ids):
+        """根据物料ID选择行"""
+        self.material_table.clearSelection()
+        
+        for row in range(self.material_table.rowCount()):
+            item = self.material_table.item(row, 0)
+            if item and item.text() in material_ids:
+                self.material_table.selectRow(row)
+    
+    def clear_search(self):
+        """清空搜索"""
+        self.search_input.clear()
+        self.filter_combo.setCurrentIndex(0)  # 设置为"全部物料"
+        self.load_materials()
+    
+    def apply_quick_filter(self):
+        """应用快速筛选"""
+        filter_text = self.filter_combo.currentText()
+        
+        if filter_text == "全部物料":
+            self.populate_table(self.current_materials)
+        elif filter_text == "液体物料":
+            filtered = [m for m in self.current_materials if m.phase == "liquid"]
+            self.populate_table(filtered)
+        elif filter_text == "固体物料":
+            filtered = [m for m in self.current_materials if m.phase == "solid"]
+            self.populate_table(filtered)
+        elif filter_text == "气体物料":
+            filtered = [m for m in self.current_materials if m.phase == "gas"]
+            self.populate_table(filtered)
+        elif filter_text == "危险物料":
+            filtered = [m for m in self.current_materials if m.hazard_class and m.hazard_class != "无"]
+            self.populate_table(filtered)
     
     def load_materials(self):
         """加载物料数据"""
@@ -332,46 +455,86 @@ class MaterialDatabaseTab(QWidget):
             return
         
         try:
+            # 临时禁用表格更新，避免闪烁
+            self.material_table.setUpdatesEnabled(False)
+            
+            # 从数据管理器获取所有物料
             self.current_materials = self.process_manager.get_all_materials()
+            
+            # 将数据显示在表格中
             self.populate_table(self.current_materials)
+            
+            # 重新启用表格更新
+            self.material_table.setUpdatesEnabled(True)
+            
+            # 强制重绘
+            self.material_table.viewport().update()
+            
+            # 更新界面状态
             self.update_info_label()
             self.status_bar.setText(f"数据加载完成: {len(self.current_materials)} 条记录")
+            
         except Exception as e:
+            # 确保表格更新被重新启用
+            self.material_table.setUpdatesEnabled(True)
             self.status_bar.setText(f"加载失败: {str(e)}")
             QMessageBox.critical(self, "错误", f"加载物料数据时发生错误:\n{str(e)}")
     
     def populate_table(self, materials):
-        """填充表格数据"""
-        self.material_table.setRowCount(len(materials))
+        """安全地填充表格，避免item所有权冲突"""
+        # 停止所有信号，防止排序干扰
+        self.material_table.blockSignals(True)
+        self.material_table.setSortingEnabled(False)
         
-        for i, material in enumerate(materials):
-            # 选择框
-            checkbox_item = QTableWidgetItem()
-            checkbox_item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-            checkbox_item.setCheckState(Qt.Unchecked)
-            self.material_table.setItem(i, 0, checkbox_item)
+        try:
+            # 完全清空表格
+            self.material_table.clearContents()
+            self.material_table.setRowCount(0)
             
-            # 物料数据
-            self.material_table.setItem(i, 1, QTableWidgetItem(material.material_id))
-            self.material_table.setItem(i, 2, QTableWidgetItem(material.name))
-            self.material_table.setItem(i, 3, QTableWidgetItem(material.cas_number))
-            self.material_table.setItem(i, 4, QTableWidgetItem(material.molecular_formula))
-            self.material_table.setItem(i, 5, QTableWidgetItem(f"{material.molecular_weight:.2f}" if material.molecular_weight else ""))
-            self.material_table.setItem(i, 6, QTableWidgetItem(material.phase))
-            self.material_table.setItem(i, 7, QTableWidgetItem(f"{material.density:.2f}" if material.density else ""))
-            self.material_table.setItem(i, 8, QTableWidgetItem(f"{material.boiling_point:.1f}" if material.boiling_point else ""))
-            self.material_table.setItem(i, 9, QTableWidgetItem(f"{material.melting_point:.1f}" if material.melting_point else ""))
-            self.material_table.setItem(i, 10, QTableWidgetItem(material.hazard_class))
+            # 设置新的行数
+            self.material_table.setRowCount(len(materials))
+            
+            for i, material in enumerate(materials):
+                # 物料数据
+                self.material_table.setItem(i, 0, QTableWidgetItem(material.material_id))
+                self.material_table.setItem(i, 1, QTableWidgetItem(material.name))
+                self.material_table.setItem(i, 2, QTableWidgetItem(material.cas_number))
+                self.material_table.setItem(i, 3, QTableWidgetItem(material.molecular_formula))
+                self.material_table.setItem(i, 4, QTableWidgetItem(f"{material.molecular_weight:.2f}" if material.molecular_weight else ""))
+                self.material_table.setItem(i, 5, QTableWidgetItem(material.phase))
+                self.material_table.setItem(i, 6, QTableWidgetItem(f"{material.density:.2f}" if material.density else ""))
+                self.material_table.setItem(i, 7, QTableWidgetItem(f"{material.boiling_point:.1f}" if material.boiling_point else ""))
+                self.material_table.setItem(i, 8, QTableWidgetItem(f"{material.melting_point:.1f}" if material.melting_point else ""))
+                self.material_table.setItem(i, 9, QTableWidgetItem(material.hazard_class))
+            
+            # 重新启用排序
+            self.material_table.setSortingEnabled(True)
+            self.material_table.sortItems(0, Qt.AscendingOrder)
+            
+        finally:
+            # 恢复信号
+            self.material_table.blockSignals(False)
         
         self.update_info_label()
     
     def update_info_label(self):
         """更新信息标签"""
         total = self.material_table.rowCount()
-        selected = len([i for i in range(total) 
-                       if self.material_table.item(i, 0).checkState() == Qt.Checked])
+        selected = len(self.material_table.selectionModel().selectedRows())
+        
         self.info_label.setText(f"总计: {total} 个物料")
         self.selected_label.setText(f"已选择: {selected} 个")
+        
+        # 更新状态栏
+        search_term = self.search_input.text().strip()
+        filter_text = self.filter_combo.currentText()
+        
+        if search_term:
+            self.status_bar.setText(f"搜索 '{search_term}'，找到 {total} 个物料")
+        elif filter_text != "全部物料":
+            self.status_bar.setText(f"筛选 '{filter_text}'，显示 {total} 个物料")
+        else:
+            self.status_bar.setText(f"总计 {total} 个物料")
     
     def on_search_changed(self):
         """搜索内容变化 - 防抖处理"""
@@ -396,56 +559,15 @@ class MaterialDatabaseTab(QWidget):
                 materials = self.process_manager.search_materials(search_term)
             
             self.current_materials = materials
-            self.apply_filters()  # 应用当前过滤器
+            self.apply_quick_filter()  # 应用当前过滤器
             self.status_bar.setText(f"搜索到 {len(materials)} 条记录")
         except Exception as e:
             self.status_bar.setText(f"搜索失败: {str(e)}")
     
-    def apply_filters(self):
-        """应用过滤器"""
-        phase_filter = self.phase_filter.currentText()
-        hazard_filter = self.hazard_filter.currentText()
-        
-        filtered_materials = self.current_materials.copy()
-        
-        # 应用相态过滤
-        if phase_filter != "所有相态":
-            filtered_materials = [m for m in filtered_materials if m.phase == phase_filter]
-        
-        # 应用危险类别过滤
-        if hazard_filter != "所有类别":
-            filtered_materials = [m for m in filtered_materials if hazard_filter in m.hazard_class]
-        
-        self.populate_table(filtered_materials)
-    
-    def open_advanced_search(self):
-        """打开高级搜索对话框"""
-        dialog = AdvancedSearchDialog(self)
-        if dialog.exec() == QDialog.Accepted:
-            criteria = dialog.get_search_criteria()
-            self.perform_advanced_search(criteria)
-    
-    def perform_advanced_search(self, criteria):
-        """执行高级搜索"""
-        if not self.process_manager:
-            return
-        
-        try:
-            materials = self.process_manager.advanced_search_materials(criteria)
-            self.current_materials = materials
-            self.populate_table(materials)
-            self.status_bar.setText(f"高级搜索找到 {len(materials)} 条记录")
-        except Exception as e:
-            self.status_bar.setText(f"高级搜索失败: {str(e)}")
-            QMessageBox.warning(self, "搜索失败", str(e))
-    
     def on_material_double_clicked(self, item):
         """物料双击事件"""
-        if item.column() == 0:  # 点击选择框时不触发
-            return
-        
         row = item.row()
-        material_id = self.material_table.item(row, 1).text()
+        material_id = self.material_table.item(row, 0).text()
         self.show_material_details(material_id)
         self.material_selected.emit(material_id)
     
@@ -486,13 +608,16 @@ class MaterialDatabaseTab(QWidget):
         for i, (prop, value) in enumerate(properties):
             self.property_table.setItem(i, 0, QTableWidgetItem(prop))
             self.property_table.setItem(i, 1, QTableWidgetItem(value))
+        
+        # 设置表格自适应
+        self.property_table.resizeRowsToContents()
     
     def on_selection_changed(self):
         """选择变化事件"""
         selected_rows = self.material_table.selectionModel().selectedRows()
         if selected_rows:
             row = selected_rows[0].row()
-            material_id = self.material_table.item(row, 1).text()
+            material_id = self.material_table.item(row, 0).text()
             self.show_material_details(material_id)
     
     def toggle_batch_mode(self, enabled):
@@ -501,30 +626,219 @@ class MaterialDatabaseTab(QWidget):
         self.batch_panel.setVisible(enabled)
         
         if enabled:
-            self.material_table.setSelectionMode(QTableWidget.NoSelection)
-            for i in range(self.material_table.rowCount()):
-                item = self.material_table.item(i, 0)
-                item.setFlags(item.flags() | Qt.ItemIsEnabled)
+            self.material_table.setSelectionMode(QTableWidget.MultiSelection)
         else:
             self.material_table.setSelectionMode(QTableWidget.ExtendedSelection)
             self.clear_batch_selection()
     
     def clear_batch_selection(self):
         """清除批量选择"""
-        for i in range(self.material_table.rowCount()):
-            self.material_table.item(i, 0).setCheckState(Qt.Unchecked)
+        self.material_table.clearSelection()
         self.update_info_label()
     
-    def get_selected_materials(self):
+    def get_selected_material_ids(self):
         """获取选中的物料ID列表"""
-        selected = []
-        for i in range(self.material_table.rowCount()):
-            if self.material_table.item(i, 0).checkState() == Qt.Checked:
-                material_id = self.material_table.item(i, 1).text()
-                selected.append(material_id)
-        return selected
+        selected_rows = self.material_table.selectionModel().selectedRows()
+        selected_ids = []
+        
+        for row in selected_rows:
+            material_id_item = self.material_table.item(row.row(), 0)
+            if material_id_item:
+                selected_ids.append(material_id_item.text())
+        
+        return selected_ids
     
-    # ==================== 新增功能方法 ====================
+    def select_all_materials(self):
+        """全选所有物料"""
+        self.material_table.selectAll()
+        self.update_info_label()
+    
+    def clear_selection(self):
+        """清除选择"""
+        self.material_table.clearSelection()
+        self.update_info_label()
+    
+    def copy_selected(self):
+        """复制选中内容到剪贴板"""
+        selected_items = self.material_table.selectedItems()
+        if not selected_items:
+            return
+        
+        # 获取选中的行和列
+        rows = sorted(set(item.row() for item in selected_items))
+        cols = sorted(set(item.column() for item in selected_items))
+        
+        # 构建表格文本
+        text = ""
+        for row in rows:
+            row_data = []
+            for col in cols:
+                item = self.material_table.item(row, col)
+                row_data.append(item.text() if item else "")
+            text += "\t".join(row_data) + "\n"
+        
+        clipboard = QApplication.clipboard()
+        clipboard.setText(text.strip())
+        
+        self.status_bar.setText(f"已复制 {len(rows)} 行数据")
+    
+    # ==================== 核心功能方法 ====================
+    
+    def add_material(self):
+        """添加物料"""
+        dialog = MaterialDialog(self)
+        if dialog.exec() == QDialog.Accepted:
+            material = dialog.get_material()
+            if material and self.process_manager:
+                try:
+                    if self.process_manager.add_material(material):
+                        # 延迟一小段时间再刷新，确保UI完全处理完
+                        QTimer.singleShot(50, self.load_materials)
+                        self.material_list_updated.emit()
+                        self.status_bar.setText(f"物料 '{material.name}' 添加成功")
+                    else:
+                        QMessageBox.warning(self, "错误", "物料添加失败，可能物料ID已存在。")
+                except Exception as e:
+                    QMessageBox.critical(self, "错误", f"添加物料时发生错误:\n{str(e)}")
+    
+    def edit_material(self):
+        """编辑物料"""
+        selected_row = self.material_table.currentRow()
+        if selected_row < 0:
+            QMessageBox.warning(self, "警告", "请先选择要编辑的物料")
+            return
+        
+        material_id = self.material_table.item(selected_row, 0).text()
+        if not self.process_manager:
+            return
+        
+        material = self.process_manager.get_material(material_id)
+        if not material:
+            QMessageBox.warning(self, "错误", "物料未找到")
+            return
+        
+        dialog = MaterialDialog(self, material)
+        if dialog.exec() == QDialog.Accepted:
+            updated_material = dialog.get_material()
+            if updated_material and self.process_manager:
+                try:
+                    if self.process_manager.update_material(updated_material):
+                        QTimer.singleShot(50, self.load_materials)
+                        self.material_list_updated.emit()
+                        self.status_bar.setText(f"物料 '{updated_material.name}' 更新成功")
+                    else:
+                        QMessageBox.warning(self, "错误", "物料更新失败")
+                except Exception as e:
+                    QMessageBox.critical(self, "错误", f"更新物料时发生错误:\n{str(e)}")
+    
+    def delete_material(self):
+        """删除物料 - 支持单个和批量删除"""
+        selected_ids = self.get_selected_material_ids()
+        if not selected_ids:
+            QMessageBox.warning(self, "警告", "请先选择要删除的物料")
+            return
+        
+        # 获取选中的第一个物料（用于单个删除时的确认信息）
+        material = None
+        if selected_ids:
+            material = self.process_manager.get_material(selected_ids[0])
+        
+        # 确认删除
+        confirmed = False
+        
+        if len(selected_ids) == 1 and material:
+            # 单个物料删除确认
+            reply = QMessageBox.question(
+                self, "确认删除",
+                f"确定要删除物料 '{material.name}' 吗？\n此操作不可恢复！",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No
+            )
+            confirmed = (reply == QMessageBox.Yes)
+        else:
+            # 批量删除确认
+            confirmed = self.confirm_batch_delete(selected_ids)
+        
+        # 如果用户确认删除，执行删除操作
+        if confirmed:
+            success_count = 0
+            failed_count = 0
+            
+            for material_id in selected_ids:
+                if self.process_manager.delete_material(material_id):
+                    success_count += 1
+                else:
+                    failed_count += 1
+            
+            # 重新加载数据
+            QTimer.singleShot(50, self.load_materials)
+            self.material_list_updated.emit()
+            
+            # 显示操作结果
+            if len(selected_ids) == 1:
+                if success_count == 1:
+                    self.status_bar.setText(f"物料 '{material.name}' 删除成功")
+                else:
+                    self.status_bar.setText(f"物料 '{material.name}' 删除失败")
+            else:
+                message = f"批量删除完成: 成功 {success_count} 个"
+                if failed_count > 0:
+                    message += f", 失败 {failed_count} 个"
+                
+                QMessageBox.information(self, "删除完成", message)
+                self.status_bar.setText(f"批量删除完成: {success_count}/{len(selected_ids)} 个成功")
+    
+    def confirm_batch_delete(self, selected_ids):
+        """批量删除确认对话框"""
+        dialog = QDialog(self)
+        dialog.setWindowTitle("批量删除确认")
+        dialog.setMinimumWidth(400)
+        
+        layout = QVBoxLayout(dialog)
+        
+        # 显示选中物料数量
+        layout.addWidget(QLabel(f"将要删除 {len(selected_ids)} 个物料"))
+        
+        # 显示部分物料名称（最多显示5个）
+        material_names = []
+        for material_id in selected_ids[:5]:  # 只显示前5个
+            material = self.process_manager.get_material(material_id)
+            if material:
+                material_names.append(f"• {material.name}")
+        
+        if material_names:
+            names_text = "\n".join(material_names)
+            if len(selected_ids) > 5:
+                names_text += f"\n...等 {len(selected_ids)} 个物料"
+            
+            names_label = QLabel(names_text)
+            layout.addWidget(names_label)
+        
+        # 警告信息
+        warning_label = QLabel("⚠️ 此操作不可恢复！请确认")
+        warning_label.setStyleSheet("color: red; font-weight: bold;")
+        layout.addWidget(warning_label)
+        
+        # 确认复选框（防止误操作）
+        confirm_checkbox = QCheckBox("我确认要删除这些物料")
+        layout.addWidget(confirm_checkbox)
+        
+        # 按钮
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        button_box.button(QDialogButtonBox.Ok).setEnabled(False)  # 初始禁用
+        
+        # 只有当用户勾选确认框时才启用确定按钮
+        def update_button_state(checked):
+            button_box.button(QDialogButtonBox.Ok).setEnabled(checked)
+        
+        confirm_checkbox.stateChanged.connect(update_button_state)
+        
+        button_box.accepted.connect(dialog.accept)
+        button_box.rejected.connect(dialog.reject)
+        
+        layout.addWidget(button_box)
+        
+        return dialog.exec() == QDialog.Accepted
     
     def import_materials(self):
         """导入物料数据"""
@@ -644,7 +958,7 @@ class MaterialDatabaseTab(QWidget):
             if export_mode == 'current':
                 data = self.current_materials
             elif export_mode == 'selected':
-                selected_ids = self.get_selected_materials()
+                selected_ids = self.get_selected_material_ids()
                 if not selected_ids:
                     QMessageBox.warning(self, "警告", "请先选择要导出的物料")
                     return
@@ -687,98 +1001,9 @@ class MaterialDatabaseTab(QWidget):
         except Exception as e:
             QMessageBox.critical(self, "导出失败", f"导出文件时发生错误:\n{str(e)}")
     
-    def copy_selected(self):
-        """复制选中内容到剪贴板"""
-        selected_items = self.material_table.selectedItems()
-        if not selected_items:
-            return
-        
-        # 获取选中的行和列
-        rows = sorted(set(item.row() for item in selected_items))
-        cols = sorted(set(item.column() for item in selected_items))
-        
-        # 构建表格文本
-        text = ""
-        for row in rows:
-            row_data = []
-            for col in cols:
-                if col == 0:  # 跳过选择框列
-                    continue
-                item = self.material_table.item(row, col)
-                row_data.append(item.text() if item else "")
-            text += "\t".join(row_data) + "\n"
-        
-        clipboard = QApplication.clipboard()
-        clipboard.setText(text.strip())
-        
-        self.status_bar.setText(f"已复制 {len(rows)} 行数据")
-    
-    def paste_material(self):
-        """从剪贴板粘贴物料数据"""
-        clipboard = QApplication.clipboard()
-        text = clipboard.text().strip()
-        
-        if not text:
-            return
-        
-        try:
-            # 解析TSV格式数据
-            rows = text.split('\n')
-            materials = []
-            
-            for row in rows:
-                parts = row.split('\t')
-                if len(parts) >= 3:  # 至少需要ID、名称、CAS号
-                    from ..process_design_data import MaterialProperty
-                    
-                    material = MaterialProperty(
-                        material_id=parts[0],
-                        name=parts[1],
-                        cas_number=parts[2] if len(parts) > 2 else "",
-                        molecular_formula=parts[3] if len(parts) > 3 else "",
-                        molecular_weight=float(parts[4]) if len(parts) > 4 and parts[4] else 0,
-                        phase=parts[5] if len(parts) > 5 else "liquid",
-                        density=float(parts[6]) if len(parts) > 6 and parts[6] else None,
-                        hazard_class=parts[7] if len(parts) > 7 else ""
-                    )
-                    materials.append(material)
-            
-            if materials:
-                dialog = PasteConfirmDialog(materials, self)
-                if dialog.exec() == QDialog.Accepted:
-                    self.batch_add_materials(materials)
-            
-        except Exception as e:
-            QMessageBox.warning(self, "粘贴失败", f"无法解析剪贴板数据:\n{str(e)}")
-    
-    def batch_add_materials(self, materials):
-        """批量添加物料"""
-        if not self.process_manager:
-            return
-        
-        success_count = 0
-        fail_count = 0
-        
-        for material in materials:
-            try:
-                if self.process_manager.add_material(material):
-                    success_count += 1
-                else:
-                    fail_count += 1
-            except Exception:
-                fail_count += 1
-        
-        self.load_materials()
-        
-        if fail_count == 0:
-            QMessageBox.information(self, "批量添加完成", f"成功添加 {success_count} 个物料")
-        else:
-            QMessageBox.warning(self, "批量添加完成", 
-                              f"添加完成:\n成功: {success_count}\n失败: {fail_count}")
-    
     def batch_edit_materials(self):
         """批量编辑物料"""
-        selected_ids = self.get_selected_materials()
+        selected_ids = self.get_selected_material_ids()
         if not selected_ids:
             QMessageBox.warning(self, "警告", "请先选择要编辑的物料")
             return
@@ -789,7 +1014,7 @@ class MaterialDatabaseTab(QWidget):
     
     def batch_export_materials(self):
         """批量导出选中的物料"""
-        selected_ids = self.get_selected_materials()
+        selected_ids = self.get_selected_material_ids()
         if not selected_ids:
             QMessageBox.warning(self, "警告", "请先选择要导出的物料")
             return
@@ -798,7 +1023,7 @@ class MaterialDatabaseTab(QWidget):
     
     def batch_delete_materials(self):
         """批量删除物料"""
-        selected_ids = self.get_selected_materials()
+        selected_ids = self.get_selected_material_ids()
         if not selected_ids:
             QMessageBox.warning(self, "警告", "请先选择要删除的物料")
             return
@@ -875,183 +1100,39 @@ class MaterialDatabaseTab(QWidget):
         except Exception as e:
             QMessageBox.critical(self, "导出失败", f"导出文件时发生错误:\n{str(e)}")
     
-    # ==================== 原有方法（保持兼容） ====================
-    
-    def add_material(self):
-        """添加物料"""
-        dialog = MaterialDialog(self)
-        if dialog.exec() == QDialog.Accepted:
-            material = dialog.get_material()
-            if material and self.process_manager:
-                try:
-                    if self.process_manager.add_material(material):
-                        self.load_materials()
-                        self.material_list_updated.emit()
-                        self.status_bar.setText(f"物料 '{material.name}' 添加成功")
-                    else:
-                        QMessageBox.warning(self, "错误", "物料添加失败，可能物料ID已存在。")
-                except Exception as e:
-                    QMessageBox.critical(self, "错误", f"添加物料时发生错误:\n{str(e)}")
-    
-    def edit_material(self):
-        """编辑物料"""
-        selected_row = self.material_table.currentRow()
-        if selected_row < 0:
-            QMessageBox.warning(self, "警告", "请先选择要编辑的物料")
-            return
+    def show_help(self):
+        """显示帮助信息"""
+        help_text = """
+        <h3>物料数据库使用说明</h3>
         
-        material_id = self.material_table.item(selected_row, 1).text()
-        if not self.process_manager:
-            return
+        <h4>主要功能：</h4>
+        <ul>
+            <li><b>添加物料</b>: 点击工具栏的"添加"按钮</li>
+            <li><b>编辑物料</b>: 选择物料后点击"编辑"按钮或双击物料行</li>
+            <li><b>删除物料</b>: 选择物料后点击"删除"按钮</li>
+            <li><b>批量操作</b>: 开启批量模式后可进行批量编辑、导出、删除</li>
+        </ul>
         
-        material = self.process_manager.get_material(material_id)
-        if not material:
-            QMessageBox.warning(self, "错误", "物料未找到")
-            return
+        <h4>搜索功能：</h4>
+        <ul>
+            <li>支持按物料名称、CAS号、分子式搜索</li>
+            <li>使用快速筛选功能按物料类型过滤</li>
+        </ul>
         
-        dialog = MaterialDialog(self, material)
-        if dialog.exec() == QDialog.Accepted:
-            updated_material = dialog.get_material()
-            if updated_material and self.process_manager:
-                if self.process_manager.update_material(updated_material):
-                    self.load_materials()
-                    self.material_list_updated.emit()
-                    self.status_bar.setText(f"物料 '{updated_material.name}' 更新成功")
-                else:
-                    QMessageBox.warning(self, "错误", "物料更新失败")
-    
-    def delete_material(self):
-        """删除物料"""
-        selected_row = self.material_table.currentRow()
-        if selected_row < 0:
-            QMessageBox.warning(self, "警告", "请先选择要删除的物料")
-            return
+        <h4>快捷键：</h4>
+        <ul>
+            <li><b>Ctrl+C</b>: 复制选中内容</li>
+            <li><b>Ctrl+E</b>: 导出物料数据</li>
+            <li><b>Delete</b>: 删除选中物料</li>
+            <li><b>F5</b>: 刷新物料列表</li>
+            <li><b>Ctrl+A</b>: 全选</li>
+        </ul>
+        """
         
-        material_id = self.material_table.item(selected_row, 1).text()
-        material_name = self.material_table.item(selected_row, 2).text()
-        
-        reply = QMessageBox.question(
-            self, "确认删除",
-            f"确定要删除物料 '{material_name}' 吗？\n此操作不可恢复！",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
-        )
-        
-        if reply == QMessageBox.Yes and self.process_manager:
-            if self.process_manager.delete_material(material_id):
-                self.load_materials()
-                self.material_list_updated.emit()
-                self.status_bar.setText(f"物料 '{material_name}' 删除成功")
-            else:
-                QMessageBox.warning(self, "错误", "物料删除失败")
+        QMessageBox.information(self, "物料数据库帮助", help_text)
 
 
-# ==================== 新增对话框类 ====================
-
-class AdvancedSearchDialog(QDialog):
-    """高级搜索对话框"""
-    
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("高级搜索")
-        self.setMinimumWidth(400)
-        self.setup_ui()
-    
-    def setup_ui(self):
-        """设置UI"""
-        layout = QVBoxLayout(self)
-        
-        form_layout = QFormLayout()
-        
-        # 分子量范围
-        mol_weight_layout = QHBoxLayout()
-        self.min_mw = QDoubleSpinBox()
-        self.min_mw.setRange(0, 10000)
-        self.min_mw.setSpecialValueText("最小值")
-        self.max_mw = QDoubleSpinBox()
-        self.max_mw.setRange(0, 10000)
-        self.max_mw.setSpecialValueText("最大值")
-        mol_weight_layout.addWidget(self.min_mw)
-        mol_weight_layout.addWidget(QLabel(" - "))
-        mol_weight_layout.addWidget(self.max_mw)
-        form_layout.addRow("分子量范围:", mol_weight_layout)
-        
-        # 密度范围
-        density_layout = QHBoxLayout()
-        self.min_density = QDoubleSpinBox()
-        self.min_density.setRange(0, 10000)
-        self.min_density.setSpecialValueText("最小值")
-        self.max_density = QDoubleSpinBox()
-        self.max_density.setRange(0, 10000)
-        self.max_density.setSpecialValueText("最大值")
-        density_layout.addWidget(self.min_density)
-        density_layout.addWidget(QLabel(" - "))
-        density_layout.addWidget(self.max_density)
-        form_layout.addRow("密度范围:", density_layout)
-        
-        # 沸点范围
-        bp_layout = QHBoxLayout()
-        self.min_bp = QDoubleSpinBox()
-        self.min_bp.setRange(-273, 10000)
-        self.min_bp.setSpecialValueText("最小值")
-        self.max_bp = QDoubleSpinBox()
-        self.max_bp.setRange(-273, 10000)
-        self.max_bp.setSpecialValueText("最大值")
-        bp_layout.addWidget(self.min_bp)
-        bp_layout.addWidget(QLabel(" - "))
-        bp_layout.addWidget(self.max_bp)
-        form_layout.addRow("沸点范围:", bp_layout)
-        
-        # 危险类别多选
-        self.hazard_checkboxes = []
-        hazard_layout = QHBoxLayout()
-        for hazard in ["易燃", "有毒", "腐蚀性", "爆炸性", "氧化剂"]:
-            checkbox = QCheckBox(hazard)
-            self.hazard_checkboxes.append(checkbox)
-            hazard_layout.addWidget(checkbox)
-        form_layout.addRow("危险类别:", hazard_layout)
-        
-        layout.addLayout(form_layout)
-        
-        # 按钮
-        from PySide6.QtWidgets import QDialogButtonBox
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        button_box.accepted.connect(self.accept)
-        button_box.rejected.connect(self.reject)
-        layout.addWidget(button_box)
-    
-    def get_search_criteria(self):
-        """获取搜索条件"""
-        criteria = {}
-        
-        # 分子量
-        if not self.min_mw.text().startswith("最小"):
-            criteria['min_molecular_weight'] = self.min_mw.value()
-        if not self.max_mw.text().startswith("最大"):
-            criteria['max_molecular_weight'] = self.max_mw.value()
-        
-        # 密度
-        if not self.min_density.text().startswith("最小"):
-            criteria['min_density'] = self.min_density.value()
-        if not self.max_density.text().startswith("最大"):
-            criteria['max_density'] = self.max_density.value()
-        
-        # 沸点
-        if not self.min_bp.text().startswith("最小"):
-            criteria['min_boiling_point'] = self.min_bp.value()
-        if not self.max_bp.text().startswith("最大"):
-            criteria['max_boiling_point'] = self.max_bp.value()
-        
-        # 危险类别
-        selected_hazards = []
-        for checkbox in self.hazard_checkboxes:
-            if checkbox.isChecked():
-                selected_hazards.append(checkbox.text())
-        if selected_hazards:
-            criteria['hazard_classes'] = selected_hazards
-        
-        return criteria
-
+# ==================== 对话框类 ====================
 
 class ImportDialog(QDialog):
     """导入选项对话框"""
@@ -1082,7 +1163,6 @@ class ImportDialog(QDialog):
         layout.addWidget(mode_group)
         
         # 按钮
-        from PySide6.QtWidgets import QDialogButtonBox
         button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         button_box.accepted.connect(self.accept)
         button_box.rejected.connect(self.reject)
@@ -1128,7 +1208,6 @@ class ExportDialog(QDialog):
         layout.addWidget(range_group)
         
         # 按钮
-        from PySide6.QtWidgets import QDialogButtonBox
         button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         button_box.accepted.connect(self.accept)
         button_box.rejected.connect(self.reject)
@@ -1142,50 +1221,6 @@ class ExportDialog(QDialog):
             return 'selected', False
         else:
             return 'all', True
-
-
-class PasteConfirmDialog(QDialog):
-    """粘贴确认对话框"""
-    
-    def __init__(self, materials, parent=None):
-        super().__init__(parent)
-        self.materials = materials
-        self.setWindowTitle("确认粘贴")
-        self.setup_ui()
-    
-    def setup_ui(self):
-        """设置UI"""
-        layout = QVBoxLayout(self)
-        
-        layout.addWidget(QLabel(f"发现 {len(self.materials)} 个物料:"))
-        
-        # 预览表格
-        preview_table = QTableWidget()
-        preview_table.setColumnCount(4)
-        preview_table.setHorizontalHeaderLabels(["物料ID", "名称", "CAS号", "分子式"])
-        preview_table.setRowCount(min(5, len(self.materials)))  # 最多显示5行
-        
-        for i in range(min(5, len(self.materials))):
-            material = self.materials[i]
-            preview_table.setItem(i, 0, QTableWidgetItem(material.material_id))
-            preview_table.setItem(i, 1, QTableWidgetItem(material.name))
-            preview_table.setItem(i, 2, QTableWidgetItem(material.cas_number))
-            preview_table.setItem(i, 3, QTableWidgetItem(material.molecular_formula))
-        
-        preview_table.horizontalHeader().setStretchLastSection(True)
-        layout.addWidget(preview_table)
-        
-        if len(self.materials) > 5:
-            layout.addWidget(QLabel(f"... 还有 {len(self.materials)-5} 个物料"))
-        
-        layout.addWidget(QLabel("确认要添加这些物料吗？"))
-        
-        # 按钮
-        from PySide6.QtWidgets import QDialogButtonBox
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        button_box.accepted.connect(self.accept)
-        button_box.rejected.connect(self.reject)
-        layout.addWidget(button_box)
 
 
 class BatchEditDialog(QDialog):
@@ -1231,7 +1266,6 @@ class BatchEditDialog(QDialog):
         layout.addWidget(QLabel("注意：空字段不会修改原有值"))
         
         # 按钮
-        from PySide6.QtWidgets import QDialogButtonBox
         button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         button_box.accepted.connect(self.apply_changes)
         button_box.rejected.connect(self.reject)
@@ -1306,7 +1340,7 @@ class ImportThread(QThread):
                     self.process_manager.delete_material(material.material_id)
             
             # 导入数据
-            from ..process_design_data import MaterialProperty
+            from ..data.data_models import MaterialProperty
             
             for i, row in self.df.iterrows():
                 if self._is_cancelled:
@@ -1364,10 +1398,10 @@ class ImportThread(QThread):
         self._is_cancelled = True
 
 
-# ==================== 原有MaterialDialog类（保持兼容） ====================
+# ==================== MaterialDialog类 ====================
 
 class MaterialDialog(QDialog):
-    """物料对话框 - 增强版"""
+    """物料对话框"""
     
     def __init__(self, parent=None, material=None):
         super().__init__(parent)
@@ -1483,7 +1517,6 @@ class MaterialDialog(QDialog):
         layout.addWidget(self.validation_label)
         
         # 按钮
-        from PySide6.QtWidgets import QDialogButtonBox
         button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         button_box.accepted.connect(self.validate_and_accept)
         button_box.rejected.connect(self.reject)
@@ -1584,7 +1617,7 @@ class MaterialDialog(QDialog):
     
     def get_material(self):
         """获取物料对象"""
-        from ..process_design_data import MaterialProperty
+        from ..data.data_models import MaterialProperty
         
         material_id = self.material_id_input.text().strip()
         name = self.name_input.text().strip()

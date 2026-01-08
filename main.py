@@ -1,4 +1,4 @@
-# main.py (只修改关键部分)
+# TofuApp/main.py
 import sys
 import os
 import traceback
@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (
     QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout, 
     QMessageBox, QMenuBar, QMenu, QStatusBar, QLabel
 )
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QAction, QFont
 from datetime import datetime
 
@@ -42,7 +42,7 @@ class TofuApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Tofu - 个人生产力工具")
-        self.setGeometry(100, 100, 1600, 900)
+        self.setGeometry(160, 50, 1600, 970)
         
         # 初始化管理器
         self.theme_manager = ThemeManager()
@@ -56,16 +56,6 @@ class TofuApp(QMainWindow):
         
         # 加载设置
         self.load_settings()
-        
-        print("✅ Tofu应用程序初始化完成")
-
-    def center_window(self):
-        """居中显示窗口"""
-        screen = QApplication.primaryScreen().geometry()
-        window_geometry = self.frameGeometry()
-        center_point = screen.center()
-        window_geometry.moveCenter(center_point)
-        self.move(window_geometry.topLeft())
     
     def setup_ui(self):
         """设置用户界面"""
@@ -95,8 +85,6 @@ class TofuApp(QMainWindow):
     def create_modules(self):
         """创建所有功能模块"""
         modules_config = [
-            # 修改：使用完整模块路径
-            ("modules.process_design", "ProcessDesignWidget", "工艺设计", "🏭"),
             ("modules.chemical_calculations", "ChemicalCalculationsWidget", "工程计算", "🔬"),
             ("modules.converter.converter_widget", "ConverterWidget", "换算器", "📐"),
             ("modules.pomodoro", "PomodoroTimer", "番茄时钟", "🍅"),
@@ -114,17 +102,30 @@ class TofuApp(QMainWindow):
                 tab_text = f"{icon} {tab_name}"
                 self.tab_widget.addTab(widget, tab_text)
                 self.modules[tab_name] = widget
-                
-                if hasattr(widget, 'on_theme_changed'):
-                    self.theme_manager.theme_changed.connect(widget.on_theme_changed)
-                    
-                print(f"✅ {tab_name} 模块加载成功")
                     
             except Exception as e:
                 print(f"❌ 创建 {tab_name} 标签页失败: {e}")
                 traceback.print_exc()
                 error_widget = ModuleLoader.create_error_widget(f"{tab_name} 加载失败", str(e))
                 self.tab_widget.addTab(error_widget, f"{icon} {tab_name}")
+    
+    def create_error_tab(self, tab_name, error_message):
+        """创建错误标签页"""
+        from PySide6.QtWidgets import QLabel
+        error_widget = QWidget()
+        error_layout = QVBoxLayout(error_widget)
+        error_layout.setAlignment(Qt.AlignCenter)
+        
+        error_label = QLabel(f"{tab_name} 加载失败")
+        error_label.setStyleSheet("color: red; font-weight: bold; font-size: 14px;")
+        error_layout.addWidget(error_label)
+        
+        detail_label = QLabel(error_message)
+        detail_label.setStyleSheet("color: #666; font-size: 12px;")
+        detail_label.setWordWrap(True)
+        error_layout.addWidget(detail_label)
+        
+        self.tab_widget.addTab(error_widget, f"❌ {tab_name}")
     
     def setup_menu(self):
         """设置菜单"""
@@ -214,8 +215,6 @@ class TofuApp(QMainWindow):
         # 应用字体设置
         self.setup_fonts()
         
-        print("✅ 设置加载完成")
-    
     def setup_fonts(self):
         """设置字体"""
         app_font = QFont("Microsoft YaHei", 10)
@@ -239,8 +238,6 @@ class TofuApp(QMainWindow):
         settings["theme"] = theme_name
         self.data_manager.update_settings(settings)
         
-        print(f"✅ 主题已切换为: {theme_name}")
-    
     def update_time(self):
         """更新状态栏时间"""
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -264,7 +261,6 @@ class TofuApp(QMainWindow):
             if hasattr(widget, 'refresh'):
                 try:
                     widget.refresh()
-                    print(f"✅ {module_name} 刷新完成")
                     refresh_count += 1
                 except Exception as e:
                     print(f"❌ {module_name} 刷新失败: {e}")
@@ -280,15 +276,125 @@ class TofuApp(QMainWindow):
             QMessageBox.warning(self, "备份失败", "数据备份失败，请检查文件权限")
     
     def show_about(self):
-        """显示关于信息"""
-        about_text = """Tofu - 个人生产力工具
-v0.1.3 (2025-12-04)
-© 2025 杜孝双 · 独立开发者
-邮件：virmuran@163.com
-——
-采用模块化设计，所有数据保存在本地JSON文件中。
-使用单例数据管理器，避免数据冲突。"""
-        QMessageBox.about(self, "关于 Tofu", about_text)
+        """显示关于信息 - 使用带滚动条的自定义对话框"""
+        from PySide6.QtWidgets import (
+            QDialog, QVBoxLayout, QScrollArea, QLabel, QPushButton, QSizePolicy
+        )
+        from PySide6.QtCore import Qt
+        
+        about_text = """<h2>Tofu - 个人生产力工具</h2>
+<h3>V2.1 标准版</h3><br>
+<b>版本信息：</b><br>
+v2.1 (2025-12-31)<br>
+版权所有 © 2025 Tofu Team<br>
+邮件：virmuran@163.com<br><br>
+
+<b>关于作者：</b><br>
+Tofu由独立开发者维护，致力于为用户提供简洁高效的个人生产力工具。<br><br>
+
+<b>免责声明：</b><br>
+本应用仅作学习用途，使用本应用造成的任何不良后果，本人概不负责。<br><br>
+
+<b>核心功能：</b><br>
+• 待办事项管理：高效管理您的日常任务<br>
+• 笔记记录：随时记录重要信息<br>
+• 番茄时钟：科学的时间管理方法<br>
+• 工程计算：化工、工程相关计算工具<br>
+• 单位换算：多种单位快速换算<br>
+• 重要日期：提醒重要日程安排<br>
+• 倒计时：重要事件的倒计时提醒<br><br>
+
+<b>常见问题：</b><br>
+<b>问题1：数据存储在哪里？安全吗？</b><br>
+答：所有数据都保存在本地JSON文件中，位于应用程序所在目录的data文件夹中。数据在本地存储，不会上传到任何服务器。<br><br>
+
+<b>问题2：是否需要联网？</b><br>
+答：Tofu完全可以在离线环境下使用，所有功能都可以离线操作。只有在备份数据到云端时才需要联网。<br><br>
+
+<b>问题3：如何备份和恢复数据？</b><br>
+答：可以通过"文件"菜单中的"备份数据"功能进行备份。备份文件保存在应用程序所在目录的backup文件夹中。<br><br>
+
+<b>问题4：支持多设备同步吗？</b><br>
+答：目前版本支持本地数据存储，多设备同步功能正在开发中，后续版本会加入。<br><br>
+
+<b>问题5：为什么需要获取本地存储权限？</b><br>
+答：应用需要读写本地文件来保存您的待办事项、笔记等数据，因此需要存储权限。<br><br>
+
+<b>问题6：软件是免费的吗？未来会收费吗？</b><br>
+答：Tofu目前完全免费使用。未来可能会推出专业版功能，但基础功能会保持免费。<br><br>
+
+<b>问题7：遇到问题如何联系开发者？</b><br>
+答：可以通过邮件 virmuran@163.com 联系开发者，或者在GitHub仓库提交Issue。<br><br>
+
+<b>数据安全承诺：</b><br>
+1. 所有数据仅在本地存储，不会上传到任何服务器<br>
+2. 不会收集用户的个人隐私信息<br>
+3. 代码开源，欢迎审查<br>
+4. 提供完整的备份和恢复功能<br><br>
+
+<b>更新日志：</b><br>
+<b>v2.1 (2025-12-31)</b><br>
+1. 新增工程计算模块<br>
+2. 优化单位换算器界面<br>
+3. 修复番茄时钟的计时问题<br>
+4. 提高数据加载速度<br><br>
+
+<b>v2.0 (2025-11-30)</b><br>
+1. 重构整体架构，采用模块化设计<br>
+2. 新增主题切换功能<br>
+3. 添加数据管理器，统一数据管理<br>
+4. 优化用户界面<br><br>
+
+<b>v1.0 (2025-10-31)</b><br>
+1. 初始版本发布<br>
+2. 包含基本待办事项和笔记功能<br>
+3. 实现番茄时钟<br>
+4. 添加书签管理<br><br>
+
+<b>软件定位：</b><br>
+Tofu致力于为用户提供轻量级、高效的个人生产力工具。我们相信好的工具应该简单易用，专注于提升用户的工作效率。通过模块化设计，Tofu可以在不增加复杂性的前提下，提供多种实用的功能。<br><br>
+
+<b>温馨提示：</b><br>
+• 定期备份数据以防丢失<br>
+• 保持软件更新以获得最佳体验<br>
+• 如有建议或问题，欢迎反馈"""
+    
+        # 创建自定义对话框
+        dialog = QDialog(self)
+        dialog.setWindowTitle("关于 Tofu")
+        dialog.setMinimumSize(700, 500)
+        
+        # 创建主布局
+        main_layout = QVBoxLayout(dialog)
+        
+        # 创建滚动区域
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        
+        # 创建内容标签
+        content_label = QLabel()
+        content_label.setTextFormat(Qt.TextFormat.RichText)
+        content_label.setText(about_text)
+        content_label.setWordWrap(True)
+        content_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        content_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        content_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        
+        # 将标签添加到滚动区域
+        scroll_area.setWidget(content_label)
+        
+        # 创建确定按钮
+        button_box = QPushButton("确定")
+        button_box.clicked.connect(dialog.accept)
+        
+        # 添加到布局
+        main_layout.addWidget(scroll_area)
+        main_layout.addWidget(button_box, alignment=Qt.AlignmentFlag.AlignCenter)
+        
+        # 显示对话框
+        dialog.exec()
     
     def show_data_status(self):
         """显示数据状态 (调试用)"""
@@ -316,7 +422,6 @@ v0.1.3 (2025-12-04)
     
     def closeEvent(self, event):
         """关闭应用程序事件处理"""
-        print("🔄 正在关闭应用程序...")
         
         # 停止所有计时器
         if hasattr(self, 'time_timer'):
@@ -327,18 +432,15 @@ v0.1.3 (2025-12-04)
             if hasattr(widget, 'save_data'):
                 try:
                     widget.save_data()
-                    print(f"✅ {module_name} 数据保存完成")
                 except Exception as e:
                     print(f"❌ 保存 {module_name} 数据失败: {e}")
         
         # 保存主数据
         try:
             self.data_manager._save_data()
-            print("✅ 主数据保存完成")
         except Exception as e:
             print(f"❌ 主数据保存失败: {e}")
         
-        print("👋 应用程序关闭完成")
         event.accept()
 
 def main():
@@ -351,11 +453,8 @@ def main():
     app.setOrganizationName("TofuSoft")
     
     try:
-        print("🚀 启动 Tofu 应用程序...")
         window = TofuApp()
         window.show()
-        window.center_window()
-        print("✅ 应用程序启动成功")
         return app.exec()
     except Exception as e:
         print(f"❌ 应用程序启动失败: {e}")
