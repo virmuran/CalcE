@@ -15,16 +15,17 @@ tofu_app_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file)))
 if tofu_app_root not in sys.path:
     sys.path.insert(0, tofu_app_root)
 
-# 3. 现在可以正常导入 DataManager 了（无需写 TofuApp 前缀，直接导入 data_manager）
+# 3. 导入 DataManager（仅保留导入兼容，实际数据读写使用 SQLite）
 try:
     from data_manager import DataManager
-    print("✅ 成功从根目录导入 DataManager")
+    print("✅ 成功从根目录导入 DataManager（仅兼容保留）")
 except Exception as e:
     print(f"❌ 导入 DataManager 失败: {e}")
-    DataManager
+    DataManager = None  # 兼容处理
+
 
 class ProcessDesignManager(QObject):
-    """工艺设计管理器"""
+    """工艺设计管理器（兼容SQLite存储）"""
     
     # 数据变更信号
     equipment_changed = Signal(str)  # equipment_id
@@ -33,24 +34,27 @@ class ProcessDesignManager(QObject):
     project_changed = Signal(str)    # project_id
     
     def __init__(self, parent=None):
+        super().__init__(parent)  # 调用QObject父类初始化（关键）
         self.parent = parent
         self.db_dir = os.path.join(os.path.dirname(__file__), "data")
         os.makedirs(self.db_dir, exist_ok=True)
         self.db_path = os.path.join(self.db_dir, "tofu_process_design.db")
-        self.main_data_manager = DataManager()
+        # 保留DataManager实例（仅兼容，不依赖其数据读写）
+        self.main_data_manager = DataManager() if DataManager else None
         self.data_manager = self.main_data_manager
+        # 初始化数据库（包含所有表结构）
         self.init_database()
+        # 初始化演示数据
+        self._init_demo_data()
     
     def init_database(self):
-        """初始化数据库（创建必要的表结构，如物料表、MSDS表）"""
+        """初始化数据库（创建所有必要表结构）"""
         try:
-            # 导入sqlite3（如果没导入，先添加导入）
-            import sqlite3
             # 连接数据库（不存在则自动创建）
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
-            # 1. 创建物料表（和你的 MaterialProperty 对应）
+            # 1. 创建物料表
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS materials (
                 material_id TEXT PRIMARY KEY,
@@ -68,7 +72,7 @@ class ProcessDesignManager(QObject):
             )
             ''')
             
-            # 2. 可选：创建MSDS表（如果需要，保留和你项目一致的结构）
+            # 2. 创建MSDS表
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS msds_documents (
                 msds_id TEXT PRIMARY KEY,
@@ -77,6 +81,36 @@ class ProcessDesignManager(QObject):
                 file_path TEXT,
                 upload_date TEXT,
                 FOREIGN KEY (material_id) REFERENCES materials (material_id)
+            )
+            ''')
+            
+            # 3. 创建设备表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS equipment (
+                equipment_id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                type TEXT,
+                unique_code TEXT UNIQUE,
+                model TEXT,
+                manufacturer TEXT,
+                design_pressure REAL,
+                design_temperature REAL,
+                capacity TEXT,
+                description TEXT,
+                status TEXT
+            )
+            ''')
+            
+            # 4. 创建项目表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS projects (
+                project_id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                code TEXT UNIQUE,
+                description TEXT,
+                start_date TEXT,
+                end_date TEXT,
+                status TEXT
             )
             ''')
             
@@ -89,28 +123,346 @@ class ProcessDesignManager(QObject):
             print(f"❌ 数据库初始化失败: {str(e)}")
             raise  # 抛出异常，方便排查问题
     
+    def _get_db_connection(self):
+        """获取数据库连接（通用方法，避免重复代码）"""
+        conn = sqlite3.connect(self.db_path)
+        # 设置行工厂，使查询结果以字典形式返回
+        conn.row_factory = sqlite3.Row
+        return conn
+    
     def get_english_name(self, chinese_name):
-        """根据中文名称获取英文名称（从全局数据管家读取）"""
-        name_mapping = self.main_data_manager.get_equipment_name_mapping()
-        return name_mapping.get(chinese_name, "")
+        """根据中文名称获取英文名称（兼容保留方法）"""
+        if self.main_data_manager:
+            name_mapping = self.main_data_manager.get_equipment_name_mapping()
+            return name_mapping.get(chinese_name, "")
+        return ""
     
     def save_flow_diagram(self, flow_diagram_data):
-        """保存流程图数据到全局数据管家（兼容原有调用逻辑）"""
+        """保存流程图数据（兼容保留方法）"""
         try:
-            # 调用全局数据管理器保存工艺参数（流程图数据）
-            self.main_data_manager.update_process_params("flow_diagram", flow_diagram_data)
-            print("✅ 流程图数据已成功保存到全局数据管家")
+            # 流程图数据存入SQLite（新增逻辑）
+            conn = self._get_db_connection()
+            cursor = conn.cursor()
+            # 创建流程图表（按需）
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS flow_diagrams (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                data TEXT NOT NULL,
+                update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            ''')
+            # 清空原有数据，只保留最新版本
+            cursor.execute("DELETE FROM flow_diagrams")
+            # 插入新数据
+            cursor.execute("INSERT INTO flow_diagrams (data) VALUES (?)", (str(flow_diagram_data),))
+            conn.commit()
+            conn.close()
+            print("✅ 流程图数据已成功保存到SQLite")
             return True
         except Exception as e:
             print(f"❌ 保存流程图数据失败: {str(e)}")
             return False
     
+    # ==================== 设备管理方法（SQLite实现） ====================
+    
     def get_equipment_data(self):
         """获取设备数据（兼容方法）"""
         return self.get_all_equipment()
     
+    def get_all_equipment(self) -> List[Dict]:
+        """获取所有设备"""
+        try:
+            conn = self._get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM equipment")
+            rows = cursor.fetchall()
+            conn.close()
+            # 转换为字典列表
+            equipment_list = [dict(row) for row in rows]
+            return equipment_list
+        except Exception as e:
+            print(f"❌ 获取所有设备失败: {str(e)}")
+            return []
+    
+    def get_equipment_by_id(self, equipment_id: str) -> Optional[Dict]:
+        """根据ID获取设备"""
+        try:
+            conn = self._get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM equipment WHERE equipment_id = ?", (equipment_id,))
+            row = cursor.fetchone()
+            conn.close()
+            return dict(row) if row else None
+        except Exception as e:
+            print(f"❌ 根据ID获取设备失败: {str(e)}")
+            return None
+    
+    def get_equipment_by_code(self, equipment_code: str) -> Optional[Dict]:
+        """根据编码获取设备"""
+        try:
+            conn = self._get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM equipment WHERE unique_code = ?", (equipment_code,))
+            row = cursor.fetchone()
+            conn.close()
+            return dict(row) if row else None
+        except Exception as e:
+            print(f"❌ 根据编码获取设备失败: {str(e)}")
+            return None
+    
+    def save_equipment(self, equipment_data: Dict) -> bool:
+        """保存设备（新增/更新）"""
+        try:
+            conn = self._get_db_connection()
+            cursor = conn.cursor()
+            # 提取字段（兼容原有数据结构）
+            equipment_id = equipment_data.get('equipment_id')
+            if not equipment_id:
+                raise ValueError("设备ID不能为空")
+            
+            # 插入/更新设备数据
+            cursor.execute('''
+            INSERT OR REPLACE INTO equipment (
+                equipment_id, name, type, unique_code, model, manufacturer,
+                design_pressure, design_temperature, capacity, description, status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                equipment_id,
+                equipment_data.get('name', ''),
+                equipment_data.get('type', ''),
+                equipment_data.get('unique_code', ''),
+                equipment_data.get('model', ''),
+                equipment_data.get('manufacturer', ''),
+                equipment_data.get('design_pressure', None),
+                equipment_data.get('design_temperature', None),
+                equipment_data.get('capacity', ''),
+                equipment_data.get('description', ''),
+                equipment_data.get('status', '')
+            ))
+            conn.commit()
+            conn.close()
+            # 发射信号
+            self.equipment_changed.emit(equipment_id)
+            print(f"✅ 设备[{equipment_id}]已保存到SQLite")
+            return True
+        except Exception as e:
+            print(f"❌ 保存设备失败: {str(e)}")
+            return False
+    
+    def update_equipment(self, equipment_id: str, update_data: Dict) -> bool:
+        """更新设备"""
+        # 先获取原有数据
+        equipment = self.get_equipment_by_id(equipment_id)
+        if not equipment:
+            print(f"❌ 设备[{equipment_id}]不存在")
+            return False
+        # 合并更新数据
+        equipment.update(update_data)
+        # 调用保存方法
+        return self.save_equipment(equipment)
+    
+    def delete_equipment(self, equipment_id: str) -> bool:
+        """删除设备"""
+        try:
+            conn = self._get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM equipment WHERE equipment_id = ?", (equipment_id,))
+            conn.commit()
+            conn.close()
+            # 发射信号
+            self.equipment_changed.emit(equipment_id)
+            print(f"✅ 设备[{equipment_id}]已从SQLite删除")
+            return True
+        except Exception as e:
+            print(f"❌ 删除设备失败: {str(e)}")
+            return False
+    
+    # ==================== 物料管理方法（SQLite实现） ====================
+    
+    def get_all_materials(self) -> List[Dict]:
+        """获取所有物料"""
+        try:
+            conn = self._get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM materials")
+            rows = cursor.fetchall()
+            conn.close()
+            # 转换为字典列表
+            material_list = [dict(row) for row in rows]
+            return material_list
+        except Exception as e:
+            print(f"❌ 获取所有物料失败: {str(e)}")
+            return []
+    
+    def get_material_by_id(self, material_id: str) -> Optional[Dict]:
+        """根据ID获取物料"""
+        try:
+            conn = self._get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM materials WHERE material_id = ?", (material_id,))
+            row = cursor.fetchone()
+            conn.close()
+            return dict(row) if row else None
+        except Exception as e:
+            print(f"❌ 根据ID获取物料失败: {str(e)}")
+            return None
+    
+    def save_material(self, material_data: Dict) -> bool:
+        """保存物料（新增/更新）"""
+        try:
+            conn = self._get_db_connection()
+            cursor = conn.cursor()
+            # 提取字段
+            material_id = material_data.get('material_id')
+            if not material_id:
+                raise ValueError("物料ID不能为空")
+            
+            # 插入/更新物料数据
+            cursor.execute('''
+            INSERT OR REPLACE INTO materials (
+                material_id, name, cas_number, molecular_formula, molecular_weight,
+                phase, density, boiling_point, melting_point, flash_point,
+                hazard_class, notes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                material_id,
+                material_data.get('name', ''),
+                material_data.get('cas_number', ''),
+                material_data.get('molecular_formula', ''),
+                material_data.get('molecular_weight', None),
+                material_data.get('phase', ''),
+                material_data.get('density', None),
+                material_data.get('boiling_point', None),
+                material_data.get('melting_point', None),
+                material_data.get('flash_point', None),
+                material_data.get('hazard_class', ''),
+                material_data.get('notes', '')
+            ))
+            conn.commit()
+            conn.close()
+            # 发射信号
+            self.material_changed.emit(material_id)
+            print(f"✅ 物料[{material_id}]已保存到SQLite")
+            return True
+        except Exception as e:
+            print(f"❌ 保存物料失败: {str(e)}")
+            return False
+    
+    # ==================== MSDS管理方法（SQLite实现） ====================
+    
+    def get_all_msds(self) -> List[Dict]:
+        """获取所有MSDS"""
+        try:
+            conn = self._get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM msds_documents")
+            rows = cursor.fetchall()
+            conn.close()
+            # 转换为字典列表
+            msds_list = [dict(row) for row in rows]
+            return msds_list
+        except Exception as e:
+            print(f"❌ 获取所有MSDS失败: {str(e)}")
+            return []
+    
+    def save_msds(self, msds_data: Dict) -> bool:
+        """保存MSDS（新增/更新）"""
+        try:
+            conn = self._get_db_connection()
+            cursor = conn.cursor()
+            # 提取字段
+            msds_id = msds_data.get('msds_id')
+            if not msds_id:
+                raise ValueError("MSDS ID不能为空")
+            
+            # 插入/更新MSDS数据
+            cursor.execute('''
+            INSERT OR REPLACE INTO msds_documents (
+                msds_id, material_id, document_name, file_path, upload_date
+            ) VALUES (?, ?, ?, ?, ?)
+            ''', (
+                msds_id,
+                msds_data.get('material_id', ''),
+                msds_data.get('document_name', ''),
+                msds_data.get('file_path', ''),
+                msds_data.get('upload_date', '')
+            ))
+            conn.commit()
+            conn.close()
+            # 发射信号
+            self.msds_changed.emit(msds_id)
+            print(f"✅ MSDS[{msds_id}]已保存到SQLite")
+            return True
+        except Exception as e:
+            print(f"❌ 保存MSDS失败: {str(e)}")
+            return False
+    
+    # ==================== 项目管理方法（SQLite实现） ====================
+    
+    def get_all_projects(self) -> List[Dict]:
+        """获取所有项目"""
+        try:
+            conn = self._get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM projects")
+            rows = cursor.fetchall()
+            conn.close()
+            # 转换为字典列表
+            project_list = [dict(row) for row in rows]
+            return project_list
+        except Exception as e:
+            print(f"❌ 获取所有项目失败: {str(e)}")
+            return []
+    
+    def save_project(self, project_data: Dict) -> bool:
+        """保存项目（新增/更新）"""
+        try:
+            conn = self._get_db_connection()
+            cursor = conn.cursor()
+            # 提取字段
+            project_id = project_data.get('project_id')
+            if not project_id:
+                raise ValueError("项目ID不能为空")
+            
+            # 插入/更新项目数据
+            cursor.execute('''
+            INSERT OR REPLACE INTO projects (
+                project_id, name, code, description, start_date, end_date, status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                project_id,
+                project_data.get('name', ''),
+                project_data.get('code', ''),
+                project_data.get('description', ''),
+                project_data.get('start_date', ''),
+                project_data.get('end_date', ''),
+                project_data.get('status', '')
+            ))
+            conn.commit()
+            conn.close()
+            # 发射信号
+            self.project_changed.emit(project_id)
+            print(f"✅ 项目[{project_id}]已保存到SQLite")
+            return True
+        except Exception as e:
+            print(f"❌ 保存项目失败: {str(e)}")
+            return False
+    
+    # ==================== 数据统计 ====================
+    
+    def get_data_stats(self) -> Dict[str, int]:
+        """获取数据统计"""
+        return {
+            'materials': len(self.get_all_materials()),
+            'equipment': len(self.get_all_equipment()),
+            'msds': len(self.get_all_msds()),
+            'projects': len(self.get_all_projects())
+        }
+    
+    # ==================== 演示数据初始化 ====================
+    
     def _init_demo_data(self):
-        """初始化演示数据"""
+        """初始化演示数据（仅首次运行时加载）"""
         try:
             # 检查是否需要加载演示物料
             materials = self.get_all_materials()
@@ -126,7 +478,7 @@ class ProcessDesignManager(QObject):
             print(f"❌ 初始化演示数据时出错: {e}")
     
     def _load_demo_materials(self):
-        """加载演示物料数据"""
+        """加载演示物料数据到SQLite"""
         try:
             demo_materials = [
                 {
@@ -168,7 +520,7 @@ class ProcessDesignManager(QObject):
             ]
             
             for material_data in demo_materials:
-                self.main_data_manager.add_material(material_data)
+                self.save_material(material_data)
             
             print(f"✅ 演示物料数据加载完成: {len(demo_materials)} 个物料")
             
@@ -176,7 +528,7 @@ class ProcessDesignManager(QObject):
             print(f"❌ 加载演示物料数据失败: {e}")
     
     def _load_demo_equipment(self):
-        """加载演示设备数据"""
+        """加载演示设备数据到SQLite"""
         try:
             demo_equipment = [
                 {
@@ -208,108 +560,17 @@ class ProcessDesignManager(QObject):
             ]
             
             for equipment_data in demo_equipment:
-                self.main_data_manager.add_equipment(equipment_data)
+                self.save_equipment(equipment_data)
             
             print(f"✅ 演示设备数据加载完成: {len(demo_equipment)} 个设备")
             
         except Exception as e:
             print(f"❌ 加载演示设备数据失败: {e}")
     
-    # ==================== 设备管理方法 ====================
-    
-    def get_all_equipment(self) -> List[Dict]:
-        """获取所有设备"""
-        return self.main_data_manager.get_equipment_data()
-    
-    def get_equipment_by_id(self, equipment_id: str) -> Optional[Dict]:
-        """根据ID获取设备"""
-        return self.main_data_manager.get_equipment_by_id(equipment_id)
-    
-    def get_equipment_by_code(self, equipment_code: str) -> Optional[Dict]:
-        """根据编码获取设备"""
-        return self.main_data_manager.get_equipment_by_unique_code(equipment_code)
-    
-    def save_equipment(self, equipment_data: Dict) -> bool:
-        """保存设备"""
-        success = self.main_data_manager.add_equipment(equipment_data)
-        if success:
-            self.equipment_changed.emit(equipment_data.get('equipment_id', ''))
-        return success
-    
-    def update_equipment(self, equipment_id: str, update_data: Dict) -> bool:
-        """更新设备"""
-        success = self.main_data_manager.update_equipment(equipment_id, update_data)
-        if success:
-            self.equipment_changed.emit(equipment_id)
-        return success
-    
-    def delete_equipment(self, equipment_id: str) -> bool:
-        """删除设备"""
-        success = self.main_data_manager.delete_equipment(equipment_id)
-        if success:
-            self.equipment_changed.emit(equipment_id)
-        return success
-    
-    # ==================== 物料管理方法 ====================
-    
-    def get_all_materials(self) -> List[Dict]:
-        """获取所有物料"""
-        return self.main_data_manager.get_materials()
-    
-    def get_material_by_id(self, material_id: str) -> Optional[Dict]:
-        """根据ID获取物料"""
-        materials = self.get_all_materials()
-        for material in materials:
-            if material.get('material_id') == material_id:
-                return material
-        return None
-    
-    def save_material(self, material_data: Dict) -> bool:
-        """保存物料"""
-        success = self.main_data_manager.add_material(material_data)
-        if success:
-            self.material_changed.emit(material_data.get('material_id', ''))
-        return success
-    
-    # ==================== MSDS管理方法 ====================
-    
-    def get_all_msds(self) -> List[Dict]:
-        """获取所有MSDS"""
-        return self.main_data_manager.get_msds_documents()
-    
-    def save_msds(self, msds_data: Dict) -> bool:
-        """保存MSDS"""
-        success = self.main_data_manager.add_msds_document(msds_data)
-        if success:
-            self.msds_changed.emit(msds_data.get('msds_id', ''))
-        return success
-    
-    # ==================== 项目管理方法 ====================
-    
-    def get_all_projects(self) -> List[Dict]:
-        """获取所有项目"""
-        return self.main_data_manager.get_projects()
-    
-    def save_project(self, project_data: Dict) -> bool:
-        """保存项目"""
-        success = self.main_data_manager.add_project(project_data)
-        if success:
-            self.project_changed.emit(project_data.get('project_id', ''))
-        return success
-    
-    # ==================== 数据统计 ====================
-    
-    def get_data_stats(self) -> Dict[str, int]:
-        """获取数据统计"""
-        return {
-            'materials': len(self.get_all_materials()),
-            'equipment': len(self.get_all_equipment()),
-            'msds': len(self.get_all_msds()),
-            'projects': len(self.get_all_projects())
-        }
+    # ==================== 兼容方法 ====================
     
     def get_main_data_manager(self):
-        """获取主 DataManager 实例"""
+        """获取主 DataManager 实例（兼容保留）"""
         return self.main_data_manager
 
 
