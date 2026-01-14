@@ -1,37 +1,27 @@
 # TofuApp/modules/process_design/process_design_manager.py
-"""
-工艺设计管理器 - 基于主程序的 DataManager
-"""
-import sys
 import os
+import sys
+import sqlite3
 from typing import List, Optional, Dict, Any
 from PySide6.QtCore import QObject, Signal
 
-# 添加项目根目录到 sys.path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-root_dir = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))  # TofuApp 根目录
+# 1. 计算 TofuApp 根目录路径（精准匹配你的项目结构）
+# 当前文件路径：process_design_manager.py → process_design/ → modules/ → TofuApp/
+current_file = os.path.abspath(__file__)
+# 向上追溯3级目录，找到 TofuApp 根目录（关键：适配你的文件夹层级）
+tofu_app_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file)))
 
-if root_dir not in sys.path:
-    sys.path.insert(0, root_dir)
-    print(f"📁 已添加根目录到路径: {root_dir}")
+# 2. 把根目录加入 Python 搜索路径
+if tofu_app_root not in sys.path:
+    sys.path.insert(0, tofu_app_root)
 
+# 3. 现在可以正常导入 DataManager 了（无需写 TofuApp 前缀，直接导入 data_manager）
 try:
-    # 现在可以直接导入 data_manager
     from data_manager import DataManager
-    print("✅ 成功导入 DataManager")
-except ImportError as e:
+    print("✅ 成功从根目录导入 DataManager")
+except Exception as e:
     print(f"❌ 导入 DataManager 失败: {e}")
-    print("尝试使用备用路径导入...")
-    # 备用导入方案
-    import importlib.util
-    spec = importlib.util.spec_from_file_location("data_manager", os.path.join(root_dir, "data_manager.py"))
-    if spec and spec.loader:
-        data_manager_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(data_manager_module)
-        DataManager = data_manager_module.DataManager
-        print("✅ 备用导入 DataManager 成功")
-    else:
-        raise
+    DataManager
 
 class ProcessDesignManager(QObject):
     """工艺设计管理器"""
@@ -42,15 +32,78 @@ class ProcessDesignManager(QObject):
     msds_changed = Signal(str)       # msds_id
     project_changed = Signal(str)    # project_id
     
-    def __init__(self):
-        super().__init__()
-        # 获取主程序的 DataManager 实例
-        self.main_data_manager = DataManager.get_instance()
+    def __init__(self, parent=None):
+        self.parent = parent
+        self.db_dir = os.path.join(os.path.dirname(__file__), "data")
+        os.makedirs(self.db_dir, exist_ok=True)
+        self.db_path = os.path.join(self.db_dir, "tofu_process_design.db")
+        self.main_data_manager = DataManager()
+        self.data_manager = self.main_data_manager
+        self.init_database()
+    
+    def init_database(self):
+        """初始化数据库（创建必要的表结构，如物料表、MSDS表）"""
+        try:
+            # 导入sqlite3（如果没导入，先添加导入）
+            import sqlite3
+            # 连接数据库（不存在则自动创建）
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # 1. 创建物料表（和你的 MaterialProperty 对应）
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS materials (
+                material_id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                cas_number TEXT,
+                molecular_formula TEXT,
+                molecular_weight REAL,
+                phase TEXT,
+                density REAL,
+                boiling_point REAL,
+                melting_point REAL,
+                flash_point REAL,
+                hazard_class TEXT,
+                notes TEXT
+            )
+            ''')
+            
+            # 2. 可选：创建MSDS表（如果需要，保留和你项目一致的结构）
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS msds_documents (
+                msds_id TEXT PRIMARY KEY,
+                material_id TEXT,
+                document_name TEXT,
+                file_path TEXT,
+                upload_date TEXT,
+                FOREIGN KEY (material_id) REFERENCES materials (material_id)
+            )
+            ''')
+            
+            # 提交更改并关闭连接
+            conn.commit()
+            conn.close()
+            print(f"✅ 数据库初始化完成: {self.db_path}")
         
-        # 初始化演示数据
-        self._init_demo_data()
-        
-        print("✅ ProcessDesignManager 初始化完成")
+        except Exception as e:
+            print(f"❌ 数据库初始化失败: {str(e)}")
+            raise  # 抛出异常，方便排查问题
+    
+    def get_english_name(self, chinese_name):
+        """根据中文名称获取英文名称（从全局数据管家读取）"""
+        name_mapping = self.main_data_manager.get_equipment_name_mapping()
+        return name_mapping.get(chinese_name, "")
+    
+    def save_flow_diagram(self, flow_diagram_data):
+        """保存流程图数据到全局数据管家（兼容原有调用逻辑）"""
+        try:
+            # 调用全局数据管理器保存工艺参数（流程图数据）
+            self.main_data_manager.update_process_params("flow_diagram", flow_diagram_data)
+            print("✅ 流程图数据已成功保存到全局数据管家")
+            return True
+        except Exception as e:
+            print(f"❌ 保存流程图数据失败: {str(e)}")
+            return False
     
     def get_equipment_data(self):
         """获取设备数据（兼容方法）"""

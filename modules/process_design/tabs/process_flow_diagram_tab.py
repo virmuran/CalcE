@@ -11,6 +11,7 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime
 from ..data.data_models import UnifiedEquipment
 from .equipment_id_generator import EquipmentIDGenerator
+from TofuApp.data_manager import DataManager
 
 try:
     from .equipment_dialogs import EquipmentDialog, EquipmentIDGenerator
@@ -137,7 +138,7 @@ class ProcessFlowDiagramTab(QWidget):
     
     def __init__(self, data_manager=None, parent=None):
         super().__init__(parent)
-        self.data_manager = data_manager
+        self.data_manager = DataManager()
         self.parent_window = parent
         self.equipment_list_tab = None
         

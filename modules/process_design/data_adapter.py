@@ -1,12 +1,28 @@
 # TofuApp/modules/process_design/data_adapter.py
-"""
-数据适配器 - 在 DataManager 和工艺设计模块之间转换数据
-"""
+import os
+import sys
+import sqlite3
 from typing import List, Dict, Any, Optional
 import traceback
 
-from TofuApp.data_manager import DataManager
+from modules.process_design.process_design_manager import ProcessDesignManager
+# 1. 计算 TofuApp 根目录路径（精准匹配你的项目结构）
+# 当前文件路径：process_design_manager.py → process_design/ → modules/ → TofuApp/
+current_file = os.path.abspath(__file__)
+# 向上追溯3级目录，找到 TofuApp 根目录（关键：适配你的文件夹层级）
+tofu_app_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file)))
 
+# 2. 把根目录加入 Python 搜索路径
+if tofu_app_root not in sys.path:
+    sys.path.insert(0, tofu_app_root)
+
+# 3. 现在可以正常导入 DataManager 了（无需写 TofuApp 前缀，直接导入 data_manager）
+try:
+    from data_manager import DataManager
+    print("✅ 成功从根目录导入 DataManager")
+except Exception as e:
+    print(f"❌ 导入 DataManager 失败: {e}")
+    DataManager = None
 from .data_models import (
     MaterialProperty, UnifiedEquipment, MSDSDocument,
     ProcessProject, ProcessRoute
@@ -16,8 +32,8 @@ from .data_models import (
 class DataAdapter:
     """数据适配器 - 连接 DataManager 和工艺设计模块"""
     
-    def __init__(self, data_manager: DataManager):
-        self.data_manager = data_manager
+    def __init__(self):
+        self.process_manager = ProcessDesignManager()
     
     # ==================== 设备数据转换 ====================
     

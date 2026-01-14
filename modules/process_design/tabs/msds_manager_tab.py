@@ -100,7 +100,7 @@ class MSDSManagerTab(QWidget):
         # 延迟初始化process_manager
         if data_manager:
             try:
-                self.process_manager = ProcessDesignManager(data_manager)
+                self.process_manager = ProcessDesignManager()
                 print("✅ MSDS管理: ProcessDesignManager 初始化成功")
             except Exception as e:
                 print(f"❌ MSDS管理: ProcessDesignManager 初始化失败: {e}")

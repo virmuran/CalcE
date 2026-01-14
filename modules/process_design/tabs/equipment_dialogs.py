@@ -2098,7 +2098,7 @@ class EquipmentDialog(QDialog):
             'equipment_id': equipment_id,
             'unique_code': unique_code,
             'name': name,
-            'type': equipment_type,
+            "equipment_type": equipment_type,
             'model': model,
             'specification': specification,
             'manufacturer': self.manufacturer_input.text().strip(),
@@ -2116,8 +2116,8 @@ class EquipmentDialog(QDialog):
             'material': self.material_input.text().strip(),
             'insulation': self.insulation_input.text().strip(),
             'weight_estimate': safe_float(self.weight_estimate_input.value()),
-            'operating_weight': safe_float(self.operating_weight_input.value()),  # 新增
-            'total_weight': safe_float(self.total_weight_input.value()),  # 新增
+            'operating_weight': safe_float(self.operating_weight_input.value()),
+            'total_weight': safe_float(self.total_weight_input.value()),
             'unit_price': safe_float(self.unit_price_input.value()),
             'total_price': safe_float(self.total_price_input.value()),
             'dynamic': self.dynamic_input.text().strip(),

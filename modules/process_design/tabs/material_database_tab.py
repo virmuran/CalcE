@@ -89,7 +89,7 @@ class MaterialDatabaseTab(QWidget):
         # 延迟初始化process_manager
         if data_manager:
             try:
-                self.process_manager = ProcessDesignManager(data_manager)
+                self.process_manager = ProcessDesignManager()
                 print("✅ 物料数据库: ProcessDesignManager 初始化成功")
             except Exception as e:
                 print(f"❌ 物料数据库: ProcessDesignManager 初始化失败: {e}")
