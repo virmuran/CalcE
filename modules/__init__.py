@@ -1,8 +1,4 @@
 # TofuApp/modules/__init__.py
-"""
-TofuApp 功能模块包 - 包含数据库初始化功能
-"""
-
 __version__ = "V2.1 标准版"
 __author__ = "Tofu Team"
 
@@ -16,15 +12,6 @@ if str(current_dir) not in sys.path:
     sys.path.insert(0, str(current_dir))
 
 def init_database(data_file=None):
-    """
-    初始化数据库和默认数据
-    
-    参数:
-        data_file (str, optional): 数据文件路径。如果为None，则使用默认路径。
-        
-    返回:
-        DataManager: 数据管理器实例
-    """
     try:
         from ..data_manager import DataManager
         
@@ -84,15 +71,6 @@ def init_database(data_file=None):
         raise
 
 def get_data_manager(data_file=None):
-    """
-    获取数据管理器实例
-    
-    参数:
-        data_file (str, optional): 数据文件路径。如果为None，则使用默认路径。
-        
-    返回:
-        DataManager: 数据管理器实例
-    """
     try:
         from ..data_manager import DataManager
         return DataManager.get_instance(data_file)
@@ -100,43 +78,7 @@ def get_data_manager(data_file=None):
         print(f"❌ 无法导入 DataManager: {e}")
         raise
 
-def init_process_design_modules():
-    """
-    初始化工艺设计相关模块
-    
-    返回:
-        dict: 包含初始化状态的字典
-    """
-    try:
-        # 尝试导入工艺设计相关模块
-        from .process_design import process_design_manager
-        from .process_design import process_design_data
-        from .process_design import utils
-        
-        modules_status = {
-            "process_design_manager": True,
-            "process_design_data": True,
-            "utils": True
-        }
-        
-        return modules_status
-        
-    except ImportError as e:
-        print(f"❌ 工艺设计模块导入失败: {e}")
-        return {
-            "process_design_manager": False,
-            "process_design_data": False,
-            "utils": False,
-            "error": str(e)
-        }
-
 def setup_module_paths():
-    """
-    设置模块路径，确保所有模块都能正确导入
-    
-    返回:
-        list: 添加的路径列表
-    """
     added_paths = []
     
     # 添加当前目录的父目录（TofuApp 根目录）
@@ -160,12 +102,6 @@ def setup_module_paths():
     return added_paths
 
 def check_module_dependencies():
-    """
-    检查模块依赖
-    
-    返回:
-        dict: 依赖检查结果
-    """
     dependencies = {
         "PySide6": False,
         "pandas": False,
