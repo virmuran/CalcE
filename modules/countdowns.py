@@ -1,4 +1,4 @@
-# TofuApp/modules/countdowns.py
+# CalcE/modules/countdowns.py
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
                                QPushButton, QScrollArea, QGridLayout, QFrame,
                                QMessageBox, QInputDialog, QGroupBox, QSpinBox)

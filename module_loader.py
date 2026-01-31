@@ -1,4 +1,4 @@
-# TofuApp/module_loader.py
+# CalcE/module_loader.py
 import sys
 import os
 import traceback

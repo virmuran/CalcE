@@ -876,7 +876,7 @@ class 蒸汽管径流量(QWidget):
             # 添加报告头信息
             report = f"""工程计算书 - 蒸汽管道计算
 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-计算工具: TofuSoft 工程计算模块
+计算工具: CalcE 工程计算模块
 ========================================
 
 """
@@ -911,7 +911,7 @@ class 蒸汽管径流量(QWidget):
     4. 计算条件变更时应重新进行计算
 
 ---
-生成于 TofuSoft 工程计算模块
+生成于 CalcE 工程计算模块
 """
             return report
             

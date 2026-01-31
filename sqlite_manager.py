@@ -1,4 +1,4 @@
-# TofuApp/sqlite_manager.py
+# CalcE/sqlite_manager.py
 import sqlite3
 import os
 import json
@@ -6,9 +6,9 @@ from datetime import datetime
 
 class SQLiteManager:
     # 初始化数据库（默认路径和原JSON同目录）
-    def __init__(self, db_name="tofu_app.db"):
-        # 数据库存储路径（和原JSON文件同目录：AppData/Roaming/TofuSoft/Tofu/）
-        self.db_dir = os.path.join(os.path.expanduser("~"), "AppData", "Roaming", "TofuSoft", "Tofu")
+    def __init__(self, db_name="CalcE_app.db"):
+        # 数据库存储路径（和原JSON文件同目录：AppData/Roaming/CalcE）
+        self.db_dir = os.path.join(os.path.expanduser("~"), "AppData", "Roaming", "CalcE")
         os.makedirs(self.db_dir, exist_ok=True)
         self.db_path = os.path.join(self.db_dir, db_name)
         # 初始化所有表
@@ -188,10 +188,6 @@ class SQLiteManager:
 
     # 【迁移专用】从JSON文件导入数据到SQLite
     def migrate_from_json(self, json_path):
-        """
-        把原来的JSON数据迁移到SQLite（仅需执行一次）
-        :param json_path: 原JSON文件路径（如C:/Users/xxx/AppData/Roaming/TofuSoft/Tofu/tofu_data.json）
-        """
         if not os.path.exists(json_path):
             print(f"❌ JSON文件不存在：{json_path}")
             return False

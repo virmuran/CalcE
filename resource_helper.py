@@ -1,4 +1,4 @@
-# TofuApp/resource_helper.py
+# CalcE/resource_helper.py
 import sys
 import os
 from pathlib import Path
@@ -45,9 +45,9 @@ class ResourceHelper:
             app_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
             if not app_data_dir:
                 app_data_dir = os.path.abspath(".")
-            return os.path.join(app_data_dir, "tofu_data.json")
+            return os.path.join(app_data_dir, "CalcE_data.json")
         except Exception:
-            return os.path.join(os.path.abspath("."), "tofu_data.json")
+            return os.path.join(os.path.abspath("."), "CalcE_data.json")
 
 # 保持向后兼容的函数
 def resource_path(relative_path):

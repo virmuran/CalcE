@@ -1,5 +1,5 @@
 # ================================
-# TofuApp 项目专用 .gitignore 文件
+# CalcE 项目专用 .gitignore 文件
 # ================================
 
 # Python 字节码和缓存文件
@@ -30,5 +30,5 @@ Thumbs.db
 desktop.ini
 
 # 项目特定的可执行文件和打包文件
-TofuApp.exe
+CalcE.exe
 *.exe

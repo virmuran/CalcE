@@ -1,4 +1,4 @@
-# TofuApp/modules/year_progress.py
+# CalcE/modules/year_progress.py
 from datetime import datetime, timedelta
 import math
 from PySide6.QtWidgets import (

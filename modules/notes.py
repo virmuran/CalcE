@@ -1,4 +1,4 @@
-# TofuApp/modules/notes.py
+# CalcE/modules/notes.py
 from datetime import datetime
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QTextEdit, 

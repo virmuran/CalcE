@@ -1,4 +1,4 @@
-# TofuApp/debug_data.py
+# CalcE/debug_data.py
 import os
 import json
 import sys
@@ -12,7 +12,7 @@ from resource_helper import get_data_file_path
 
 def diagnose_data_issue():
     """诊断数据文件问题"""
-    print("=== Tofu 数据文件诊断工具 ===\n")
+    print("=== CalcE 数据文件诊断工具 ===\n")
     
     # 获取数据文件路径
     data_file = get_data_file_path()
@@ -72,11 +72,11 @@ def diagnose_data_issue():
     # 检查可能的其他数据文件位置
     print("\n10. 搜索其他可能的数据文件:")
     possible_locations = [
-        os.path.join(current_dir, "tofu_data.json"),
-        os.path.join(current_dir, "data", "tofu_data.json"),
-        os.path.join(os.path.expanduser("~"), "tofu_data.json"),
-        os.path.join(os.path.expanduser("~"), "AppData", "Local", "Tofu", "tofu_data.json"),
-        os.path.join(os.path.expanduser("~"), "AppData", "Roaming", "Tofu", "tofu_data.json"),
+        os.path.join(current_dir, "CalcE_data.json"),
+        os.path.join(current_dir, "data", "CalcE_data.json"),
+        os.path.join(os.path.expanduser("~"), "CalcE_data.json"),
+        os.path.join(os.path.expanduser("~"), "AppData", "Local", "CalcE", "CalcE_data.json"),
+        os.path.join(os.path.expanduser("~"), "AppData", "Roaming", "CalcE", "CalcE_data.json"),
     ]
     
     for location in possible_locations:

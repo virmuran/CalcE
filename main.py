@@ -1,4 +1,4 @@
-# TofuApp/main.py
+# CalcE/main.py
 import sys
 import os
 import traceback
@@ -40,12 +40,12 @@ except ImportError as e:
     traceback.print_exc()
     print("尝试继续运行程序...")
 
-class TofuApp(QMainWindow):
-    """Tofu主应用程序"""
+class CalcE(QMainWindow):
+    """CalcE主应用程序"""
     
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Tofu - 个人生产力工具")
+        self.setWindowTitle("CalcE - 个人生产力工具")
         self.setGeometry(160, 50, 1600, 970)
         
         # 初始化管理器
@@ -158,7 +158,7 @@ class TofuApp(QMainWindow):
         
         # 帮助菜单
         help_menu = menubar.addMenu("❓ 帮助")
-        about_action = QAction("ℹ️ 关于 Tofu", self)
+        about_action = QAction("ℹ️ 关于 CalcE", self)
         about_action.triggered.connect(self.show_about)
         help_menu.addAction(about_action)
         
@@ -186,7 +186,7 @@ class TofuApp(QMainWindow):
         self.setStatusBar(status_bar)
         
         # 欢迎消息
-        welcome_label = QLabel("Tofu - 您的个人生产力助手")
+        welcome_label = QLabel("CalcE - 您的个人生产力助手")
         status_bar.addWidget(welcome_label)
         
         # 主题信息
@@ -286,15 +286,15 @@ class TofuApp(QMainWindow):
         )
         from PySide6.QtCore import Qt
         
-        about_text = """<h2>Tofu - 个人生产力工具</h2>
+        about_text = """<h2>CalcE - 个人生产力工具</h2>
 <h3>V2.1 标准版</h3><br>
 <b>版本信息：</b><br>
 v2.1 (2025-12-31)<br>
-版权所有 © 2025 Tofu Team<br>
+版权所有 © 2025 CalcE Team<br>
 邮件：virmuran@163.com<br><br>
 
 <b>关于作者：</b><br>
-Tofu由独立开发者维护，致力于为用户提供简洁高效的个人生产力工具。<br><br>
+CalcE由独立开发者维护，致力于为用户提供简洁高效的个人生产力工具。<br><br>
 
 <b>免责声明：</b><br>
 本应用仅作学习用途，使用本应用造成的任何不良后果，本人概不负责。<br><br>
@@ -313,7 +313,7 @@ Tofu由独立开发者维护，致力于为用户提供简洁高效的个人生�
 答：所有数据都保存在本地JSON文件中，位于应用程序所在目录的data文件夹中。数据在本地存储，不会上传到任何服务器。<br><br>
 
 <b>问题2：是否需要联网？</b><br>
-答：Tofu完全可以在离线环境下使用，所有功能都可以离线操作。只有在备份数据到云端时才需要联网。<br><br>
+答：CalcE完全可以在离线环境下使用，所有功能都可以离线操作。只有在备份数据到云端时才需要联网。<br><br>
 
 <b>问题3：如何备份和恢复数据？</b><br>
 答：可以通过"文件"菜单中的"备份数据"功能进行备份。备份文件保存在应用程序所在目录的backup文件夹中。<br><br>
@@ -325,7 +325,7 @@ Tofu由独立开发者维护，致力于为用户提供简洁高效的个人生�
 答：应用需要读写本地文件来保存您的待办事项、笔记等数据，因此需要存储权限。<br><br>
 
 <b>问题6：软件是免费的吗？未来会收费吗？</b><br>
-答：Tofu目前完全免费使用。未来可能会推出专业版功能，但基础功能会保持免费。<br><br>
+答：CalcE目前完全免费使用。未来可能会推出专业版功能，但基础功能会保持免费。<br><br>
 
 <b>问题7：遇到问题如何联系开发者？</b><br>
 答：可以通过邮件 virmuran@163.com 联系开发者，或者在GitHub仓库提交Issue。<br><br>
@@ -356,7 +356,7 @@ Tofu由独立开发者维护，致力于为用户提供简洁高效的个人生�
 4. 添加书签管理<br><br>
 
 <b>软件定位：</b><br>
-Tofu致力于为用户提供轻量级、高效的个人生产力工具。我们相信好的工具应该简单易用，专注于提升用户的工作效率。通过模块化设计，Tofu可以在不增加复杂性的前提下，提供多种实用的功能。<br><br>
+CalcE致力于为用户提供轻量级、高效的个人生产力工具。我们相信好的工具应该简单易用，专注于提升用户的工作效率。通过模块化设计，CalcE可以在不增加复杂性的前提下，提供多种实用的功能。<br><br>
 
 <b>温馨提示：</b><br>
 • 定期备份数据以防丢失<br>
@@ -365,7 +365,7 @@ Tofu致力于为用户提供轻量级、高效的个人生产力工具。我们�
     
         # 创建自定义对话框
         dialog = QDialog(self)
-        dialog.setWindowTitle("关于 Tofu")
+        dialog.setWindowTitle("关于 CalcE")
         dialog.setMinimumSize(700, 500)
         
         # 创建主布局
@@ -452,12 +452,12 @@ def main():
     app = QApplication(sys.argv)
     
     # 设置应用程序属性
-    app.setApplicationName("Tofu")
-    app.setApplicationVersion("2.1")
-    app.setOrganizationName("TofuSoft")
+    app.setApplicationName("CalcE")
+    app.setApplicationVersion("1.0")
+    app.setOrganizationName("CalcE")
     
     try:
-        window = TofuApp()
+        window = CalcE()
         window.show()
         return app.exec()
     except Exception as e:

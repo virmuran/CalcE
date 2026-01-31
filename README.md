@@ -1,6 +1,6 @@
-# TofuSoft - 化工工程计算与工艺设计模块
+# CalcE - 化工工程计算与工艺设计模块
 
-TofuSoft 是一套基于 PyQt 开发的化工工程计算与工艺设计桌面应用模块，涵盖管道压降计算、制冷循环分析、离心泵汽蚀余量计算、工艺流程图绘制等核心化工工程功能，旨在为化工工程师提供便捷、专业的工程计算与设计工具。
+CalcE 是一套基于 PyQt 开发的化工工程计算与工艺设计桌面应用模块，涵盖管道压降计算、制冷循环分析、离心泵汽蚀余量计算、工艺流程图绘制等核心化工工程功能，旨在为化工工程师提供便捷、专业的工程计算与设计工具。
 
 ## 🌟 功能模块
 
@@ -46,8 +46,8 @@ TofuSoft 是一套基于 PyQt 开发的化工工程计算与工艺设计桌面�
 ### 安装步骤
 1. 克隆仓库
 ```bash
-git clone https://github.com/your-username/tofusoft-chemical-engineering.git
-cd tofusoft-chemical-engineering
+git clone https://github.com/your-username/CalcE-chemical-engineering.git
+cd CalcE-chemical-engineering
 ```
 
 2. 安装依赖
@@ -58,7 +58,7 @@ pip install pyqt5
 3. 运行应用（示例）
 ```bash
 # 以制冷循环计算模块为例
-python TofuApp/modules/chemical_calculations/calculators/refrigeration_cycle_calculator.py
+python CalcE/modules/chemical_calculations/calculators/refrigeration_cycle_calculator.py
 ```
 
 ## 📖 使用说明
@@ -76,7 +76,7 @@ python TofuApp/modules/chemical_calculations/calculators/refrigeration_cycle_cal
 
 ## 📂 目录结构
 ```
-TofuApp/
+CalcE/
 ├── modules/
 │   ├── chemical_calculations/          # 化工计算核心模块
 │   │   ├── calculators/

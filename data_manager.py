@@ -1,4 +1,4 @@
-# TofuApp/data_manager.py
+# CalcE/data_manager.py
 import json
 import os
 import traceback
@@ -68,10 +68,10 @@ class DataManager(QObject):
             # 确保目录存在
             os.makedirs(app_data_dir, exist_ok=True)
             
-            return os.path.join(app_data_dir, "tofu_data.json")
+            return os.path.join(app_data_dir, "CalcE_data.json")
         except Exception:
             # 如果 Qt 不可用，使用当前目录
-            return os.path.join(os.path.abspath("."), "tofu_data.json")
+            return os.path.join(os.path.abspath("."), "CalcE_data.json")
     
     def _load_or_create_data(self):
         """加载或创建数据文件"""

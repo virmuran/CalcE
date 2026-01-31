@@ -1,4 +1,4 @@
-# TofuApp/modules/pomodoro.py
+# CalcE/modules/pomodoro.py
 import time
 from datetime import datetime
 from PySide6.QtWidgets import (

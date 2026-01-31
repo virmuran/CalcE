@@ -1,4 +1,4 @@
-# TofuApp/theme_manager.py
+# CalcE/theme_manager.py
 from PySide6.QtCore import QObject, Signal
 
 class ThemeManager(QObject):
