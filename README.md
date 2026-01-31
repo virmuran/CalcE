@@ -46,8 +46,8 @@ CalcE 是一套基于 PyQt 开发的化工工程计算与工艺设计桌面应�
 ### 安装步骤
 1. 克隆仓库
 ```bash
-git clone https://github.com/your-username/CalcE-chemical-engineering.git
-cd CalcE-chemical-engineering
+git clone https://github.com/virmuran/CalcE.git
+cd CalcE
 ```
 
 2. 安装依赖
