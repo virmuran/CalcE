@@ -1,5 +1,5 @@
 # CalcE/modules/__init__.py
-__version__ = "V1.0 标准版"
+__version__ = "v1.0.20260131"
 __author__ = "CalcE Team"
 
 import os
