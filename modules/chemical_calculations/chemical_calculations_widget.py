@@ -144,7 +144,7 @@ class ChemicalCalculationsWidget(QWidget):
             # ("🔥 长输蒸汽管道温降计算", "LongDistanceSteamPipeCalculator", "long_distance_steam_pipe_calculator", False),
             # ("🚨 泄压面积计算", "ReliefAreaCalculator", "relief_area_calculator", False),
             # ("🌬️ 风机功率计算", "FanPowerCalculator", "fan_power_calculator", False),
-            # ("🌫️ 水蒸气性质", "SteamPropertyCalculator", "steam_property_calculator", False),
+            ("🌫️ 水蒸气性质", "SteamPropertyCalculator", "steam_property_calculator", False),
             # ("🧪 纯物质物性查询", "PureSubstanceProperties", "pure_substance_properties", False),
             # ("💨 湿空气计算", "WetAirCalculator", "wet_air_calculator", False),
             # ("🔥 混合液体闪点", "MixedLiquidFlashPointCalculator", "mixed_liquid_flash_point_calculator", False),
