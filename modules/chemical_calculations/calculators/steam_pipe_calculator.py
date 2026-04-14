@@ -627,7 +627,57 @@ class 蒸汽管径流量(QWidget):
             QMessageBox.critical(self, "计算错误", f"参数输入格式错误: {str(e)}")
         except Exception as e:
             QMessageBox.critical(self, "计算错误", f"计算过程中发生错误: {str(e)}")
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        mode = self.get_current_mode()
+        pressure = float(self.pressure_input.text() or 0)
+        temperature = float(self.temperature_input.text() or 0)
+        steam_density = self.calculate_steam_density(pressure, temperature)
+        specific_volume = 1 / steam_density if steam_density > 0 else 0
+
+        inputs = {
+            "计算模式": mode,
+            "压力_MPa": pressure,
+            "温度_C": temperature,
+            "蒸汽密度_kg_m3": round(steam_density, 4),
+            "比容_m3_kg": round(specific_volume, 4)
+        }
+
+        outputs = {}
+        try:
+            if "根据流量计算管径" in mode:
+                flow_rate = float(self.flow_input.text() or 0)
+                inputs["质量流量_kg_h"] = flow_rate
+                volume_flow = (flow_rate / 3600) * specific_volume
+                inputs["体积流量_m3_s"] = round(volume_flow, 4)
+                required_area = volume_flow / 25.0
+                required_diameter = math.sqrt(4 * required_area / math.pi) * 1000
+                standard_diameters = [15, 20, 25, 32, 40, 50, 65, 80, 100, 125, 150, 200, 250, 300]
+                recommended_diameter = min(standard_diameters, key=lambda x: abs(x - required_diameter))
+                actual_area = math.pi * (recommended_diameter / 1000 / 2) ** 2
+                actual_velocity = volume_flow / actual_area
+                outputs = {
+                    "所需管径_mm": round(required_diameter, 1),
+                    "推荐标准管径": f"DN{recommended_diameter}",
+                    "实际流速_m_s": round(actual_velocity, 2)
+                }
+            else:
+                diameter = float(self.diameter_input.text() or 0)
+                inputs["管道内径_mm"] = diameter
+                area = math.pi * (diameter / 1000 / 2) ** 2
+                volume_flow = area * 25.0
+                max_flow_rate = volume_flow / specific_volume * 3600
+                outputs = {
+                    "截面积_m2": round(area, 5),
+                    "体积流量_m3_s": round(volume_flow, 4),
+                    "最大质量流量_kg_h": round(max_flow_rate, 1)
+                }
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def format_diameter_result(self, mode, pressure, temperature, steam_density, specific_volume,
                                flow_rate, volume_flow, required_diameter, recommended_diameter,
                                actual_velocity, required_area):

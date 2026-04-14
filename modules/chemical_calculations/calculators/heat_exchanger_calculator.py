@@ -1272,7 +1272,88 @@ class 换热器计算(QWidget):
                 widget.setCurrentIndex(0)
         
         self.result_text.clear()
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        mode = self.mode_combo.currentIndex()
+        mode_name = self.mode_combo.currentText()
+
+        inputs = {"计算模式": mode_name}
+
+        # 根据模式收集不同的输入
+        if mode == 0:
+            inputs["蒸汽压力_MPa"] = self.get_input_value("蒸汽压力g_mpa", 0)
+            inputs["冷流体流量_kg_h"] = self.get_input_value("冷流体w_kg/h", 0)
+            inputs["冷流体cp"] = self.get_input_value("冷流体cp_kj/(kg·k)", 0)
+            inputs["冷流体进口温度_C"] = self.get_input_value("冷流体t1_℃", 0)
+            inputs["冷流体出口温度_C"] = self.get_input_value("冷流体t2_℃", 0)
+        elif mode == 1:
+            inputs["蒸汽压力_MPa"] = self.get_input_value("蒸汽压力g_mpa", 0)
+            inputs["冷流体cp"] = self.get_input_value("冷流体cp_kj/(kg·k)", 0)
+            inputs["冷流体进口温度_C"] = self.get_input_value("冷流体t1_℃", 0)
+            inputs["冷流体出口温度_C"] = self.get_input_value("冷流体t2_℃", 0)
+            inputs["换热面积_m2"] = self.get_input_value("换热面积m2", 0)
+        elif mode == 2:
+            inputs["蒸汽压力_MPa"] = self.get_input_value("蒸汽压力g_mpa", 0)
+            inputs["冷流体流量_kg_h"] = self.get_input_value("冷流体w_kg/h", 0)
+            inputs["冷流体cp"] = self.get_input_value("冷流体cp_kj/(kg·k)", 0)
+            inputs["冷流体进口温度_C"] = self.get_input_value("冷流体t1_℃", 0)
+            inputs["换热面积_m2"] = self.get_input_value("换热面积m2", 0)
+        elif mode == 3:
+            inputs["热流体流量_kg_h"] = self.get_input_value("热流体w_kg/h", 0)
+            inputs["热流体cp"] = self.get_input_value("热流体cp_kj/(kg·k)", 0)
+            inputs["热流体进口温度_C"] = self.get_input_value("热流体t1_℃", 0)
+            inputs["热流体出口温度_C"] = self.get_input_value("热流体t2_℃", 0)
+            inputs["冷流体cp"] = self.get_input_value("冷流体cp_kj/(kg·k)", 0)
+            inputs["冷流体进口温度_C"] = self.get_input_value("冷流体t1_℃", 0)
+            inputs["换热面积_m2"] = self.get_input_value("换热面积m2", 0)
+        elif mode == 4:
+            inputs["热流体流量_kg_h"] = self.get_input_value("热流体w_kg/h", 0)
+            inputs["热流体cp"] = self.get_input_value("热流体cp_kj/(kg·k)", 0)
+            inputs["热流体进口温度_C"] = self.get_input_value("热流体t1_℃", 0)
+            inputs["冷流体流量_kg_h"] = self.get_input_value("冷流体w_kg/h", 0)
+            inputs["冷流体cp"] = self.get_input_value("冷流体cp_kj/(kg·k)", 0)
+            inputs["冷流体进口温度_C"] = self.get_input_value("冷流体t1_℃", 0)
+            inputs["换热面积_m2"] = self.get_input_value("换热面积m2", 0)
+        elif mode == 5:
+            inputs["热流体流量_kg_h"] = self.get_input_value("热流体w_kg/h", 0)
+            inputs["热流体cp"] = self.get_input_value("热流体cp_kj/(kg·k)", 0)
+            inputs["热流体进口温度_C"] = self.get_input_value("热流体t1_℃", 0)
+            inputs["热流体出口温度_C"] = self.get_input_value("热流体t2_℃", 0)
+            inputs["冷流体cp"] = self.get_input_value("冷流体cp_kj/(kg·k)", 0)
+            inputs["冷流体进口温度_C"] = self.get_input_value("冷流体t1_℃", 0)
+            inputs["冷流体出口温度_C"] = self.get_input_value("冷流体t2_℃", 0)
+        elif mode == 6:
+            inputs["热流体cp"] = self.get_input_value("热流体cp_kj/(kg·k)", 0)
+            inputs["热流体进口温度_C"] = self.get_input_value("热流体t1_℃", 0)
+            inputs["热流体出口温度_C"] = self.get_input_value("热流体t2_℃", 0)
+            inputs["冷流体流量_kg_h"] = self.get_input_value("冷流体w_kg/h", 0)
+            inputs["冷流体cp"] = self.get_input_value("冷流体cp_kj/(kg·k)", 0)
+            inputs["冷流体进口温度_C"] = self.get_input_value("冷流体t1_℃", 0)
+            inputs["冷流体出口温度_C"] = self.get_input_value("冷流体t2_℃", 0)
+
+        # 添加总传热系数
+        k_combo_idx = self.input_widgets.get("k_combo").currentIndex() if "k_combo" in self.input_widgets else 0
+        inputs["传热系数选择"] = k_combo_idx
+        if k_combo_idx == 0:
+            inputs["传热系数_W_m2K"] = self.get_input_value("k_manual", 0)
+
+        outputs = {}
+        result_text = self.result_text.toPlainText()
+        if "计算结果" in result_text:
+            try:
+                import re
+                q_match = re.search(r'换热量[：:]\s*([\d.]+)\s*kW', result_text)
+                if q_match:
+                    outputs["换热量_kW"] = float(q_match.group(1))
+                lmtd_match = re.search(r'对数平均温差[（(]LMTD[）)][：:]\s*([\d.]+)\s*°C', result_text)
+                if lmtd_match:
+                    outputs["LMTD_C"] = float(lmtd_match.group(1))
+            except Exception:
+                pass
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def get_project_info(self):
         """获取工程信息 - 使用共享的项目信息"""
         try:

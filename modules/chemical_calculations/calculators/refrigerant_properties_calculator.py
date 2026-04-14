@@ -623,7 +623,42 @@ class RefrigerantPropertiesCalculator(QWidget):
             self.show_error("输入参数格式错误，请检查输入值")
         except Exception as e:
             self.show_error(f"计算错误: {str(e)}")
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        refrigerant = self.refrigerant_selection.currentText()
+        calc_type = self.calculation_type.currentText()
+        temperature = float(self.temperature_input.text()) if self.temperature_input.text() else None
+        pressure = float(self.pressure_input.text()) if self.pressure_input.text() else None
+        quality = float(self.quality_input.text()) if self.quality_input.text() else None
+
+        inputs = {
+            "制冷剂": refrigerant,
+            "计算类型": calc_type,
+            "温度_C": temperature,
+            "压力_MPa": pressure,
+            "干度": quality
+        }
+
+        outputs = {}
+        try:
+            refrigerant_info = self.get_refrigerant_info(refrigerant)
+            results = self.calculate_refrigerant_properties(
+                refrigerant, refrigerant_info, calc_type, temperature, pressure, quality
+            )
+            outputs = {
+                "密度_kg_m3": round(results.get('density', 0), 4),
+                "比焓_kJ_kg": round(results.get('enthalpy', 0), 2),
+                "比熵_kJ_kgK": round(results.get('entropy', 0), 4),
+                "比容_m3_kg": round(results.get('specific_volume', 0), 5),
+                "动力粘度_Pa_s": round(results.get('viscosity', 0), 6),
+                "热导率_W_mK": round(results.get('conductivity', 0), 4)
+            }
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def calculate_refrigerant_properties(self, refrigerant, info, calc_type, T, P, x):
         """计算制冷剂物性"""
         # 转换为绝对温度

@@ -276,7 +276,61 @@ class LongDistanceSteamPipeCalculator(QWidget):
             self.show_error("输入参数格式错误，请检查输入值")
         except Exception as e:
             self.show_error(f"计算错误: {str(e)}")
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        steam_type = self.steam_type.currentText()
+        flow_rate = float(self.flow_rate_input.text() or 0)
+        flow_unit = self.flow_rate_unit.currentText()
+        if flow_unit == "t/h":
+            mass_flow = flow_rate * 1000 / 3600
+        else:
+            mass_flow = flow_rate
+        inlet_temp = float(self.inlet_temp_input.text() or 0)
+        inlet_pressure = float(self.inlet_pressure_input.text() or 0)
+        pressure_unit = self.pressure_unit.currentText()
+        inlet_pressure_mpa = inlet_pressure / 10 if pressure_unit == "bar" else inlet_pressure
+        pipe_length = float(self.pipe_length_input.text() or 0)
+        pipe_diameter = float(self.pipe_diameter_input.text() or 0)
+        roughness = float(self.roughness_input.text() or 0)
+        insulation_thickness = float(self.insulation_thickness_input.text() or 0)
+        insulation_conductivity = float(self.insulation_conductivity_input.text() or 0)
+        ambient_temp = float(self.ambient_temp_input.text() or 0)
+
+        inputs = {
+            "蒸汽类型": steam_type,
+            "流量": flow_rate,
+            "流量单位": flow_unit,
+            "入口温度_C": inlet_temp,
+            "入口压力": inlet_pressure,
+            "压力单位": pressure_unit,
+            "管道长度_m": pipe_length,
+            "管道直径_mm": pipe_diameter,
+            "粗糙度_mm": roughness,
+            "保温厚度_mm": insulation_thickness,
+            "保温导热系数_W_mK": insulation_conductivity,
+            "环境温度_C": ambient_temp
+        }
+
+        outputs = {}
+        try:
+            results = self.calculate_steam_pipe_loss(
+                steam_type, mass_flow, inlet_temp, inlet_pressure_mpa,
+                pipe_length, pipe_diameter / 1000, roughness / 1000,
+                insulation_thickness / 1000, insulation_conductivity, ambient_temp
+            )
+            outputs = {
+                "出口温度_C": round(results.get('outlet_temp', 0), 1),
+                "出口压力_MPa": round(results.get('outlet_pressure', 0), 3),
+                "温降_C": round(results.get('temp_drop', 0), 1),
+                "压降_MPa": round(results.get('pressure_drop', 0), 3),
+                "总热损失_kW": round(results.get('total_heat_loss', 0), 1)
+            }
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def calculate_steam_pipe_loss(self, steam_type, mass_flow, inlet_temp, inlet_pressure,
                                  pipe_length, pipe_diameter, roughness,
                                  insulation_thickness, insulation_conductivity, ambient_temp):

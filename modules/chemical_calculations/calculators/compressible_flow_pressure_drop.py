@@ -221,7 +221,7 @@ class CompressibleFlowPressureDrop(QWidget):
         
         # 按钮组
         button_layout = QHBoxLayout()
-        self.calculate_btn = QPushButton("计算压降")
+        self.calculate_btn = QPushButton("计算")
         self.calculate_btn.clicked.connect(self.calculate_pressure_drop)
         self.calculate_btn.setStyleSheet("QPushButton { background-color: #9b59b6; color: white; font-weight: bold; }")
         button_layout.addWidget(self.calculate_btn)
@@ -446,7 +446,71 @@ class CompressibleFlowPressureDrop(QWidget):
             
         except Exception as e:
             QMessageBox.warning(self, "计算错误", f"计算过程中发生错误: {str(e)}")
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        method = self.get_selected_method()
+        diameter = self.diameter_input.value()
+        length = self.length_input.value()
+        roughness = self.roughness_input.value()
+        inlet_pressure = self.inlet_pressure_input.value()
+        outlet_pressure = self.outlet_pressure_input.value()
+        temperature = self.temperature_input.value()
+        mass_flow = self.mass_flow_input.value()
+        molecular_weight = self.molecular_weight_input.value()
+        gamma = self.gamma_input.value()
+        viscosity = self.viscosity_input.value()
+
+        inputs = {
+            "计算方法": method,
+            "管道直径_mm": diameter,
+            "管道长度_m": length,
+            "粗糙度_mm": roughness,
+            "入口压力_kPa": inlet_pressure,
+            "出口压力_kPa": outlet_pressure,
+            "温度_C": temperature,
+            "质量流量_kg_h": mass_flow,
+            "分子量": molecular_weight,
+            "绝热指数": gamma,
+            "动力粘度_Pa_s": viscosity
+        }
+
+        outputs = {}
+        try:
+            d = diameter / 1000
+            l = length
+            r = roughness / 1000
+            p1 = inlet_pressure * 1000
+            p2 = outlet_pressure * 1000
+            T = temperature + 273.15
+            m = mass_flow / 3600
+            R = 8314 / molecular_weight
+            mu = viscosity * 1e-6
+            rho_in = self.calculate_density(p1, T, R)
+            rho_out = self.calculate_density(p2, T, R)
+            rho_avg = (rho_in + rho_out) / 2
+            area = math.pi * d**2 / 4
+            v = m / (rho_avg * area)
+            Re = self.calculate_reynolds(d, v, rho_avg, mu)
+            f = self.calculate_friction_factor(Re, r, d)
+            speed_of_sound = math.sqrt(gamma * R * T)
+            mach = v / speed_of_sound
+            pressure_drop = p1 - p2
+            outputs = {
+                "入口密度_kg_m3": round(rho_in, 4),
+                "出口密度_kg_m3": round(rho_out, 4),
+                "平均密度_kg_m3": round(rho_avg, 4),
+                "平均流速_m_s": round(v, 2),
+                "雷诺数": round(Re, 0),
+                "摩擦系数": round(f, 6),
+                "马赫数": round(mach, 4),
+                "压降_Pa": round(pressure_drop, 0)
+            }
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def get_selected_method(self):
         """获取选择的方法"""
         if self.darcy_radio.isChecked():

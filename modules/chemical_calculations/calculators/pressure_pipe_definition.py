@@ -93,7 +93,7 @@ class 压力管道定义(QWidget):
         
         # 按钮组
         button_layout = QHBoxLayout()
-        self.calculate_btn = QPushButton("计算管道定义")
+        self.calculate_btn = QPushButton("计算")
         self.calculate_btn.clicked.connect(self.calculate_pipe_definition)
         self.calculate_btn.setStyleSheet("QPushButton { background-color: #3498db; color: white; font-weight: bold; }")
         button_layout.addWidget(self.calculate_btn)
@@ -360,6 +360,34 @@ class 压力管道定义(QWidget):
         self.diameter_input.clear()
         self.media_combo.setCurrentIndex(0)
         self.result_text.clear()
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        design_pressure = float(self.pressure_input.text() or 0)
+        working_pressure = float(self.working_pressure_input.text() or 0)
+        design_temp = float(self.temp_input.text() or 0)
+        working_temp = float(self.working_temp_input.text() or 0)
+        diameter = float(self.diameter_input.text() or 0)
+        media_type = self.media_combo.currentText()
+
+        inputs = {
+            "设计压力_MPa": design_pressure,
+            "工作压力_MPa": working_pressure,
+            "设计温度_C": design_temp,
+            "工作温度_C": working_temp,
+            "公称直径_mm": diameter,
+            "介质类型": media_type
+        }
+
+        outputs = {}
+        result_text = self.result_text.toPlainText()
+        if "管道类别" in result_text or "GC" in result_text:
+            import re
+            class_match = re.search(r'(GC[123])', result_text)
+            if class_match:
+                outputs["判定管道类别"] = class_match.group(1)
+
+        return {"inputs": inputs, "outputs": outputs}
 
 if __name__ == "__main__":
     # 测试代码

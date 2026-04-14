@@ -509,7 +509,7 @@ class 管道补偿(QWidget):
         left_layout.addWidget(input_group)
         
         # 4. 计算按钮
-        calculate_btn = QPushButton("计算补偿量")
+        calculate_btn = QPushButton("计算")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate_compensation)
         calculate_btn.setStyleSheet("""
@@ -843,7 +843,86 @@ class 管道补偿(QWidget):
             QMessageBox.critical(self, "计算错误", f"参数输入格式错误: {str(e)}")
         except Exception as e:
             QMessageBox.critical(self, "计算错误", f"计算过程中发生错误: {str(e)}")
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        mode = self.get_current_mode()
+        material_name = self.material_combo.currentText()
+        if material_name.startswith("---") or material_name == "- 请选择管道材质 -":
+            material_name = "未指定"
+        od, thickness = self.get_pipe_dimensions()
+        temp_install = float(self.temp_install_input.text() or 0)
+        temp_operate = float(self.temp_operate_input.text() or 0)
+        temp_change = abs(temp_operate - temp_install)
+        alpha, elastic, allowable_stress = self.get_material_properties()
+
+        inputs = {
+            "计算模式": mode,
+            "管道材质": material_name,
+            "管道外径_mm": round(od * 1000, 1),
+            "管道壁厚_mm": round(thickness * 1000, 1),
+            "安装温度_C": temp_install,
+            "操作温度_C": temp_operate,
+            "温度变化_C": round(temp_change, 1),
+            "线膨胀系数_1e-6": round(alpha * 1e6, 2),
+            "弹性模量_GPa": round(elastic / 1e9, 0),
+            "许用应力_MPa": round(allowable_stress / 1e6, 0)
+        }
+
+        outputs = {}
+        try:
+            if mode == "热膨胀基本计算":
+                length = float(self.length_input.text() or 0)
+                inputs["管道长度_m"] = length
+                expansion = alpha * temp_change * length
+                id_val = od - 2 * thickness
+                area = math.pi * (od**2 - id_val**2) / 4
+                stress = elastic * alpha * temp_change
+                force = stress * area
+                if expansion < 0.05:
+                    compensation = "自然补偿"
+                elif expansion < 0.15:
+                    compensation = "Π型补偿器"
+                elif expansion < 0.3:
+                    compensation = "波纹管补偿器"
+                else:
+                    compensation = "套筒/球形补偿器"
+                outputs = {
+                    "热膨胀量_mm": round(expansion * 1000, 1),
+                    "热应力_MPa": round(stress / 1e6, 1),
+                    "热推力_kN": round(force / 1000, 1),
+                    "推荐补偿方式": compensation
+                }
+            elif mode == "L形直角弯补偿":
+                l1 = float(self.l1_input.text() or 0)
+                l2 = float(self.l2_input.text() or 0)
+                inputs["L1臂长_m"] = l1
+                inputs["L2臂长_m"] = l2
+                expansion = alpha * temp_change * max(l1, l2)
+                outputs = {
+                    "L1臂长_m": l1,
+                    "L2臂长_m": l2,
+                    "最大热膨胀_mm": round(expansion * 1000, 1)
+                }
+            elif mode == "Z形折角弯补偿":
+                l1 = float(self.l1_input.text() or 0)
+                l2 = float(self.l2_input.text() or 0)
+                l3 = float(self.l3_input.text() or 0)
+                inputs["L1_m"] = l1
+                inputs["L2_m"] = l2
+                inputs["L3_m"] = l3
+                expansion = alpha * temp_change * max(l1, l3)
+                outputs = {
+                    "L1_m": l1,
+                    "L2_m": l2,
+                    "L3_m": l3,
+                    "端臂热膨胀_mm": round(expansion * 1000, 1)
+                }
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def calculate_basic_expansion(self, od, thickness, length, temp_change, alpha, elastic, allowable_stress, material_name):
         """计算基本热膨胀"""
         # 计算热膨胀量

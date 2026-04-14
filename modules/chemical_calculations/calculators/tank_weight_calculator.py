@@ -400,7 +400,7 @@ class 罐体重量(QWidget):
         left_layout.addWidget(material_group)
         
         # 5. 计算按钮
-        calculate_btn = QPushButton("计算重量")
+        calculate_btn = QPushButton("计算")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate_weight)
         calculate_btn.setStyleSheet("""
@@ -739,7 +739,78 @@ class 罐体重量(QWidget):
             QMessageBox.warning(self, "输入错误", f"请输入有效的数值: {str(e)}")
         except Exception as e:
             QMessageBox.warning(self, "计算错误", f"计算过程中发生错误: {str(e)}")
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        tank_type = self.get_current_tank_type()
+        diameter = float(self.diameter_input.text() or 0)
+        material_density = float(self.density_input.text() or 0)
+        liquid_density = float(self.liquid_density_input.text() or 0)
+
+        inputs = {
+            "罐体类型": tank_type,
+            "直径_mm": diameter,
+            "材料密度_kg_m3": material_density,
+            "液体密度_kg_m3": liquid_density
+        }
+
+        outputs = {}
+        try:
+            D = diameter / 1000
+            if tank_type == "锥体罐":
+                H = float(self.height_input.text() or 0) / 1000
+                t = float(self.shell_thickness_input.text() or 0) / 1000
+                h_cone = float(self.cone_height_input.text() or 0) / 1000
+                d = float(self.nozzle_diameter_input.text() or 0) / 1000
+                inputs["高度_mm"] = H * 1000
+                inputs["壁厚_mm"] = t * 1000
+                inputs["锥高_mm"] = h_cone * 1000
+                tank_weight = self.calculate_cone_tank_weight(D, H, t, h_cone, d, material_density)
+                liquid_weight = self.calculate_cone_liquid_weight(D, H, h_cone, liquid_density)
+            elif tank_type == "平底罐":
+                H = float(self.height_input.text() or 0) / 1000
+                t = float(self.shell_thickness_input.text() or 0) / 1000
+                inputs["高度_mm"] = H * 1000
+                inputs["壁厚_mm"] = t * 1000
+                tank_weight = self.calculate_flat_tank_weight(D, H, t, material_density)
+                liquid_weight = self.calculate_flat_liquid_weight(D, H, liquid_density)
+            elif tank_type == "椭圆底罐":
+                H = float(self.height_input.text() or 0) / 1000
+                t = float(self.shell_thickness_input.text() or 0) / 1000
+                inputs["高度_mm"] = H * 1000
+                inputs["壁厚_mm"] = t * 1000
+                tank_weight = self.calculate_elliptic_tank_weight(D, H, t, material_density)
+                liquid_weight = self.calculate_elliptic_liquid_weight(D, H, liquid_density)
+            elif tank_type == "卧式罐":
+                L = float(self.length_input.text() or 0) / 1000
+                t = float(self.shell_thickness_input.text() or 0) / 1000
+                h = float(self.liquid_level_input.text() or 0) / 1000
+                inputs["长度_mm"] = L * 1000
+                inputs["壁厚_mm"] = t * 1000
+                inputs["液位_mm"] = h * 1000
+                tank_weight = self.calculate_horizontal_tank_weight(D, L, t, material_density)
+                liquid_weight = self.calculate_horizontal_liquid_weight(D, L, h, liquid_density)
+            elif tank_type == "球罐":
+                t = float(self.shell_thickness_input.text() or 0) / 1000
+                h = float(self.liquid_level_input.text() or 0) / 1000
+                inputs["壁厚_mm"] = t * 1000
+                inputs["液位_mm"] = h * 1000
+                tank_weight = self.calculate_sphere_tank_weight(D, t, material_density)
+                liquid_weight = self.calculate_sphere_liquid_weight(D, h, liquid_density)
+            else:
+                tank_weight = 0
+                liquid_weight = 0
+
+            outputs = {
+                "罐体重量_kg": round(tank_weight, 1),
+                "液体重量_kg": round(liquid_weight, 1),
+                "总重量_kg": round(tank_weight + liquid_weight, 1)
+            }
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def calculate_cone_tank_weight(self, D, H, t, h_cone, d, density):
         """计算锥体罐重量"""
         # 筒体体积 (圆柱侧面积 × 厚度)

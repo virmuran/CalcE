@@ -582,8 +582,41 @@ class VLEActivityCoefficientCalculator(QWidget):
         self.dew_point_result.setText("计算错误")
         self.flash_temp_result.setText("计算错误")
         self.vapor_fraction_result.setText("计算错误")
-        
+
         print(f"错误: {message}")
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        temperature = float(self.temperature_input.text()) if self.temperature_input.text() else 25.0
+        pressure = float(self.pressure_input.text()) if self.pressure_input.text() else 0
+        model = self.model_selection.currentText()
+        calc_type = self.calc_type.currentText()
+
+        inputs = {
+            "温度_C": temperature,
+            "压力_kPa": pressure,
+            "热力学模型": model,
+            "计算类型": calc_type
+        }
+
+        outputs = {}
+        try:
+            components = self.get_component_data()
+            inputs["组分数量"] = len(components)
+            for i, comp in enumerate(components):
+                inputs[f"组分{i+1}"] = comp.get("name", "")
+                inputs[f"组分{i+1}_液相分率"] = comp.get("x", 0)
+
+            k_text = self.k_value_result.text()
+            vapor_text = self.vapor_fraction_result.text()
+            if k_text and k_text not in ["--", "计算错误"]:
+                outputs["K值"] = float(k_text)
+            if vapor_text and vapor_text not in ["--", "计算错误"]:
+                outputs["气相分率"] = float(vapor_text)
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}
 
 
 if __name__ == "__main__":

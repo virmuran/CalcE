@@ -249,7 +249,7 @@ class 篮式过滤器(QWidget):
     def setup_buttons(self, layout):
         """设置按钮区域"""
         # 计算按钮
-        calculate_btn = QPushButton("设计计算")
+        calculate_btn = QPushButton("计算")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.perform_design_calculation)
         calculate_btn.setStyleSheet("""
@@ -633,7 +633,57 @@ class 篮式过滤器(QWidget):
             QMessageBox.critical(self, "计算错误", "参数不能为零")
         except Exception as e:
             QMessageBox.critical(self, "计算错误", f"计算过程中发生错误: {str(e)}")
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        inputs = self.get_input_values()
+
+        inputs_hist = {
+            "流体名称": inputs.get('fluid_name', ''),
+            "密度_kg_m3": inputs.get('density', 0),
+            "动力粘度_Pa_s": inputs.get('viscosity', 0),
+            "设计流量_m3_h": inputs.get('flow_rate', 0),
+            "设计压力_MPa": inputs.get('design_pressure', 0),
+            "设计温度_C": inputs.get('design_temp', 0),
+            "允许压降_kPa": inputs.get('max_pressure_drop', 0),
+            "过滤精度_um": inputs.get('mesh_size', 0),
+            "材料": inputs.get('material', ''),
+            "开孔率_%": inputs.get('porosity', 0),
+            "过滤速度_m_s": inputs.get('velocity', 0),
+            "支撑网厚度_m": inputs.get('support_thickness', 0),
+            "许用应力_MPa": inputs.get('stress', 0)
+        }
+
+        outputs = {}
+        try:
+            wire_diameter = self.calculate_wire_diameter(inputs['mesh_size'])
+            effective_area = self.calculate_effective_area(inputs['flow_rate'], inputs['velocity'])
+            screen_diameter = self.calculate_screen_diameter(effective_area)
+            screen_height = self.calculate_screen_height(screen_diameter)
+            pressure_drop = self.calculate_pressure_drop(inputs['viscosity'], inputs['velocity'],
+                                                        inputs['support_thickness'], inputs['porosity'], wire_diameter)
+            stress_factor = self.calculate_stress_factor(inputs['design_pressure'], screen_diameter,
+                                                         inputs['support_thickness'], inputs['stress'])
+            pipe_diameter = self.calculate_pipe_diameter(inputs['flow_rate'])
+            effective_area_rounded = self.round_value(effective_area, 'area')
+            screen_diameter_rounded = self.round_value(screen_diameter, 'dimension')
+            filter_diameter_rounded = self.get_filter_diameter_value(screen_diameter_rounded)
+
+            outputs = {
+                "丝径_mm": round(wire_diameter * 1000, 4),
+                "有效面积_m2": round(effective_area, 4),
+                "筛网直径_mm": round(screen_diameter * 1000, 1),
+                "筛网高度_mm": round(screen_height * 1000, 1),
+                "压降_kPa": round(pressure_drop / 1000, 2),
+                "应力因子": round(stress_factor, 3),
+                "管道直径_mm": round(pipe_diameter * 1000, 1),
+                "过滤器直径_mm": filter_diameter_rounded
+            }
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs_hist, "outputs": outputs}
+
     def get_input_values(self):
         """获取并验证输入值"""
         try:

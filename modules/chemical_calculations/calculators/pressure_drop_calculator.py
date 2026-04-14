@@ -484,7 +484,7 @@ class 压降计算(QWidget):
         left_layout.addWidget(self.fittings_btn)
         
         # 5. 计算按钮
-        calculate_btn = QPushButton("计算压降")
+        calculate_btn = QPushButton("计算")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate_pressure_drop)
         calculate_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # 水平扩展
@@ -1017,7 +1017,108 @@ class 压降计算(QWidget):
             QMessageBox.critical(self, "计算错误", "参数不能为零")
         except Exception as e:
             QMessageBox.critical(self, "计算错误", f"计算过程中发生错误: {str(e)}")
-    
+
+    def _get_history_data(self):
+        """提供历史记录所需的输入输出数据"""
+        mode = self.get_current_mode()
+        diameter = self.get_diameter_value()
+        length = float(self.length_input.text() or 0)
+        flow_rate = float(self.flow_input.text() or 0)
+        density = float(self.density_input.text() or 0)
+        viscosity = float(self.viscosity_input.text() or 0)
+        roughness = self.get_roughness_value()
+
+        inputs = {
+            "计算模式": mode,
+            "管道内径": f"{diameter*1000:.1f} mm",
+            "管道内径原始值(m)": diameter,
+            "管道长度": f"{length} m",
+            "流体流量": f"{flow_rate} m\u00b3/h",
+            "流体密度": f"{density:.3f} kg/m\u00b3",
+            "动力粘度": f"{viscosity:.4f} mPa\u00b7s",
+            "管道粗糙度": f"{roughness*1000:.3f} mm",
+            "流体类型": self.fluid_combo.currentText(),
+        }
+
+        outputs = {}
+        raw_results = {}
+
+        if mode == "不可压缩流体":
+            elevation = float(self.elevation_input.text() or 0)
+            inputs["标高变化"] = f"{elevation} m"
+            velocity = (flow_rate / 3600) / (math.pi * (diameter / 2) ** 2)
+            viscosity_pa = viscosity / 1000
+            reynolds = (density * velocity * diameter) / viscosity_pa
+            if reynolds < 2000:
+                friction_factor = 64 / reynolds
+            elif reynolds < 4000:
+                friction_factor = 0.25 / (math.log10(roughness/(3.7*diameter) + 5.74/reynolds**0.9)) ** 2
+            else:
+                friction_factor = self.solve_colebrook(roughness/diameter, reynolds)
+            pd_friction = friction_factor * (length / diameter) * (density * velocity ** 2) / 2
+            pd_local = self.local_resistance_coeff * (density * velocity ** 2) / 2
+            pd_elevation = density * 9.81 * elevation
+            total = pd_friction + pd_local + pd_elevation
+            inputs["局部阻力系数"] = self.local_resistance_coeff
+            raw_results = {
+                "流速(m/s)": velocity, "雷诺数": reynolds,
+                "摩擦系数": friction_factor,
+                "沿程损失(kPa)": pd_friction/1000,
+                "局部损失(kPa)": pd_local/1000,
+                "静压头变化(kPa)": pd_elevation/1000,
+                "总压降(kPa)": total/1000,
+                "总压降(Pa)": total,
+            }
+        elif mode == "可压缩流体（绝热）":
+            adiabatic = self.get_adiabatic_value()
+            pressure = float(self.pressure_input.text() or 0)
+            inputs["绝热系数"] = adiabatic
+            inputs["起点压力"] = f"{pressure} kPa"
+            velocity = (flow_rate / 3600) / (math.pi * (diameter / 2) ** 2)
+            viscosity_pa = viscosity / 1000
+            reynolds = (density * velocity * diameter) / viscosity_pa
+            if reynolds < 2000:
+                friction_factor = 64 / reynolds
+            elif reynolds < 4000:
+                friction_factor = 0.25 / (math.log10(roughness/(3.7*diameter) + 5.74/reynolds**0.9)) ** 2
+            else:
+                friction_factor = self.solve_colebrook(roughness/diameter, reynolds)
+            mach = velocity / math.sqrt(adiabatic * 287 * 293)
+            pressure_ratio = max(0, 1 - (friction_factor * length / diameter) * (adiabatic * mach**2) / 2)
+            end_pressure = pressure * 1000 * pressure_ratio
+            total = (pressure * 1000 - end_pressure)
+            raw_results = {
+                "流速(m/s)": velocity, "雷诺数": reynolds,
+                "摩擦系数": friction_factor, "马赫数": mach,
+                "总压降(kPa)": total/1000,
+            }
+        else:  # 可压缩流体（等温）
+            pressure = float(self.pressure_input.text() or 0)
+            inputs["起点压力"] = f"{pressure} kPa"
+            velocity = (flow_rate / 3600) / (math.pi * (diameter / 2) ** 2)
+            viscosity_pa = viscosity / 1000
+            reynolds = (density * velocity * diameter) / viscosity_pa
+            if reynolds < 2000:
+                friction_factor = 64 / reynolds
+            elif reynolds < 4000:
+                friction_factor = 0.25 / (math.log10(roughness/(3.7*diameter) + 5.74/reynolds**0.9)) ** 2
+            else:
+                friction_factor = self.solve_colebrook(roughness/diameter, reynolds)
+            total = (friction_factor * length * density * velocity**2) / (2 * diameter)
+            raw_results = {
+                "流速(m/s)": velocity, "雷诺数": reynolds,
+                "摩擦系数": friction_factor,
+                "总压降(kPa)": total/1000,
+            }
+
+        for k, v in raw_results.items():
+            if isinstance(v, float):
+                outputs[k] = round(v, 6)
+            else:
+                outputs[k] = v
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def format_incompressible_result(self, mode, diameter, length, elevation, flow_rate, 
                                    density, viscosity, roughness, velocity, reynolds, 
                                    flow_regime, friction_factor, pressure_drop_friction, 

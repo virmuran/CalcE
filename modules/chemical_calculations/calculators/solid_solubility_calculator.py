@@ -527,7 +527,33 @@ class SolidSolubilityCalculator(QWidget):
         self.worker.finished.connect(self.on_query_finished)
         self.worker.error.connect(self.on_query_error)
         self.worker.start()
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        compound = self.compound_input.currentText().strip()
+        solvent = self.solvent_input.currentText().strip()
+        temperature = float(self.temperature_input.text() or 0)
+        pressure = float(self.pressure_input.text() or 101.3)
+
+        inputs = {
+            "化合物": compound,
+            "溶剂": solvent,
+            "温度_C": temperature,
+            "压力_kPa": pressure
+        }
+
+        outputs = {}
+        solubility = self.solubility_result.text()
+        if solubility and solubility != "--":
+            try:
+                outputs["溶解度"] = float(solubility)
+                outputs["单位"] = self.unit_result.text()
+                outputs["数据来源"] = self.source_result.text()
+            except ValueError:
+                outputs["溶解度"] = solubility
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def batch_query(self):
         """批量查询溶解度"""
         row_count = self.batch_table.rowCount()

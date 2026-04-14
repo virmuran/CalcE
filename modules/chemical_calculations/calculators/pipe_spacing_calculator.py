@@ -264,7 +264,7 @@ class 管道间距(QWidget):
         button_layout.setSpacing(10)
         
         # 计算按钮
-        self.calc_btn = QPushButton("计算间距")
+        self.calc_btn = QPushButton("计算")
         self.calc_btn.setFixedHeight(40)
         self.calc_btn.setStyleSheet("""
             QPushButton {
@@ -578,7 +578,43 @@ class 管道间距(QWidget):
             detail_text += "无"
         
         self.result_detail_label.setText(detail_text)
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        dn1 = self.dn_input1.currentText()
+        dn2 = self.dn_input2.currentText()
+        flange_grade1 = self.flange_combo1.currentText()
+        flange_grade2 = self.flange_combo2.currentText()
+        insulation1 = float(self.insulation_input1.text()) if self.insulation_check1.isChecked() else 0
+        insulation2 = float(self.insulation_input2.text()) if self.insulation_check2.isChecked() else 0
+
+        inputs = {
+            "管道1_DN": dn1,
+            "管道2_DN": dn2,
+            "法兰等级1": flange_grade1,
+            "法兰等级2": flange_grade2,
+            "保温厚度1_mm": insulation1,
+            "保温厚度2_mm": insulation2,
+            "管廊类型": self.rack_type_combo.currentText(),
+            "热位移_mm": float(self.thermal_input.text()) if self.thermal_check.isChecked() else 0
+        }
+
+        outputs = {}
+        if self.results.get('spacing_final', 0) > 0:
+            outputs = {
+                "管道1外径_mm": self.results.get('pipe_od1', 0),
+                "管道2外径_mm": self.results.get('pipe_od2', 0),
+                "法兰1外径_mm": self.results.get('flange_od1', 0),
+                "法兰2外径_mm": self.results.get('flange_od2', 0),
+                "基础间距_mm": self.results.get('spacing_basic', 0),
+                "法兰间距_mm": self.results.get('spacing_flange', 0),
+                "最小中心距_mm": self.results.get('spacing_final', 0)
+            }
+        else:
+            outputs["状态"] = "未计算"
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def reset_inputs(self):
         """重置所有输入到默认值"""
         # 重置单位制

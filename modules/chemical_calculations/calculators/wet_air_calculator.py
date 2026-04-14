@@ -223,7 +223,58 @@ class WetAirCalculator(QWidget):
             self.show_error("输入参数格式错误，请检查输入值")
         except Exception as e:
             self.show_error(f"计算错误: {str(e)}")
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        temp = float(self.temp_input.text() or 0)
+        if self.temp_unit.currentText() == "K":
+            temp = temp - 273.15
+        pressure = float(self.pressure_input.text() or 0)
+        pressure_unit = self.pressure_unit.currentText()
+        if pressure_unit == "bar":
+            pressure_kpa = pressure * 100
+        elif pressure_unit == "atm":
+            pressure_kpa = pressure * 101.325
+        else:
+            pressure_kpa = pressure
+
+        known_params = {}
+        if self.rh_input.text().strip():
+            known_params['rh'] = float(self.rh_input.text())
+        if self.humidity_input.text().strip():
+            humidity = float(self.humidity_input.text())
+            if self.humidity_unit.currentText() == "g/kg干空气":
+                humidity = humidity / 1000
+            known_params['abs_humidity'] = humidity
+        if self.wet_bulb_input.text().strip():
+            known_params['wet_bulb'] = float(self.wet_bulb_input.text())
+        if self.dew_point_input.text().strip():
+            known_params['dew_point'] = float(self.dew_point_input.text())
+
+        inputs = {
+            "干球温度_C": round(temp, 1),
+            "压力": pressure,
+            "压力单位": pressure_unit,
+            "已知参数": list(known_params.keys())
+        }
+
+        outputs = {}
+        try:
+            results = self.calculate_wet_air_properties(temp, pressure_kpa, known_params)
+            outputs = {
+                "相对湿度_%": round(results.get('rh', 0), 1),
+                "绝对湿度_kg_kg": round(results.get('abs_humidity', 0), 5),
+                "湿球温度_C": round(results.get('wet_bulb', 0), 1),
+                "露点温度_C": round(results.get('dew_point', 0), 1),
+                "比焓_kJ_kg": round(results.get('enthalpy', 0), 2),
+                "比容_m3_kg": round(results.get('specific_volume', 0), 4),
+                "水蒸气分压_kPa": round(results.get('pv', 0), 4)
+            }
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def calculate_wet_air_properties(self, temp, pressure, known_params):
         """计算湿空气物性参数"""
         # 饱和水蒸气压力计算 (Antoine公式)

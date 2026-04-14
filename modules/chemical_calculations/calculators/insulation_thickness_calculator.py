@@ -301,7 +301,7 @@ class InsulationThicknessCalculator(QWidget):
         # 4. 按钮布局
         button_layout = QHBoxLayout()
         
-        self.calculate_btn = QPushButton("计算保温厚度")
+        self.calculate_btn = QPushButton("计算")
         self.calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         self.calculate_btn.clicked.connect(self.calculate)
         self.calculate_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -687,7 +687,45 @@ class InsulationThicknessCalculator(QWidget):
             
         except Exception as e:
             QMessageBox.critical(self, "计算错误", f"计算过程中发生错误:\n{str(e)}")
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        calc_type = self.get_current_calc_type()
+        equipment_type = self.equipment_type_combo.currentText()
+        insulation_type = self.insulation_type_combo.currentText()
+        size = float(self.size_input.text() or 0) if self.size_input.text() else 108
+        conductivity = float(self.conductivity_input.text() or 0)
+        ambient_temp = float(self.ambient_temp_input.text() or 0)
+        wind_speed = float(self.wind_speed_input.text() or 0)
+        equipment_temp = float(self.equipment_temp_input.text() or 0)
+
+        inputs = {
+            "计算方法": calc_type,
+            "设备类型": equipment_type,
+            "保温材料": insulation_type,
+            "管道外径或设备尺寸_mm": size,
+            "导热系数_W_mK": conductivity,
+            "环境温度_C": ambient_temp,
+            "风速_m_s": wind_speed,
+            "设备工作温度_C": equipment_temp
+        }
+
+        outputs = {}
+        result_text = self.result_text.toPlainText()
+        if "推荐保温厚度" in result_text or "计算结果" in result_text:
+            try:
+                import re
+                thick_match = re.search(r'推荐保温厚度[：:]\s*([\d.]+)\s*mm', result_text)
+                if thick_match:
+                    outputs["推荐保温厚度_mm"] = float(thick_match.group(1))
+                loss_match = re.search(r'表面热损失[：:]\s*([\d.]+)\s*W/m', result_text)
+                if loss_match:
+                    outputs["表面热损失_W_m2"] = float(loss_match.group(1))
+            except Exception:
+                pass
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def calculate_economic_thickness(self, equipment_type, size, insulation_type,
                                    energy_price, insulation_cost,
                                    ambient_temp, equipment_temp, conductivity,

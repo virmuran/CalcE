@@ -379,7 +379,40 @@ class GasMixturePropertiesCalculator(QWidget):
             self.show_error("输入参数格式错误，请检查输入值")
         except Exception as e:
             self.show_error(f"计算错误: {str(e)}")
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        temperature = float(self.temperature_input.text() or 0)
+        pressure = float(self.pressure_input.text() or 0)
+        mixture_type = self.mixture_type.currentText()
+        method = self.calculation_method.currentText()
+
+        inputs = {
+            "温度_C": temperature,
+            "压力_MPa": pressure,
+            "混合物类型": mixture_type,
+            "计算方法": method
+        }
+
+        outputs = {}
+        try:
+            components = self.get_component_data()
+            results = self.calculate_mixture_properties(components, temperature, pressure, mixture_type, method)
+            outputs = {
+                "混合分子量": round(results.get('mw_mix', 0), 3),
+                "密度_kg_m3": round(results.get('density', 0), 4),
+                "压缩系数": round(results.get('z_factor', 0), 4),
+                "粘度_Pa_s": round(results.get('viscosity', 0), 6),
+                "热导率_W_mK": round(results.get('thermal_conductivity', 0), 4),
+                "定压比热_kJ_kgK": round(results.get('cp', 0), 3),
+                "绝热指数": round(results.get('gamma', 0), 4),
+                "音速_m_s": round(results.get('sound_speed', 0), 1)
+            }
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def get_component_data(self):
         """从表格获取组分数据"""
         count = int(self.component_count.currentText())

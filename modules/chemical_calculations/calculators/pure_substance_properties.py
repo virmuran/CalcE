@@ -450,7 +450,41 @@ class PureSubstanceProperties(QWidget):
                 
         except Exception as e:
             QMessageBox.warning(self, "查询错误", f"查询过程中发生错误: {str(e)}")
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        substance = self.substance_combo.currentText()
+        temperature = self.temperature_input.value()
+        pressure = self.pressure_input.value()
+
+        inputs = {
+            "物质名称": substance,
+            "温度_C": temperature,
+            "压力": pressure
+        }
+
+        outputs = {}
+        if substance in self.substance_data:
+            data = self.substance_data[substance]
+            basic = data.get("basic", {})
+            thermal = data.get("thermal", {})
+            boiling_point = basic.get("沸点", 0)
+            state = "气态" if temperature > boiling_point else ("固态" if temperature < basic.get("熔点", 0) else "液态")
+
+            outputs = {
+                "分子式": basic.get("分子式", ""),
+                "分子量": basic.get("分子量", 0),
+                "沸点_C": basic.get("沸点", 0),
+                "熔点_C": basic.get("熔点", 0),
+                "临界温度_K": basic.get("临界温度", 0),
+                "临界压力_kPa": basic.get("临界压力", 0),
+                "物态": state,
+                "密度_kg_L": thermal.get("密度", 0),
+                "比热容_kJ_kgK": thermal.get("比热容", 0)
+            }
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def update_state_label(self, substance, temperature):
         """更新状态标签"""
         if substance in self.substance_data:

@@ -42,13 +42,9 @@ class CalcE(QMainWindow):
     # 模块配置：(模块路径, 类名, 标签名)
     MODULES_CONFIG = [
         ("modules.chemical_calculations", "ChemicalCalculationsWidget", "工程计算"),
+        ("modules.history_viewer", "HistoryViewer", "计算历史"),
         ("modules.converter.converter_widget", "ConverterWidget", "换算器"),
-
-        ("modules.todo", "TodoManager", "待办事项"),
-        ("modules.notes", "NotesWidget", "笔记"),
-
         ("modules.countdowns", "CountdownsWidget", "倒计时"),
-        ("modules.year_progress", "YearProgressWidget", "今年余额"),
     ]
 
     def __init__(self):

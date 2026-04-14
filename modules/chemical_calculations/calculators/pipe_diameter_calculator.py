@@ -597,7 +597,7 @@ class 管径计算(QWidget):
         left_layout.addWidget(input_group)
         
         # 4. 计算按钮
-        calculate_btn = QPushButton("开始计算")
+        calculate_btn = QPushButton("计算")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate)
         calculate_btn.setStyleSheet("""
@@ -1292,7 +1292,55 @@ class 管径计算(QWidget):
         
         area = math.pi * ((diameter_mm / 1000) / 2) ** 2
         return flow_kg_s / (density * area)
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        mode = self.get_current_mode()
+        fluid = self.fluid_combo.currentText()
+        condition = self.condition_combo.currentText()
+        velocity = float(self.velocity_input.text() or 0)
+        density = float(self.density_input.text() or 0) if self.density_input.text() else 1000.0
+        pressure = float(self.pressure_input.text() or 0)
+
+        inputs = {
+            "计算模式": mode,
+            "流体类型": fluid,
+            "计算条件": condition,
+            "流速_m_s": velocity,
+            "密度_kg_m3": density,
+            "压力_MPa": pressure
+        }
+        outputs = {}
+
+        try:
+            flow_unit = ""
+            if fluid in self.fluid_ranges and condition in self.fluid_ranges[fluid]:
+                flow_unit = self.fluid_ranges[fluid][condition]["flow_unit"]
+
+            if mode == "由流量计算管径":
+                flow_rate = float(self.flow_input.text() or 0)
+                inputs["流量"] = flow_rate
+                if flow_unit:
+                    inputs["流量单位"] = flow_unit
+                diameter_mm = self.calculate_diameter_from_flow(flow_rate, velocity, density, fluid, condition)
+                standard_diameters = [6, 8, 10, 15, 20, 25, 32, 40, 50, 65, 80, 100,
+                                      125, 150, 200, 250, 300, 350, 400, 450, 500]
+                closest_diam = min(standard_diameters, key=lambda x: abs(x - diameter_mm))
+                outputs["理论管径_mm"] = round(diameter_mm, 1)
+                outputs["推荐标准管径"] = f"DN{closest_diam}"
+                outputs["实际流速_m_s"] = round(self.calculate_actual_velocity(flow_rate, closest_diam, density, fluid, condition), 2)
+            else:
+                diameter_mm = float(self.diameter_input.text() or 0)
+                inputs["管道内径_mm"] = diameter_mm
+                flow_rate = self.calculate_flow_from_diameter(diameter_mm, velocity, density, fluid, condition)
+                outputs["理论流量"] = round(flow_rate, 2)
+                if flow_unit:
+                    outputs["流量单位"] = flow_unit
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def get_project_info(self):
         """获取工程信息 - 使用共享的项目信息"""
         try:

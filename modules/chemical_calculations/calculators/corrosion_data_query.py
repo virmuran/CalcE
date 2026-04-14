@@ -560,6 +560,33 @@ class CorrosionDataQuery(QWidget):
         self.result_text.clear()
         self.detail_table.setRowCount(0)
 
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        material = self.material_category_combo.currentText()
+        medium = self.medium_category_combo.currentText()
+        temperature = self.temperature_input.value()
+        concentration = self.concentration_input.value()
+        ph = self.ph_input.value()
+
+        inputs = {
+            "材料类别": material,
+            "介质类别": medium,
+            "温度_C": temperature,
+            "浓度_%": concentration,
+            "pH值": ph
+        }
+
+        outputs = {}
+        if self.detail_table.rowCount() > 0:
+            for row in range(min(5, self.detail_table.rowCount())):
+                name_item = self.detail_table.item(row, 0)
+                rate_item = self.detail_table.item(row, 2)
+                if name_item and rate_item:
+                    outputs[f"材料{row+1}"] = name_item.text()
+                    outputs[f"腐蚀速率{row+1}"] = rate_item.text()
+
+        return {"inputs": inputs, "outputs": outputs}
+
 if __name__ == "__main__":
     # 测试代码
     import sys

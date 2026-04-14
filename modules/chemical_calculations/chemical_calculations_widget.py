@@ -1,8 +1,8 @@
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget, 
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget,
     QListWidgetItem, QStackedWidget, QFrame, QPushButton
 )
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt, QSize, QEvent, QTimer
 from PySide6.QtGui import QFont
 import sys
 import os
@@ -13,7 +13,7 @@ class ChemicalCalculationsWidget(QWidget):
     
     def __init__(self, parent=None, data_manager=None):
         super().__init__(parent)
-        
+
         # 使用传入的数据管理器或单例
         if data_manager is not None:
             self.data_manager = data_manager
@@ -25,10 +25,10 @@ class ChemicalCalculationsWidget(QWidget):
             except ImportError:
                 self.data_manager = None
                 print("工程计算模块: 数据管理器不可用")
-        
+
         # 初始化页面列表
         self.pages = []
-        
+
         # 设置UI
         self.setup_ui()
 
@@ -186,25 +186,40 @@ class ChemicalCalculationsWidget(QWidget):
             current_dir = os.path.dirname(os.path.abspath(__file__))
             # 构建计算器模块的完整路径
             calculator_path = os.path.join(current_dir, "calculators", f"{module_name}.py")
-            
+
             # 检查文件是否存在
             if not os.path.exists(calculator_path):
                 raise FileNotFoundError(f"计算器文件不存在: {calculator_path}")
-            
+
             # 使用 importlib 动态导入模块
             spec = importlib.util.spec_from_file_location(module_name, calculator_path)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
-            
+
             # 获取计算器类
             calculator_class = getattr(module, calculator_name)
-            
+
             # 根据是否支持data_manager选择初始化方式
             if supports_data_manager and self.data_manager is not None:
-                return calculator_class(data_manager=self.data_manager)
+                widget = calculator_class(data_manager=self.data_manager)
             else:
-                return calculator_class()
-                
+                widget = calculator_class()
+
+            # 注入计算器元数据（用于历史记录）
+            widget._calc_meta = {
+                "id": module_name,
+                "name": calculator_name,
+                "category": self._get_category_from_module(module_name),
+            }
+
+            # 连接所有"计算"按钮的 clicked 信号以保存历史
+            self._connect_calculate_buttons(widget)
+
+            # 安装事件过滤器作为备用方案
+            widget.installEventFilter(self)
+
+            return widget
+
         except Exception as e:
             print(f"创建 {calculator_name} 失败: {e}")
             # 返回占位符部件
@@ -263,17 +278,115 @@ class ChemicalCalculationsWidget(QWidget):
         layout.addWidget(error_label)
         
         return widget
-        
+
     def add_page(self, title, widget):
         """添加页面到导航和堆栈"""
         # 添加到导航列表
         self.nav_list.addItem(title)
-        
+
         # 添加到堆栈窗口
         self.content_stack.addWidget(widget)
-        
+
         # 保存页面引用
         self.pages.append(widget)
+
+    def eventFilter(self, obj, event):
+        """拦截计算器子控件事件，保存历史记录"""
+        if event.type() == QEvent.Type.MouseButtonPress:
+            child = obj.childAt(event.position().toPoint())
+            if isinstance(child, QPushButton) and self._is_calculate_button(child):
+                print(f"[历史] 捕获到计算按钮点击: {child.text()}")
+                QTimer.singleShot(100, lambda w=obj: self._save_history_for(w))
+        return super().eventFilter(obj, event)
+
+    def _is_calculate_button(self, btn):
+        text = btn.text().strip()
+        # 匹配各种计算按钮文本
+        return text in ("计算", "计算功率", "计算结果", "开始计算", "计算压降") or text.startswith("计算")
+
+    def _connect_calculate_buttons(self, widget):
+        """查找并连接所有计算按钮的 clicked 信号"""
+        try:
+            # 查找所有按钮
+            for btn in widget.findChildren(QPushButton):
+                if self._is_calculate_button(btn):
+                    # 使用 lambda 捕获 widget 引用
+                    btn.clicked.connect(lambda checked, w=widget: self._save_history_for(w))
+                    print(f"[历史] 已连接按钮: {btn.text()} -> {widget._calc_meta['name']}")
+        except Exception as e:
+            print(f"[历史] 连接按钮失败: {e}")
+
+    def _save_history_for(self, widget):
+        """为指定计算器部件保存历史记录"""
+        meta = getattr(widget, "_calc_meta", None)
+        if meta is None:
+            print(f"[历史] 无 _calc_meta，跳过: {widget}")
+            return
+        get_data = getattr(widget, "_get_history_data", None)
+        if get_data is None:
+            print(f"[历史] 计算器 '{meta['name']}' 未实现 _get_history_data，无法保存")
+            return
+        try:
+            data = get_data()
+            if not data or not data.get("inputs"):
+                print(f"[历史] _get_history_data 返回空，跳过")
+                return
+            from modules.history_db import HistoryDB
+            HistoryDB().save(
+                calculator_id=meta["id"],
+                calculator_name=meta["name"],
+                calculator_category=meta.get("category", ""),
+                inputs=data.get("inputs", {}),
+                outputs=data.get("outputs", {}),
+                notes=data.get("notes", ""),
+            )
+            print(f"[历史] 已保存: {meta['name']} | inputs={data.get('inputs')}")
+        except Exception as e:
+            print(f"[历史] 保存失败: {e}")
+            import traceback; traceback.print_exc()
+
+    # 计算器分类映射
+    _CALC_CATEGORIES = {
+        "basket_filter_design_calculator": "容器/结构",
+        "pressure_drop_calculator": "管道",
+        "pipe_diameter_calculator": "管道",
+        "pipe_span_calculator": "管道",
+        "pipe_spacing_calculator": "管道",
+        "pipe_compensation_calculator": "管道",
+        "pipe_thickness_calculator": "管道",
+        "steam_pipe_calculator": "管道",
+        "gas_state_converter": "热工/制冷",
+        "pressure_pipe_definition": "管道",
+        "fire_hydrant_calculator": "安全/消防",
+        "heat_exchanger_calculator": "换热",
+        "heat_exchanger_area_calculator": "换热",
+        "tank_weight_calculator": "容器/结构",
+        "vessel_sizing_calculator": "容器/结构",
+        "insulation_thickness_calculator": "换热",
+        "flange_size_calculator": "其他",
+        "safety_valve_calculator": "安全/消防",
+        "long_distance_steam_pipe_calculator": "管道",
+        "relief_area_calculator": "安全/消防",
+        "fan_power_calculator": "流体设备",
+        "steam_property_calculator": "热工/制冷",
+        "pure_substance_properties": "热力学",
+        "wet_air_calculator": "热工/制冷",
+        "mixed_liquid_flash_point_calculator": "热力学",
+        "eos_calculator": "热力学",
+        "vle_activity_coefficient_calculator": "热力学",
+        "gas_mixture_properties_calculator": "热力学",
+        "corrosion_data_query": "安全/消防",
+        "solid_solubility_calculator": "热力学",
+        "refrigerant_properties_calculator": "热工/制冷",
+        "refrigeration_cycle_calculator": "热工/制冷",
+        "hazardous_chemicals_query": "安全/消防",
+        "pump_power_calculator": "流体设备",
+        "npsha_calculator": "流体设备",
+        "compressible_flow_pressure_drop": "管道",
+    }
+
+    def _get_category_from_module(self, module_name):
+        return self._CALC_CATEGORIES.get(module_name, "其他")
 
 
 if __name__ == "__main__":

@@ -103,7 +103,7 @@ class FlangeSizeCalculator(QWidget):
         self.query_btn.setStyleSheet("QPushButton { background-color: #34495e; color: white; font-weight: bold; }")
         button_layout.addWidget(self.query_btn)
         
-        self.bolt_calc_btn = QPushButton("螺栓计算")
+        self.bolt_calc_btn = QPushButton("计算")
         self.bolt_calc_btn.clicked.connect(self.bolt_calculation)
         self.bolt_calc_btn.setStyleSheet("QPushButton { background-color: #3498db; color: white; }")
         button_layout.addWidget(self.bolt_calc_btn)
@@ -715,6 +715,35 @@ class FlangeSizeCalculator(QWidget):
         self.basic_size_table.setRowCount(0)
         self.bolt_size_table.setRowCount(0)
         self.weight_material_table.setRowCount(0)
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        standard = self.standard_combo.currentText()
+        flange_type = self.type_combo.currentText()
+        pressure = self.pressure_combo.currentText()
+        dn = self.dn_combo.currentText()
+        face_type = self.face_type_combo.currentText()
+        material = self.material_combo.currentText()
+
+        inputs = {
+            "标准": standard,
+            "法兰类型": flange_type,
+            "压力等级": pressure,
+            "公称直径_DN": dn,
+            "密封面类型": face_type,
+            "材料": material
+        }
+
+        outputs = {}
+        # 从表格中提取显示的尺寸数据
+        if self.basic_size_table.rowCount() > 0:
+            for row in range(self.basic_size_table.rowCount()):
+                item = self.basic_size_table.item(row, 0)
+                val = self.basic_size_table.item(row, 1)
+                if item and val:
+                    outputs[item.text()] = val.text()
+
+        return {"inputs": inputs, "outputs": outputs}
 
 if __name__ == "__main__":
     # 测试代码

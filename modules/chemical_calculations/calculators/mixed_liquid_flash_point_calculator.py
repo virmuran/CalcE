@@ -376,7 +376,7 @@ class MixedLiquidFlashPointCalculator(QWidget):
         left_layout.addWidget(components_group)
         
         # 计算按钮
-        calculate_btn = QPushButton("计算混合闪点")
+        calculate_btn = QPushButton("计算")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate_flash_point)
         calculate_btn.setStyleSheet("""
@@ -614,7 +614,45 @@ class MixedLiquidFlashPointCalculator(QWidget):
             
         except Exception as e:
             QMessageBox.critical(self, "计算错误", f"计算过程中发生错误: {str(e)}")
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        method = self.method_combo.currentText()
+        total_fraction = sum(comp["mass_fraction"] for comp in self.components)
+
+        inputs = {
+            "计算方法": method,
+            "组分数量": len(self.components),
+            "总质量分数_%": round(total_fraction, 2)
+        }
+
+        # 添加每个组分的信息
+        for i, comp in enumerate(self.components):
+            inputs[f"组分{i+1}_名称"] = comp.get("name", f"组分{i+1}")
+            inputs[f"组分{i+1}_质量分数_%"] = comp.get("mass_fraction", 0)
+            inputs[f"组分{i+1}_闪点_C"] = comp.get("flash_point", 0)
+
+        outputs = {}
+        try:
+            if "Le Chatelier" in method:
+                flash_point = self.calculate_le_chatelier()
+            elif "最低闪点法" in method:
+                flash_point = self.calculate_minimum_flash()
+            elif "质量加权平均法" in method:
+                flash_point = self.calculate_weighted_average_mass()
+            elif "摩尔加权平均法" in method:
+                flash_point = self.calculate_weighted_average_molar()
+            elif "Cox 图表法" in method:
+                flash_point = self.calculate_cox_method()
+            else:
+                flash_point = self.calculate_weighted_average_mass()
+
+            outputs = {"混合液体闪点_C": round(flash_point, 1)}
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def calculate_le_chatelier(self):
         """Le Chatelier 法则计算"""
         # 对于理想混合物，使用Le Chatelier公式

@@ -162,7 +162,7 @@ class 消火栓计算(QWidget):
         
         # 按钮组
         button_layout = QHBoxLayout()
-        self.calculate_btn = QPushButton("计算消火栓系统")
+        self.calculate_btn = QPushButton("计算")
         self.calculate_btn.clicked.connect(self.calculate_hydrant_system)
         self.calculate_btn.setStyleSheet("QPushButton { background-color: #e74c3c; color: white; font-weight: bold; }")
         button_layout.addWidget(self.calculate_btn)
@@ -375,7 +375,58 @@ class 消火栓计算(QWidget):
             
         except Exception as e:
             QMessageBox.warning(self, "计算错误", f"计算过程中发生错误: {str(e)}")
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        building_type = self.building_type_combo.currentText()
+        building_height = self.building_height_input.value()
+        building_area = self.building_area_input.value()
+        danger_level = self.danger_level_combo.currentText()
+        fire_zones = self.fire_zone_spin.value()
+        gun_count = self.gun_count_spin.value()
+        gun_flow = self.gun_flow_input.value()
+        water_column = self.water_column_input.value()
+        min_pressure = self.min_pressure_input.value()
+        pump_head = self.pump_head_input.value()
+        main_diameter = int(self.main_pipe_diameter_combo.currentText())
+        is_high_rise = self.high_rise_check.isChecked()
+        has_sprinkler = self.sprinkler_check.isChecked()
+
+        inputs = {
+            "建筑类型": building_type,
+            "建筑高度_m": building_height,
+            "建筑面积_m2": building_area,
+            "危险等级": danger_level,
+            "消防分区数": fire_zones,
+            "水枪数量": gun_count,
+            "水枪流量_L_s": gun_flow,
+            "充实水柱_m": water_column,
+            "最不利点压力_MPa": min_pressure,
+            "水泵扬程_m": pump_head,
+            "主管管径_mm": main_diameter,
+            "超高层": is_high_rise,
+            "配喷淋": has_sprinkler
+        }
+
+        outputs = {}
+        try:
+            total_flow = self.calculate_total_flow(gun_count, gun_flow, building_type, danger_level)
+            pipe_results = self.calculate_pipe_parameters(total_flow, main_diameter)
+            pump_results = self.calculate_pump_parameters(pump_head, total_flow, building_height)
+            tank_capacity = self.calculate_tank_capacity(total_flow, building_type, danger_level)
+            hydrant_count = self.calculate_hydrant_count(building_area, building_type)
+            outputs = {
+                "消防总流量_L_s": round(total_flow, 1),
+                "管道流速_m_s": round(pipe_results['velocity'], 2),
+                "水泵流量_L_s": round(pump_results['flow'], 1),
+                "水箱容量_m3": round(tank_capacity, 1),
+                "消火栓数量": hydrant_count
+            }
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def auto_calculate_parameters(self, building_type, height, danger_level):
         """自动计算参数"""
         # 自动设置水枪数

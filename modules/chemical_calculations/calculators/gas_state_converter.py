@@ -266,7 +266,7 @@ class 气体标态转压缩态(QWidget):
         left_layout.addWidget(input_group)
         
         # 3. 计算按钮
-        calculate_btn = QPushButton("转换状态")
+        calculate_btn = QPushButton("计算")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.convert_gas_state)
         calculate_btn.setStyleSheet("""
@@ -532,6 +532,39 @@ Q_actual = Q_std × (P_std / P_actual) × (T_actual / T_std) × Z
             QMessageBox.critical(self, "计算错误", "压力或温度不能为零")
         except Exception as e:
             QMessageBox.critical(self, "计算错误", f"计算过程中发生错误: {str(e)}")
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        std_flow = float(self.flow_input.text() or 0)
+        actual_pressure = float(self.actual_pressure_input.text() or 0)
+        actual_temp = float(self.actual_temp_input.text() or 0)
+        compress_factor = float(self.compress_input.text() or 0)
+        std_temp, std_pressure = self.get_standard_conditions()
+
+        inputs = {
+            "标况流量_Nm3_h": std_flow,
+            "标况温度_C": std_temp,
+            "标况压力_kPa": std_pressure,
+            "实际压力_kPa": actual_pressure,
+            "实际温度_C": actual_temp,
+            "压缩因子Z": compress_factor
+        }
+
+        outputs = {}
+        try:
+            std_temp_k = std_temp + 273.15
+            actual_temp_k = actual_temp + 273.15
+            actual_flow = std_flow * (std_pressure / actual_pressure) * (actual_temp_k / std_temp_k) * compress_factor
+            actual_density_factor = (actual_pressure / std_pressure) * (std_temp_k / actual_temp_k) / compress_factor
+            outputs = {
+                "实际流量_m3_h": round(actual_flow, 2),
+                "实际流量_m3_min": round(actual_flow / 60, 4),
+                "密度变化倍数": round(actual_density_factor, 4)
+            }
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}
 
     def get_project_info(self):
         """获取工程信息 - 使用共享的项目信息"""

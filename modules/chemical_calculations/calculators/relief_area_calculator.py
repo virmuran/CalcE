@@ -436,7 +436,86 @@ class ReliefAreaCalculator(QWidget):
             self.show_error("输入参数格式错误，请检查输入值")
         except Exception as e:
             self.show_error(f"计算错误: {str(e)}")
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        scenario = self.scenario_type.currentText()
+        fluid_type = self.fluid_type.currentText()
+        standard = self.standard_selection.currentText()
+        vessel_volume = float(self.vessel_volume_input.text() or 0)
+        volume_unit = self.vessel_volume_unit.currentText()
+        if volume_unit == "L":
+            vessel_volume = vessel_volume / 1000
+        max_pressure = float(self.vessel_pressure_input.text() or 0)
+        design_pressure = float(self.design_pressure_input.text() or 0)
+        operating_pressure = float(self.operating_pressure_input.text() or 0)
+        molecular_weight = float(self.molecular_weight_input.text() or 0)
+        temperature = float(self.temperature_input.text() or 0)
+        compressibility = float(self.compressibility_input.text() or 0)
+        specific_heat_ratio = float(self.specific_heat_ratio_input.text() or 0)
+        density = float(self.density_input.text() or 0)
+        relief_rate = float(self.relief_rate_input.text() or 0)
+        rate_unit = self.relief_rate_unit.currentText()
+        if rate_unit == "kg/h":
+            relief_rate_kg_s = relief_rate / 3600
+        elif rate_unit == "m³/h":
+            relief_rate_kg_s = relief_rate * density / 3600
+        else:
+            relief_rate_kg_s = relief_rate
+        back_pressure = float(self.back_pressure_input.text() or 0)
+        overpressure_percent = float(self.overpressure_input.text() or 0)
+        discharge_coeff = float(self.discharge_coeff_input.text() or 0)
+
+        inputs = {
+            "场景类型": scenario,
+            "介质类型": fluid_type,
+            "设计标准": standard,
+            "设备容积_m3": vessel_volume,
+            "最大压力_MPa": max_pressure,
+            "设计压力_MPa": design_pressure,
+            "操作压力_MPa": operating_pressure,
+            "分子量": molecular_weight,
+            "温度_C": temperature,
+            "压缩系数": compressibility,
+            "绝热指数": specific_heat_ratio,
+            "密度_kg_m3": density,
+            "泄放速率": relief_rate,
+            "泄放速率单位": rate_unit,
+            "背压_MPa": back_pressure,
+            "超压_%": overpressure_percent,
+            "泄放系数": discharge_coeff
+        }
+
+        outputs = {}
+        try:
+            relief_pressure = max_pressure * (1 + overpressure_percent / 100)
+            if fluid_type == "气体/蒸汽":
+                results = self.calculate_gas_relief_area(
+                    relief_rate_kg_s, relief_pressure, back_pressure, temperature,
+                    molecular_weight, compressibility, specific_heat_ratio, discharge_coeff
+                )
+            elif fluid_type == "液体":
+                results = self.calculate_liquid_relief_area(
+                    relief_rate_kg_s, relief_pressure, back_pressure, density, discharge_coeff
+                )
+            else:
+                results = self.calculate_two_phase_relief_area(
+                    relief_rate_kg_s, relief_pressure, back_pressure, temperature,
+                    molecular_weight, density, discharge_coeff
+                )
+            diameter = math.sqrt(results['area'] / math.pi) * 2
+            recommended_size = self.get_recommended_size(results['area'])
+            outputs = {
+                "泄放压力_MPa": round(relief_pressure, 3),
+                "喉部面积_mm2": round(results['area'] * 1e6, 2),
+                "喉部直径_mm": round(diameter * 1000, 2),
+                "推荐规格": recommended_size
+            }
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def calculate_gas_relief_area(self, W, P1, P2, T, M, Z, k, Kd):
         """计算气体/蒸汽泄放面积"""
         # 转换为绝对温度

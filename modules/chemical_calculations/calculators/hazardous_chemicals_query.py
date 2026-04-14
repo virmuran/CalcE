@@ -815,6 +815,24 @@ class HazardousChemicalsQuery(QWidget):
             dialog = ChemicalDetailDialog(self, self.current_chemical)
             dialog.exec()
 
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        inputs = {}
+        outputs = {}
+        if hasattr(self, 'current_chemical') and self.current_chemical:
+            chem = self.current_chemical
+            inputs["化学品名称"] = chem.get("name", "")
+            inputs["CAS号"] = chem.get("cas", "")
+            outputs = {
+                "UN编号": chem.get("un", ""),
+                "危险类别": chem.get("hazard_class", ""),
+                "闪点": chem.get("flash_point", ""),
+                "沸点": chem.get("boiling_point", ""),
+                "爆炸上限": chem.get("explosive_upper", ""),
+                "爆炸下限": chem.get("explosive_lower", "")
+            }
+        return {"inputs": inputs, "outputs": outputs}
+
 
 if __name__ == "__main__":
     # 测试代码

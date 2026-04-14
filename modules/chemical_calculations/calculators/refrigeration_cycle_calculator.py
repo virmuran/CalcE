@@ -228,7 +228,7 @@ class RefrigerationCycleCalculator(QWidget):
         left_layout.addWidget(input_group)
         
         # 计算按钮
-        calculate_btn = QPushButton("计算制冷循环")
+        calculate_btn = QPushButton("计算")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate_cycle)
         calculate_btn.setStyleSheet("""
@@ -491,7 +491,66 @@ class RefrigerationCycleCalculator(QWidget):
             QMessageBox.critical(self, "计算错误", f"参数输入格式错误: {str(e)}")
         except Exception as e:
             QMessageBox.critical(self, "计算错误", f"计算过程中发生错误: {str(e)}")
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        cycle_type = self.cycle_button_group.checkedButton().text()
+        refrigerant_text = self.refrigerant_combo.currentText()
+        refrigerant = refrigerant_text.split(" - ")[0]
+        evap_temp = float(self.evap_temp_input.text() or 0)
+        cond_temp = float(self.cond_temp_input.text() or 0)
+        mass_flow = float(self.mass_flow_input.text() or 0)
+        comp_efficiency = float(self.comp_eff_input.text() or 0) / 100
+
+        inputs = {
+            "循环类型": cycle_type,
+            "制冷剂": refrigerant,
+            "蒸发温度_C": evap_temp,
+            "冷凝温度_C": cond_temp,
+            "质量流量_kg_s": mass_flow,
+            "压缩机效率_%": comp_efficiency * 100
+        }
+
+        outputs = {}
+        try:
+            if cycle_type == "实际循环":
+                subcool = float(self.subcool_input.text() or 0)
+                superheat = float(self.superheat_input.text() or 0)
+                inputs["过冷度_C"] = subcool
+                inputs["过热度_C"] = superheat
+            else:
+                subcool = 0
+                superheat = 0
+
+            P_evap = self.calculate_saturation_pressure(refrigerant, evap_temp)
+            T1 = evap_temp + superheat
+            h1 = self.calculate_enthalpy(refrigerant, T1, P_evap, is_vapor=True)
+            P_cond = self.calculate_saturation_pressure(refrigerant, cond_temp)
+            h2s = h1 + (P_cond - P_evap) * 0.1
+            h2 = h1 + (h2s - h1) / comp_efficiency
+            h3 = self.calculate_enthalpy(refrigerant, cond_temp - subcool, P_cond, is_vapor=False)
+            h4 = h3
+            refrigeration_effect = h1 - h4
+            compressor_work = h2 - h1
+            COP = refrigeration_effect / compressor_work
+            compressor_power = mass_flow * compressor_work
+            refrigeration_capacity = mass_flow * refrigeration_effect
+            carnot_COP = (evap_temp + 273.15) / (cond_temp - evap_temp)
+
+            outputs = {
+                "制冷量_kW": round(refrigeration_capacity, 2),
+                "压缩机功率_kW": round(compressor_power, 2),
+                "COP": round(COP, 3),
+                "卡诺COP": round(carnot_COP, 3),
+                "制冷剂流量_kg_s": round(mass_flow, 3),
+                "单位制冷量_kJ_kg": round(refrigeration_effect, 2),
+                "单位压缩功_kJ_kg": round(compressor_work, 2)
+            }
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def format_results(self, cycle_type, refrigerant, evap_temp, cond_temp, subcool, 
                       superheat, mass_flow, comp_efficiency, P_evap, P_cond, h1, h2, 
                       h3, h4, refrigeration_effect, compressor_work, heat_rejection, 

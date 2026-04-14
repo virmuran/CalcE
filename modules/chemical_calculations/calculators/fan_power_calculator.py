@@ -313,7 +313,75 @@ class FanPowerCalculator(QWidget):
             self.show_error("输入参数格式错误，请检查输入值")
         except Exception as e:
             self.show_error(f"计算错误: {str(e)}")
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        flow_rate = float(self.flow_rate_input.text() or 0)
+        flow_unit = self.flow_rate_unit.currentText()
+        if flow_unit == "m³/min":
+            flow_rate_m3h = flow_rate * 60
+        elif flow_unit == "m³/s":
+            flow_rate_m3h = flow_rate * 3600
+        else:
+            flow_rate_m3h = flow_rate
+
+        pressure = float(self.pressure_input.text() or 0)
+        pressure_unit = self.pressure_unit.currentText()
+        if pressure_unit == "kPa":
+            pressure_pa = pressure * 1000
+        elif pressure_unit == "mmH₂O":
+            pressure_pa = pressure * 9.80665
+        else:
+            pressure_pa = pressure
+
+        temperature = float(self.temperature_input.text() or 0)
+        altitude = float(self.altitude_input.text() or 0)
+        fan_efficiency = float(self.fan_efficiency_input.text() or 0) / 100
+        motor_efficiency = float(self.motor_efficiency_input.text() or 0) / 100
+        transmission_efficiency = float(self.transmission_efficiency_input.text() or 0) / 100
+        operation_hours = float(self.operation_hours_input.text() or 0)
+        days_per_year = float(self.days_per_year_input.text() or 0)
+        electricity_price = float(self.electricity_price_input.text() or 0)
+
+        inputs = {
+            f"流量_{flow_unit}": flow_rate,
+            f"全压_{pressure_unit}": pressure,
+            "温度_C": temperature,
+            "海拔_m": altitude,
+            "风机效率_%": fan_efficiency * 100,
+            "电机效率_%": motor_efficiency * 100,
+            "传动效率_%": transmission_efficiency * 100,
+            "年运行小时_h": operation_hours * days_per_year if days_per_year else 0,
+            "电费_元_kWh": electricity_price
+        }
+
+        outputs = {}
+        try:
+            rho_standard = 1.2
+            T_kelvin = temperature + 273.15
+            rho_temp = 1.293 * (273.15 / T_kelvin)
+            rho_altitude = (1 - altitude / 44300) ** 5.255
+            rho = rho_standard * rho_temp * rho_altitude
+            flow_m3s = flow_rate_m3h / 3600
+            shaft_power = flow_m3s * pressure_pa / fan_efficiency if fan_efficiency > 0 else 0
+            motor_power = shaft_power / motor_efficiency if motor_efficiency > 0 else 0
+            total_efficiency = fan_efficiency * motor_efficiency * transmission_efficiency
+            power_consumption = flow_m3s * pressure_pa / total_efficiency if total_efficiency > 0 else 0
+            annual_energy = power_consumption * operation_hours * days_per_year / 1000 if days_per_year else 0
+            annual_cost = annual_energy * electricity_price
+
+            outputs = {
+                "实际空气密度_kg_m3": round(rho, 3),
+                "轴功率_kW": round(shaft_power / 1000, 2),
+                "电机功率_kW": round(motor_power / 1000, 2),
+                "年耗电量_kWh": round(annual_energy, 0),
+                "年电费_万元": round(annual_cost / 10000, 2)
+            }
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def calculate_fan_power(self, flow_rate, pressure, temperature, altitude,
                            fan_efficiency, motor_efficiency, transmission_efficiency,
                            operation_hours, days_per_year, electricity_price):

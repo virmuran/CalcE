@@ -420,7 +420,7 @@ class 设备尺寸计算(QWidget):
         left_layout.addWidget(self.accessory_btn)
 
         # 计算按钮
-        calc_btn = QPushButton("计算设备尺寸")
+        calc_btn = QPushButton("计算")
         calc_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calc_btn.clicked.connect(self.calculate)
         calc_btn.setStyleSheet("""
@@ -700,6 +700,63 @@ class 设备尺寸计算(QWidget):
             QMessageBox.warning(self, "输入错误", f"请填写有效的数字: {e}")
         except Exception as e:
             QMessageBox.critical(self, "计算错误", f"发生未知错误: {e}")
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        mode = self.mode_button_group.checkedButton().text()
+        fill_factor = float(self.fill_factor_input.text() or 0)
+        hd_ratio = float(self.hd_ratio_input.text() or 0)
+        rho_mat = float(self.density_input.text() or 0)
+        t = float(self.wall_thickness.text() or 0) / 1000
+        top_type = self.top_type.currentText()
+        bottom_type = self.bottom_type.currentText()
+
+        inputs = {
+            "计算模式": mode,
+            "填充系数": fill_factor,
+            "高径比": hd_ratio,
+            "材料密度_kg_m3": rho_mat,
+            "壁厚_mm": t * 1000,
+            "顶部封头类型": top_type,
+            "底部封头类型": bottom_type
+        }
+
+        outputs = {}
+        try:
+            top_head_h = self.get_head_depth('top', top_type)
+            bottom_head_h = self.get_head_depth('bottom', bottom_type)
+
+            if mode == "反向计算":
+                target_work_vol = float(self.target_vol_input.text() or 0)
+                inputs["目标工作容积_m3"] = target_work_vol
+                D, H_cyl = self.solve_dimensions(target_work_vol / fill_factor, hd_ratio,
+                                                   top_type, top_head_h, bottom_type, bottom_head_h)
+            else:
+                D = float(self.diameter_input.text() or 0) / 1000
+                H_cyl = float(self.cyl_height_input.text() or 0) / 1000
+                inputs["直径_mm"] = D * 1000
+                inputs["筒体高度_mm"] = H_cyl * 1000
+
+            geo_vol = self.calc_total_volume(D, H_cyl, top_type, top_head_h, bottom_type, bottom_head_h)
+            work_vol = geo_vol * fill_factor
+            area = self.calc_total_area(D, H_cyl, top_type, top_head_h, bottom_type, bottom_head_h)
+            steel_volume = area * t
+            weight = steel_volume * rho_mat
+            total_height = H_cyl + top_head_h + bottom_head_h
+
+            outputs = {
+                "直径_mm": round(D * 1000, 1),
+                "筒体高度_mm": round(H_cyl * 1000, 1),
+                "总高度_mm": round(total_height * 1000, 1),
+                "几何容积_m3": round(geo_vol, 3),
+                "工作容积_m3": round(work_vol, 3),
+                "内表面积_m2": round(area, 2),
+                "容器重量_kg": round(weight, 1)
+            }
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}
 
     def get_head_depth(self, which, head_type):
         """获取封头深度（m）"""

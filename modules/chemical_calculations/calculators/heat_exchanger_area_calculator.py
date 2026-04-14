@@ -301,7 +301,7 @@ class 换热器面积(QWidget):
         left_layout.addWidget(advanced_group)
         
         # 5. 计算按钮
-        calculate_btn = QPushButton("计算换热面积")
+        calculate_btn = QPushButton("计算")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate)
         calculate_btn.setStyleSheet("""
@@ -878,7 +878,43 @@ class 换热器面积(QWidget):
             QMessageBox.critical(self, "计算错误", "参数不能为零")
         except Exception as e:
             QMessageBox.critical(self, "计算错误", f"计算过程中发生错误: {str(e)}")
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        mode = self.get_current_mode()
+        Q_heat = self.get_widget_value("heat_load")
+        K = self.get_widget_value("k_value")
+        T1 = self.get_widget_value("hot_in_temp")
+        T2 = self.get_widget_value("hot_out_temp")
+
+        inputs = {
+            "计算模式": mode,
+            "热负荷_kW": Q_heat,
+            "传热系数_W_m2K": K,
+            "热流体进口温度_C": T1,
+            "热流体出口温度_C": T2
+        }
+
+        outputs = {}
+        try:
+            delta_T1 = T1 - T2
+            if mode == "直接计算":
+                t1 = self.get_widget_value("cold_in_temp")
+                t2 = self.get_widget_value("cold_out_temp")
+                inputs["冷流体进口温度_C"] = t1
+                inputs["冷流体出口温度_C"] = t2
+                delta_T2 = t2 - t1
+                lmtd = (delta_T1 - delta_T2) / math.log(delta_T1 / delta_T2) if delta_T1 != delta_T2 else (delta_T1 + delta_T2) / 2
+                area = (Q_heat * 1000) / (K * lmtd)
+                outputs = {
+                    "对数平均温差_C": round(lmtd, 2),
+                    "所需换热面积_m2": round(area, 2)
+                }
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def calculate_mode_0(self):
         """模式0：直接计算法"""
         # 获取输入值

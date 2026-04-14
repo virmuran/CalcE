@@ -328,7 +328,7 @@ class 管道壁厚(QWidget):
         left_layout.addWidget(input_group)
         
         # 4. 计算按钮
-        calculate_btn = QPushButton("计算壁厚")
+        calculate_btn = QPushButton("计算")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate_thickness)
         calculate_btn.setStyleSheet("""
@@ -785,7 +785,58 @@ class 管道壁厚(QWidget):
         
         # 如果需要的壁厚超过最大值，返回最大值
         return standard_thicknesses[-1]
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        standard = self.standard_combo.currentText()
+        design_pressure = float(self.pressure_input.text() or 0)
+        design_temp = float(self.temp_input.text() or 0)
+        outer_diameter = float(self.diameter_input.text() or 0)
+        weld_factor = float(self.weld_input.text() or 0)
+        allowable_stress = float(self.stress_input.text() or 0)
+        y_factor = float(self.y_input.text() or 0)
+        thinning_allowance = float(self.thinning_input.text() or 0)
+        corrosion_allowance = float(self.corrosion_input.text() or 0)
+
+        inputs = {
+            "计算标准": standard,
+            "设计压力_MPa": design_pressure,
+            "设计温度_C": design_temp,
+            "管道外径_mm": outer_diameter,
+            "焊接接头系数": weld_factor,
+            "许用应力_MPa": allowable_stress,
+            "系数Y": y_factor,
+            "减薄量_mm": thinning_allowance,
+            "腐蚀裕量_mm": corrosion_allowance
+        }
+
+        outputs = {}
+        try:
+            total_additional = thinning_allowance + corrosion_allowance
+            theoretical_thickness = (design_pressure * outer_diameter) / \
+                                   (2 * allowable_stress * weld_factor + 2 * design_pressure * y_factor)
+            design_thickness = theoretical_thickness + total_additional
+            minimum_required_thickness = theoretical_thickness + corrosion_allowance
+            standard_thickness = self.select_standard_thickness(design_thickness)
+            actual_stress = design_pressure * (outer_diameter - 2 * standard_thickness) / \
+                          (2 * standard_thickness * weld_factor)
+            safety_factor = allowable_stress / actual_stress if actual_stress > 0 else 0
+            weight_increase = ((standard_thickness / theoretical_thickness) - 1) * 100 if theoretical_thickness > 0 else 0
+
+            outputs = {
+                "理论壁厚_mm": round(theoretical_thickness, 2),
+                "最小要求壁厚_mm": round(minimum_required_thickness, 2),
+                "设计壁厚_mm": round(design_thickness, 2),
+                "选用标准壁厚_mm": standard_thickness,
+                "实际应力_MPa": round(actual_stress, 1),
+                "安全系数": round(safety_factor, 2),
+                "强度状态": "安全" if safety_factor >= 1.0 else "需重新设计"
+            }
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def format_results(self, standard, design_pressure, design_temp, outer_diameter,
                       allowable_stress, weld_factor, y_factor,
                       thinning_allowance, corrosion_allowance, total_additional,

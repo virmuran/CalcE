@@ -32,3 +32,6 @@ desktop.ini
 # 项目特定的可执行文件和打包文件
 CalcE.exe
 *.exe
+
+# 用户数据文件（本地存储的用户数据，不上传）
+CalcE_data.json

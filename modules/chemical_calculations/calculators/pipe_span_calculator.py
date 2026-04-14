@@ -321,7 +321,7 @@ class 管道跨距(QWidget):
         left_layout.addWidget(input_group)
         
         # 3. 计算按钮
-        calculate_btn = QPushButton("计算跨距")
+        calculate_btn = QPushButton("计算")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate_span)
         calculate_btn.setStyleSheet("""
@@ -910,7 +910,57 @@ class 管道跨距(QWidget):
             QMessageBox.critical(self, "计算错误", "参数不能为零")
         except Exception as e:
             QMessageBox.critical(self, "计算错误", f"计算过程中发生错误: {str(e)}")
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        od = self.get_od_value()
+        thickness = self.get_thickness_value()
+        material_density, elastic_modulus = self.get_material_properties()
+        fluid_density = float(self.fluid_density_input.text() or 0)
+        insulation_thickness = float(self.insulation_input.text() or 0) / 1000
+        insulation_density = float(self.insulation_density_input.text() or 0)
+        allowable_stress = float(self.stress_input.text() or 0) * 1e6
+
+        inputs = {
+            "管道外径_mm": round(od * 1000, 1),
+            "壁厚_mm": round(thickness * 1000, 1),
+            "材料密度_kg_m3": material_density,
+            "流体密度_kg_m3": fluid_density,
+            "保温层厚度_mm": insulation_thickness * 1000,
+            "保温层密度_kg_m3": insulation_density,
+            "允许应力_MPa": float(self.stress_input.text() or 0)
+        }
+
+        outputs = {}
+        try:
+            id_val = od - 2 * thickness
+            I = math.pi * (od**4 - id_val**4) / 64
+            Z = math.pi * (od**4 - id_val**4) / (32 * od)
+            pipe_area = math.pi * (od**2 - id_val**2) / 4
+            pipe_weight = pipe_area * material_density * 9.81
+            fluid_area = math.pi * id_val**2 / 4
+            fluid_weight = fluid_area * fluid_density * 9.81 if fluid_density > 0 else 0
+            insulation_od = od + 2 * insulation_thickness
+            insulation_area = math.pi * (insulation_od**2 - od**2) / 4
+            insulation_weight = insulation_area * insulation_density * 9.81 if insulation_thickness > 0 and insulation_density > 0 else 0
+            total_weight = pipe_weight + fluid_weight + insulation_weight
+            span_stress = math.sqrt(8 * allowable_stress * Z / total_weight)
+            max_deflection = span_stress / 360
+            span_deflection = (384 * elastic_modulus * I / (5 * total_weight * max_deflection)) ** 0.25
+            recommended_span = min(span_stress, span_deflection)
+
+            outputs = {
+                "管道内径_mm": round(id_val * 1000, 1),
+                "总重量_N_m": round(total_weight, 2),
+                "基于应力跨距_m": round(span_stress, 2),
+                "基于挠度跨距_m": round(span_deflection, 2),
+                "推荐最大跨距_m": round(recommended_span, 2)
+            }
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def get_project_info(self):
         """获取工程信息 - 与压降计算模块保持一致"""
         try:

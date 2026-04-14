@@ -236,7 +236,7 @@ class NPSHaCalculator(QWidget):
         left_layout.addWidget(input_group)
         
         # 计算按钮
-        calculate_btn = QPushButton("计算NPSHa")
+        calculate_btn = QPushButton("计算")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate_npsha)
         calculate_btn.setStyleSheet("""
@@ -519,3 +519,43 @@ H_friction = {friction_loss} m (摩擦损失)
             QMessageBox.critical(self, "计算错误", "密度不能为零")
         except Exception as e:
             QMessageBox.critical(self, "计算错误", f"计算过程中发生错误: {str(e)}")
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        atm_pressure = float(self.atm_pressure_input.text() or 0)
+        vapor_pressure = float(self.vapor_pressure_input.text() or 0)
+        static_head = float(self.static_head_input.text() or 0)
+        friction_loss = float(self.friction_loss_input.text() or 0)
+        density = float(self.density_input.text() or 0)
+        npshr_text = self.npshr_input.text()
+        npshr_value = float(npshr_text) if npshr_text else None
+
+        inputs = {
+            "大气压力_kPa": atm_pressure,
+            "饱和蒸汽压_kPa": vapor_pressure,
+            "静压头_m": static_head,
+            "摩擦损失_m": friction_loss,
+            "液体密度_kg_m3": density
+        }
+        if npshr_value is not None:
+            inputs["NPSHr_m"] = npshr_value
+
+        outputs = {}
+        try:
+            g = 9.81
+            atm_head = (atm_pressure * 1000) / (density * g)
+            vapor_head = (vapor_pressure * 1000) / (density * g)
+            npsha = atm_head + static_head - vapor_head - friction_loss
+            outputs = {
+                "大气压头_m": round(atm_head, 3),
+                "蒸汽压头_m": round(vapor_head, 3),
+                "NPSHa_m": round(npsha, 3)
+            }
+            if npshr_value is not None:
+                safety_margin = npsha - npshr_value
+                outputs["安全余量_m"] = round(safety_margin, 3)
+                outputs["NPSHa_NPSHr"] = round(npsha / npshr_value, 2) if npshr_value > 0 else 0
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}

@@ -194,7 +194,7 @@ class SafetyValveCalculator(QWidget):
         
         # 按钮组
         button_layout = QHBoxLayout()
-        self.calculate_btn = QPushButton("计算安全阀")
+        self.calculate_btn = QPushButton("计算")
         self.calculate_btn.clicked.connect(self.calculate_safety_valve)
         self.calculate_btn.setStyleSheet("QPushButton { background-color: #c0392b; color: white; font-weight: bold; }")
         button_layout.addWidget(self.calculate_btn)
@@ -383,7 +383,80 @@ class SafetyValveCalculator(QWidget):
             
         except Exception as e:
             QMessageBox.warning(self, "计算错误", f"计算过程中发生错误: {str(e)}")
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        medium = self.medium_combo.currentText()
+        molecular_weight = self.molecular_weight_input.value()
+        gamma = self.gamma_input.value()
+        set_pressure = self.set_pressure_input.value()
+        back_pressure = self.back_pressure_input.value()
+        overpressure = self.overpressure_input.value()
+        temperature = self.temperature_input.value()
+        relief_temp = self.relief_temp_input.value()
+        compressibility = self.compressibility_input.value()
+        relief_rate = self.relief_rate_input.value()
+        is_fire_case = self.fire_case_check.isChecked()
+        wetted_area = self.wetted_area_input.value()
+        env_factor = self.env_factor_input.value()
+
+        inputs = {
+            "介质类型": medium,
+            "分子量": molecular_weight,
+            "绝热指数k": gamma,
+            "设定压力_MPa": set_pressure,
+            "背压_MPa": back_pressure,
+            "超压_%": overpressure,
+            "温度_C": temperature,
+            "泄放温度_C": relief_temp,
+            "压缩系数": compressibility,
+            "泄放速率_kg_h": relief_rate,
+            "火灾工况": is_fire_case,
+            "润湿面积_m2": wetted_area,
+            "环境系数": env_factor
+        }
+
+        outputs = {}
+        try:
+            set_pa = set_pressure * 1e6
+            back_pa = back_pressure * 1e6
+            over = overpressure / 100
+            relief_pressure = set_pa * (1 + over)
+            if is_fire_case:
+                heat_input = 43.2 * env_factor * (wetted_area ** 0.82)
+                relief_rate_calc = (heat_input / 300) * 3600 / 3600
+            else:
+                relief_rate_calc = relief_rate / 3600
+
+            if medium in ["蒸汽", "空气", "气体"]:
+                temp_k = (relief_temp + 273.15)
+                R = 8314 / molecular_weight
+                k_term = (gamma / (gamma - 1)) ** 0.5
+                pressure_ratio = back_pa / relief_pressure
+                critical_ratio = (2 / (gamma + 1)) ** (gamma / (gamma - 1))
+                if pressure_ratio <= critical_ratio:
+                    flow_factor = 0.9
+                else:
+                    flow_factor = 0.6
+                area = relief_rate_calc * k_term * math.sqrt(compressibility * R * temp_k) / \
+                       (flow_factor * relief_pressure * math.sqrt(2 * (gamma - 1) / (gamma + 1)))
+                if area < 0:
+                    area = relief_rate_calc * 1.5 / (0.61 * math.sqrt(2 * 1000000 / 1000))
+            else:
+                delta_p = relief_pressure - back_pa
+                area = relief_rate_calc * 1.5 / (0.61 * math.sqrt(2 * delta_p / 1000)) if delta_p > 0 else 0
+
+            diameter = math.sqrt(4 * area / math.pi) * 1000
+            outputs = {
+                "泄放压力_Pa": round(relief_pressure, 0),
+                "喉径面积_mm2": round(area * 1e6, 2) if area > 0 else 0,
+                "喉径_mm": round(diameter, 1) if diameter > 0 else 0
+            }
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def calculate_fire_relief(self, wetted_area, env_factor):
         """计算火灾工况泄放量"""
         # API 521 火灾工况计算公式

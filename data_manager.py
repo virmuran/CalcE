@@ -557,12 +557,6 @@ class DataManager(QObject):
     
     def delete_folder(self, folder_name):
         """删除文件夹"""
-        # 首先将该文件夹下的笔记移动到"未分类"
-        for note in self.data.get("notes", []):
-            if note.get("folder") == folder_name:
-                note["folder"] = "未分类"
-        
-        # 然后删除文件夹
         self.data["folders"] = [
             folder for folder in self.data.get("folders", []) 
             if folder.get("name") != folder_name
@@ -570,7 +564,6 @@ class DataManager(QObject):
         
         if self._save_data():
             self.data_changed.emit("folders")
-            self.data_changed.emit("notes")
         return True
     
     def rename_folder(self, old_name, new_name):
@@ -585,112 +578,10 @@ class DataManager(QObject):
                 folder["name"] = new_name
                 break
         
-        # 更新所有使用该文件夹的笔记
-        for note in self.data.get("notes", []):
-            if note.get("folder") == old_name:
-                note["folder"] = new_name
-        
         if self._save_data():
             self.data_changed.emit("folders")
-            self.data_changed.emit("notes")
         return True
-    
-    # ==================== 待办事项相关方法 ====================
-    def get_todos(self):
-        return self._get_items("todos")
-    
-    def add_todo(self, title, description="", priority="medium"):
-        todo = {
-            "title": title,
-            "description": description,
-            "priority": priority,
-            "completed": False,
-            "created_at": datetime.now().isoformat()
-        }
-        return self._add_item("todos", todo)
-    
-    def update_todo(self, todo_id, **kwargs):
-        return self._update_item("todos", todo_id, kwargs)
-    
-    def delete_todo(self, todo_id):
-        self._delete_item("todos", todo_id)
-    
-    # ==================== 笔记相关方法 ====================
-    def get_notes(self):
-        return self._get_items("notes")
-    
-    def add_note(self, title, content="", folder="未分类"):
-        note = {
-            "title": title,
-            "content": content,
-            "folder": folder,
-            "created_at": datetime.now().isoformat(),
-            "updated_at": datetime.now().isoformat()
-        }
-        return self._add_item("notes", note)
-    
-    def update_note(self, note_id, **kwargs):
-        updates = kwargs.copy()
-        updates["updated_at"] = datetime.now().isoformat()
-        return self._update_item("notes", note_id, updates)
-    
-    def delete_note(self, note_id):
-        self._delete_item("notes", note_id)
-    
-    # ==================== 日期相关方法 ====================
-    def get_birthdays(self):
-        return self._get_items("birthdays")
-    
-    def add_birthday(self, name, date):
-        birthday = {
-            "name": name,
-            "date": date,
-            "created_at": datetime.now().isoformat()
-        }
-        return self._add_item("birthdays", birthday)
-    
-    def update_birthday(self, birthday_id, **kwargs):
-        return self._update_item("birthdays", birthday_id, kwargs)
-    
-    def delete_birthday(self, birthday_id):
-        self._delete_item("birthdays", birthday_id)
-    
-    def get_holidays(self):
-        return self._get_items("holidays")
-    
-    def add_holiday(self, name, date, holiday_type="custom"):
-        holiday = {
-            "name": name,
-            "date": date,
-            "type": holiday_type,
-            "created_at": datetime.now().isoformat()
-        }
-        return self._add_item("holidays", holiday)
-    
-    def update_holiday(self, holiday_id, **kwargs):
-        return self._update_item("holidays", holiday_id, kwargs)
-    
-    def delete_holiday(self, holiday_id):
-        self._delete_item("holidays", holiday_id)
-    
-    def get_anniversaries(self):
-        return self._get_items("anniversaries")
-    
-    def add_anniversary(self, name, date, anniversary_type="personal"):
-        anniversary = {
-            "name": name,
-            "date": date,
-            "type": anniversary_type,
-            "created_at": datetime.now().isoformat()
-        }
-        return self._add_item("anniversaries", anniversary)
-    
-    def update_anniversary(self, anniversary_id, **kwargs):
-        return self._update_item("anniversaries", anniversary_id, kwargs)
-    
-    def delete_anniversary(self, anniversary_id):
-        self._delete_item("anniversaries", anniversary_id)
-    
+
     # ==================== 倒计时相关方法 ====================
     def get_countdowns(self):
         return self._get_items("countdowns")
@@ -728,25 +619,10 @@ class DataManager(QObject):
     def delete_custom_countdown_button(self, button_id):
         self._delete_item("custom_countdown_buttons", button_id)
     
-    # ==================== 自定义节假日 ====================
-    def get_custom_holidays(self):
-        return self.data.get("custom_holidays", {})
-    
-    def save_custom_holidays(self, custom_holidays):
-        self.data["custom_holidays"] = custom_holidays
-        if self._save_data():
-            self.data_changed.emit("custom_holidays")
-    
     def get_default_data(self):
         """返回默认数据结构（新格式）"""
         default_data = {
-            "todos": [],
-            "notes": [],
-            "birthdays": [],
-            "holidays": [],
-            "anniversaries": [],
             "countdowns": [],
-            "custom_holidays": {},
             "custom_countdown_buttons": [],
             "folders": ["工作", "生活", "学习"],
             "project_info": {

@@ -452,7 +452,51 @@ class EOSCalculator(QWidget):
             self.show_error("输入参数格式错误，请检查输入值")
         except Exception as e:
             self.show_error(f"计算错误: {str(e)}")
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        tc = float(self.tc_input.text() or 0)
+        pc = float(self.pc_input.text() or 0)
+        omega = float(self.omega_input.text() or 0)
+        mw = float(self.mw_input.text() or 0)
+        zc = float(self.zc_input.text() or 0.27) if self.zc_input.text() else 0.27
+        T = float(self.temperature_input.text() or 0)
+        P = float(self.pressure_input.text() or 0)
+        V_input = self.volume_input.text()
+        V = float(V_input) if V_input else None
+        eos_type = self.eos_type.currentText()
+
+        inputs = {
+            "状态方程": eos_type,
+            "临界温度_K": tc,
+            "临界压力_MPa": pc,
+            "偏心因子": omega,
+            "分子量": mw,
+            "临界压缩因子": zc,
+            "温度_K": T,
+            "压力_MPa": P,
+            "体积": V
+        }
+
+        outputs = {}
+        try:
+            Tr = T / tc
+            Pr = P / pc
+            results = self.calculate_eos_properties(
+                eos_type, T, P, V, tc, pc, omega, mw, zc, Tr, Pr
+            )
+            outputs = {
+                "对比温度": round(Tr, 4),
+                "对比压力": round(Pr, 4),
+                "压缩因子Z": round(results.get('Z', 0), 4),
+                "逸度系数": round(results.get('phi', 0), 4),
+                "密度_kg_m3": round(results.get('density', 0), 4)
+            }
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def calculate_eos_properties(self, eos_type, T, P, V, tc, pc, omega, mw, zc, Tr, Pr):
         """计算状态方程性质"""
         R = 8.314  # J/(mol·K)

@@ -105,6 +105,10 @@ class ScipyMissingCalculator(QWidget):
         
         layout.addStretch()
 
+    def _get_history_data(self):
+        """提供历史记录数据 - 此模块无计算功能"""
+        return {"inputs": {}, "outputs": {}}
+
 
 if __name__ == "__main__":
     import sys

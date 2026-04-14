@@ -135,7 +135,7 @@ class SteamPropertyCalculator(QWidget):
         left_layout.addWidget(self.input_stack)
         
         # 4. 计算按钮
-        self.calculate_btn = QPushButton("查询水蒸气性质")
+        self.calculate_btn = QPushButton("计算")
         self.calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         self.calculate_btn.clicked.connect(self.calculate_steam_properties)
         self.calculate_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -731,7 +731,49 @@ class SteamPropertyCalculator(QWidget):
             QMessageBox.critical(self, "计算错误", "计算过程中出现除零错误")
         except Exception as e:
             QMessageBox.critical(self, "计算错误", f"计算过程中发生错误: {str(e)}")
-    
+
+    def _get_history_data(self):
+        """提供历史记录数据"""
+        mode = self.current_mode
+
+        inputs = {"计算模式": mode}
+
+        outputs = {}
+        try:
+            if mode == "饱和状态":
+                checked_button = self.sat_known_button_group.checkedButton()
+                param_type = checked_button.text() if checked_button else "压力 P"
+                param_value = float(self.sat_param1_input.text() or 0)
+                dryness = float(self.dryness_input.text() or 0)
+                inputs["已知参数"] = param_type
+                inputs["参数值"] = param_value
+                inputs["干度"] = dryness
+
+                if "压力" in param_type:
+                    pressure_mpa = param_value
+                    saturation_temp = self.calculate_saturation_temperature(pressure_mpa)
+                else:
+                    temperature_c = param_value
+                    pressure_mpa = self.calculate_saturation_pressure(temperature_c)
+                    saturation_temp = temperature_c
+
+                density = self.calculate_steam_density(pressure_mpa, saturation_temp, dryness)
+                enthalpy = self.calculate_enthalpy(pressure_mpa, saturation_temp, dryness)
+                entropy = self.calculate_entropy(pressure_mpa, saturation_temp, dryness)
+
+                outputs = {
+                    "压力_MPa": round(pressure_mpa, 4),
+                    "温度_C": round(saturation_temp, 2),
+                    "密度_kg_m3": round(density, 5),
+                    "比容_m3_kg": round(1/density, 5) if density > 0 else 0,
+                    "焓_kJ_kg": round(enthalpy, 2),
+                    "熵_kJ_kgK": round(entropy, 4)
+                }
+        except Exception as e:
+            outputs["计算错误"] = str(e)
+
+        return {"inputs": inputs, "outputs": outputs}
+
     def calculate_saturation_properties(self):
         """计算饱和状态水蒸气性质"""
         # 获取输入值

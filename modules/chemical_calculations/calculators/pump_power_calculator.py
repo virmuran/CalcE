@@ -230,7 +230,7 @@ class CentrifugalPumpCalculator(QWidget):
         left_layout.addWidget(input_group)
         
         # 计算按钮
-        calculate_btn = QPushButton("计算功率")
+        calculate_btn = QPushButton("计算")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate_pump_power)
         calculate_btn.setStyleSheet("""
@@ -512,3 +512,32 @@ P_电机 = {shaft_power:.2f} / {motor_efficiency/100:.3f} × {safety_factor} = {
             QMessageBox.critical(self, "计算错误", "效率不能为零")
         except Exception as e:
             QMessageBox.critical(self, "计算错误", f"计算过程中发生错误: {str(e)}")
+
+    def _get_history_data(self):
+        """获取当前输入输出数据，用于保存历史记录"""
+        try:
+            inputs = {
+                "流量 (m³/h)": self.flow_input.text() or "",
+                "扬程 (m)": self.head_input.text() or "",
+                "介质密度 (kg/m³)": self.density_input.text() or "",
+                "泵效率 (%)": self.efficiency_input.text() or "",
+                "电机效率 (%)": self.motor_efficiency_input.text() or "",
+                "安全系数": self.safety_combo.currentText(),
+            }
+            # 尝试从结果文本中提取关键数值
+            outputs = {}
+            text = self.result_text.toPlainText()
+            import re
+            for key, pattern in [
+                ("有效功率 (kW)", r"有效功率:\s*([\d.]+)\s*kW"),
+                ("轴功率 (kW)", r"轴功率:\s*([\d.]+)\s*kW"),
+                ("电机功率 (kW)", r"电机功率:\s*([\d.]+)\s*kW"),
+                ("总效率 (%)", r"总效率:\s*([\d.]+)\s*%"),
+                ("推荐电机 (kW)", r"推荐电机功率:\s*([\d.]+)\s*kW"),
+            ]:
+                m = re.search(pattern, text)
+                if m:
+                    outputs[key] = m.group(1)
+            return {"inputs": inputs, "outputs": outputs}
+        except Exception:
+            return {"inputs": {}, "outputs": {}}
