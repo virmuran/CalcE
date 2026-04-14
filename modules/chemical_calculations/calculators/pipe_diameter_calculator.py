@@ -370,7 +370,7 @@ class 管径计算(QWidget):
         left_layout.addWidget(mode_group)
         
         # 3. 输入参数组 - 使用GridLayout实现整齐的布局
-        input_group = QGroupBox("📥 输入参数")
+        input_group = QGroupBox("输入参数")
         input_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -484,7 +484,7 @@ class 管径计算(QWidget):
         row += 1
         
         # 推荐流速按钮行
-        self.velocity_recommend_btn = QPushButton("📏 获取推荐流速")
+        self.velocity_recommend_btn = QPushButton("获取推荐流速")
         self.velocity_recommend_btn.setFixedWidth(combo_width)
         self.velocity_recommend_btn.clicked.connect(self.set_recommended_velocity)
         self.velocity_recommend_btn.setStyleSheet("""
@@ -531,7 +531,7 @@ class 管径计算(QWidget):
         row += 1
         
         # 推荐流量按钮行
-        self.flow_recommend_btn = QPushButton("📏 获取推荐流量")
+        self.flow_recommend_btn = QPushButton("获取推荐流量")
         self.flow_recommend_btn.setFixedWidth(combo_width)
         self.flow_recommend_btn.clicked.connect(self.set_recommended_flow)
         self.flow_recommend_btn.setStyleSheet("""
@@ -597,7 +597,7 @@ class 管径计算(QWidget):
         left_layout.addWidget(input_group)
         
         # 4. 计算按钮
-        calculate_btn = QPushButton("🧮 开始计算")
+        calculate_btn = QPushButton("开始计算")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate)
         calculate_btn.setStyleSheet("""
@@ -618,7 +618,7 @@ class 管径计算(QWidget):
         
         # 5. 下载按钮布局
         download_layout = QHBoxLayout()
-        download_txt_btn = QPushButton("📄 下载计算书(TXT)")
+        download_txt_btn = QPushButton("下载计算书(TXT)")
         download_txt_btn.clicked.connect(self.download_txt_report)
         download_txt_btn.setStyleSheet("""
             QPushButton {
@@ -634,7 +634,7 @@ class 管径计算(QWidget):
             }
         """)
 
-        download_pdf_btn = QPushButton("📊 下载计算书(PDF)")
+        download_pdf_btn = QPushButton("下载计算书(PDF)")
         download_pdf_btn.clicked.connect(self.generate_pdf_report)
         download_pdf_btn.setStyleSheet("""
             QPushButton {
@@ -664,7 +664,7 @@ class 管径计算(QWidget):
         right_layout.setSpacing(15)
         
         # 结果显示
-        self.result_group = QGroupBox("📤 计算结果")
+        self.result_group = QGroupBox("计算结果")
         self.result_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -1147,7 +1147,7 @@ class 管径计算(QWidget):
         closest_diam = min(standard_diameters, key=lambda x: abs(x - diameter_mm))
         
         result = f"""═══════════
-📋 输入参数
+ 输入参数
 ══════════
 
     计算模式: {mode}
@@ -1159,7 +1159,7 @@ class 管径计算(QWidget):
     密度: {density:.2f} kg/m³
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     理论计算管径: {diameter_mm:.1f} mm
@@ -1168,7 +1168,7 @@ class 管径计算(QWidget):
     • 实际流速: {self.calculate_actual_velocity(flow_rate, closest_diam, density, fluid, condition):.2f} m/s
 
 ══════════
-🧮 计算公式 (HG/T 20570.6—1995)
+计算公式 (HG/T 20570.6—1995)
 ══════════
 
     d = 18.81 × W^0.5 × u^-0.5 × ρ^-0.5
@@ -1185,7 +1185,7 @@ class 管径计算(QWidget):
     = {diameter_mm:.1f} mm
 
 ══════════
-💡 工程建议
+工程建议
 ══════════
 
     • 推荐使用标准管径 DN{closest_diam}
@@ -1210,7 +1210,7 @@ class 管径计算(QWidget):
             W = flow_rate * 1000
         
         result = f"""══════════
-📋 输入参数
+ 输入参数
 ══════════
 
     计算模式: {mode}
@@ -1222,7 +1222,7 @@ class 管径计算(QWidget):
     密度: {density:.2f} kg/m³
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     理论计算流量:
@@ -1245,7 +1245,7 @@ class 管径计算(QWidget):
         result += f"""
 
 ══════════
-🧮 计算公式 (HG/T 20570.6—1995)
+计算公式 (HG/T 20570.6—1995)
 ══════════
 
     由管径计算流量的反推公式:
@@ -1265,7 +1265,7 @@ class 管径计算(QWidget):
     = {flow_rate:.2f} {flow_unit}
 
 ══════════
-💡 工程建议
+工程建议
 ══════════
 
     • 当前流速和流量在推荐范围内
@@ -1451,7 +1451,7 @@ class 管径计算(QWidget):
             
             # 添加工程信息部分
             report += f"""══════════
-📋 工程信息
+ 工程信息
 ══════════
 
     公司名称: {project_info['company_name']}
@@ -1461,7 +1461,7 @@ class 管径计算(QWidget):
     计算日期: {datetime.now().strftime('%Y-%m-%d')}
 
 ══════════
-🏷️ 计算书标识
+计算书标识
 ══════════
 
     计算书编号: {project_info['report_number']}
@@ -1469,7 +1469,7 @@ class 管径计算(QWidget):
     状态: 正式计算书
 
 ══════════
-📝 备注说明
+备注说明
 ══════════
 
     1. 本计算书基于《化工管路设计手册》及相关标准规范
@@ -1648,42 +1648,8 @@ class 管径计算(QWidget):
     
     def process_content_for_pdf(self, content):
         """处理内容，使其适合PDF显示"""
-        # 替换表情图标为文字描述
-        replacements = {
-            "📋": "",
-            "📊": "", 
-            "🧮": "",
-            "💡": "",
-            "📤": "",
-            "📥": "",
-            "⚠️": "",
-            "🔬": "",
-            "📏": "",
-            "🌪️": "",
-            "💨": "",
-            "🌫️": "",
-            "⚡": "",
-            "💧": "",
-            "🔄": "",
-            "🌬️": "",
-            "🔧": "",
-            "🚒": "",
-            "⚖️": "",
-            "🧊": "",
-            "🧪": "",
-            "🔩": "",
-            "🛡️": "",
-            "🔥": "",
-            "⚗️": "",
-            "🚨": "",
-            "⚛️": "",
-            "❄️": "",
-            "📄": "",
-            "📊": "",
-            "•": "",
-            "🏷️": "",
-            "📝": ""
-        }
+        # 清理bullet符号
+        content = content.replace("•", "")
         
         # 替换表情图标
         for emoji, text in replacements.items():

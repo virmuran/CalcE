@@ -57,31 +57,31 @@ class 篮式过滤器(QWidget):
         left_layout.addWidget(description)
         
         # 流体介质参数组
-        fluid_group = self.create_group_box("💧 流体介质参数")
+        fluid_group = self.create_group_box("流体介质参数")
         fluid_layout = QGridLayout(fluid_group)
         self.setup_fluid_parameters(fluid_layout)
         left_layout.addWidget(fluid_group)
         
         # 系统工况参数组
-        system_group = self.create_group_box("⚙️ 系统工况参数")
+        system_group = self.create_group_box("系统工况参数")
         system_layout = QGridLayout(system_group)
         self.setup_system_parameters(system_layout)
         left_layout.addWidget(system_group)
         
         # 过滤核心参数组
-        filter_group = self.create_group_box("🔧 过滤核心参数")
+        filter_group = self.create_group_box("过滤核心参数")
         filter_layout = QGridLayout(filter_group)
         self.setup_filter_parameters(filter_layout)
         left_layout.addWidget(filter_group)
         
         # 结构与材料参数组
-        structure_group = self.create_group_box("🏗️ 结构与材料参数")
+        structure_group = self.create_group_box("结构与材料参数")
         structure_layout = QGridLayout(structure_group)
         self.setup_structure_parameters(structure_layout)
         left_layout.addWidget(structure_group)
         
         # 经济参数组
-        economic_group = self.create_group_box("💰 经济参数")
+        economic_group = self.create_group_box("经济参数")
         economic_layout = QGridLayout(economic_group)
         self.setup_economic_parameters(economic_layout)
         left_layout.addWidget(economic_group)
@@ -103,7 +103,7 @@ class 篮式过滤器(QWidget):
         right_layout.addWidget(self.result_tabs)
         
         # 复制按钮
-        copy_btn = QPushButton("📋 复制结果")
+        copy_btn = QPushButton(" 复制结果")
         copy_btn.clicked.connect(self.copy_results_to_clipboard)
         copy_btn.setStyleSheet("""
             QPushButton {
@@ -249,7 +249,7 @@ class 篮式过滤器(QWidget):
     def setup_buttons(self, layout):
         """设置按钮区域"""
         # 计算按钮
-        calculate_btn = QPushButton("🧮 设计计算")
+        calculate_btn = QPushButton("设计计算")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.perform_design_calculation)
         calculate_btn.setStyleSheet("""
@@ -270,7 +270,7 @@ class 篮式过滤器(QWidget):
         
         # 下载按钮
         download_layout = QHBoxLayout()
-        download_txt_btn = QPushButton("📄 下载计算书(TXT)")
+        download_txt_btn = QPushButton("下载计算书(TXT)")
         download_txt_btn.clicked.connect(self.download_txt_report)
         download_txt_btn.setStyleSheet("""
             QPushButton {
@@ -286,7 +286,7 @@ class 篮式过滤器(QWidget):
             }
         """)
 
-        download_pdf_btn = QPushButton("📊 下载计算书(PDF)")
+        download_pdf_btn = QPushButton("下载计算书(PDF)")
         download_pdf_btn.clicked.connect(self.generate_pdf_report)
         download_pdf_btn.setStyleSheet("""
             QPushButton {
@@ -365,8 +365,8 @@ class 篮式过滤器(QWidget):
         self.selection_text.setMaximumHeight(700)
         selection_layout.addWidget(self.selection_text)
         
-        tabs.addTab(detailed_result_widget, "📊 详细结果")
-        tabs.addTab(selection_widget, "✅ 选型结果")
+        tabs.addTab(detailed_result_widget, "详细结果")
+        tabs.addTab(selection_widget, "选型结果")
         
         return tabs
     
@@ -716,12 +716,12 @@ class 篮式过滤器(QWidget):
                               stress_factor, pipe_diameter, filter_diameter_calc, filter_diameter_rounded,
                               filter_height, weight_result, price, pressure_drop_ok, stress_factor_ok, flange_dn):
         """格式化详细结果"""
-        pressure_drop_status = "✅" if pressure_drop_ok else "❌"
-        stress_factor_status = "✅" if stress_factor_ok else "❌"
+        pressure_drop_status = "合格" if pressure_drop_ok else "不合格"
+        stress_factor_status = "合格" if stress_factor_ok else "不合格"
         
         return f"""
 ══════════
-📋 设计参数
+ 设计参数
 ══════════
 
     流体介质参数:
@@ -755,7 +755,7 @@ class 篮式过滤器(QWidget):
     • 利润: {inputs['profit']:.3f}
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     【计算值 vs 取值】
@@ -799,7 +799,7 @@ class 篮式过滤器(QWidget):
     • 产品底价: {price:.0f} 元/台
 
 ══════════
-💡 计算说明
+计算说明
 ══════════
 
     计算公式:
@@ -829,11 +829,11 @@ class 篮式过滤器(QWidget):
         pressure_value = int(inputs['design_pressure'] * 10)
         model_code = f"SBL-{pressure_value}P {flange_dn.split('[')[0].strip()}"
         
-        measures = '✅ 设计合格，可直接选用' if (pressure_drop_ok and stress_factor_ok) else '❌ 需要调整设计参数'
+        measures = '设计合格，可直接选用' if (pressure_drop_ok and stress_factor_ok) else '需要调整设计参数'
         
         return f"""
 ══════════
-✅ 选型结果
+选型结果
 ══════════
 
     过滤器型号: {model_code}
@@ -847,11 +847,11 @@ class 篮式过滤器(QWidget):
     整机质量: {total_weight:.1f} kg
     估算价格: {price:.0f} 元/台
 
-    设计状态: {'✅ 设计合格' if (pressure_drop_ok and stress_factor_ok) else '❌ 需要调整'}
+    设计状态: {'设计合格' if (pressure_drop_ok and stress_factor_ok) else '需要调整'}
     建议措施: {measures}
 
 ══════════
-📝 备注说明
+备注说明
 ══════════
 
     型号说明: {model_code}
@@ -1049,7 +1049,7 @@ class 篮式过滤器(QWidget):
             # 添加工程信息部分
             report += f"""
 ══════════
-📋 工程信息
+ 工程信息
 ══════════
 
     公司名称: {project_info['company_name']}
@@ -1059,7 +1059,7 @@ class 篮式过滤器(QWidget):
     计算日期: {datetime.now().strftime('%Y-%m-%d')}
 
 ══════════
-🏷️ 计算书标识
+计算书标识
 ══════════
 
     计算书编号: {project_info['report_number']}
@@ -1067,7 +1067,7 @@ class 篮式过滤器(QWidget):
     状态: 正式计算书
 
 ══════════
-📝 备注说明
+备注说明
 ══════════
 
     1. 本计算书基于流体力学原理及相关标准规范
@@ -1235,53 +1235,8 @@ class 篮式过滤器(QWidget):
     
     def process_content_for_pdf(self, content):
         """处理内容，使其适合PDF显示"""
-        # 替换表情图标为文字描述
-        replacements = {
-            "📋": "",
-            "📊": "", 
-            "🧮": "",
-            "💡": "",
-            "📤": "",
-            "📥": "",
-            "⚠️": "",
-            "🔬": "",
-            "📏": "",
-            "🌪️": "",
-            "💨": "",
-            "🌫️": "",
-            "⚡": "",
-            "💧": "",
-            "🔄": "",
-            "🌬️": "",
-            "🔧": "",
-            "🚒": "",
-            "⚖️": "",
-            "🧊": "",
-            "🧪": "",
-            "🔩": "",
-            "🛡️": "",
-            "🔥": "",
-            "⚗️": "",
-            "🚨": "",
-            "⚛️": "",
-            "❄️": "",
-            "📄": "",
-            "📊": "",
-            "•": "",
-            "🏷️": "",
-            "📝": "",
-            "✅": "",
-            "❌": "",
-            "💰": "",
-            "⚙️": "",
-            "🏗️": "",
-            "🔧": "",
-            "📋": ""
-        }
-        
-        # 替换表情图标
-        for emoji, text in replacements.items():
-            content = content.replace(emoji, text)
+        # 清理bullet符号
+        content = content.replace("•", "")
         
         # 替换单位符号
         content = content.replace("m³", "m3")

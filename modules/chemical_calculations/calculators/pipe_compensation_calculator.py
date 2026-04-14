@@ -207,7 +207,7 @@ class 管道补偿(QWidget):
         left_layout.addWidget(mode_group)
         
         # 3. 输入参数组 - 使用GridLayout实现整齐的布局
-        input_group = QGroupBox("📥 输入参数")
+        input_group = QGroupBox("输入参数")
         input_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -509,7 +509,7 @@ class 管道补偿(QWidget):
         left_layout.addWidget(input_group)
         
         # 4. 计算按钮
-        calculate_btn = QPushButton("🧮 计算补偿量")
+        calculate_btn = QPushButton("计算补偿量")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate_compensation)
         calculate_btn.setStyleSheet("""
@@ -530,7 +530,7 @@ class 管道补偿(QWidget):
         
         # 5. 下载按钮布局
         download_layout = QHBoxLayout()
-        download_txt_btn = QPushButton("📄 下载计算书(TXT)")
+        download_txt_btn = QPushButton("下载计算书(TXT)")
         download_txt_btn.clicked.connect(self.download_txt_report)
         download_txt_btn.setStyleSheet("""
             QPushButton {
@@ -546,7 +546,7 @@ class 管道补偿(QWidget):
             }
         """)
 
-        download_pdf_btn = QPushButton("📊 下载计算书(PDF)")
+        download_pdf_btn = QPushButton("下载计算书(PDF)")
         download_pdf_btn.clicked.connect(self.generate_pdf_report)
         download_pdf_btn.setStyleSheet("""
             QPushButton {
@@ -576,7 +576,7 @@ class 管道补偿(QWidget):
         right_layout.setSpacing(15)
         
         # 结果显示
-        self.result_group = QGroupBox("📤 计算结果")
+        self.result_group = QGroupBox("计算结果")
         self.result_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -872,14 +872,14 @@ class 管道补偿(QWidget):
         # 应力评估
         stress_mpa = stress / 1e6
         if stress_mpa < allowable_stress / 1e6 * 0.8:
-            stress_evaluation = "✓ 热应力在安全范围内"
+            stress_evaluation = "热应力在安全范围内"
         elif stress_mpa < allowable_stress / 1e6:
-            stress_evaluation = "⚠ 热应力较高，需要详细应力分析"
+            stress_evaluation = "热应力较高，需要详细应力分析"
         else:
-            stress_evaluation = "✗ 热应力过高，必须采取补偿措施"
+            stress_evaluation = "热应力过高，必须采取补偿措施"
         
         result = f"""═══════════
-📋 输入参数
+输入参数
 ══════════
 
     计算模式: 热膨胀基本计算
@@ -895,7 +895,7 @@ class 管道补偿(QWidget):
     许用应力: {allowable_stress/1e6:.0f} MPa
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     热膨胀分析:
@@ -915,7 +915,7 @@ class 管道补偿(QWidget):
     • {stress_evaluation}
 
 ══════════
-💡 计算说明
+计算说明
 ══════════
 
     • 热膨胀量: ΔL = α × L × ΔT
@@ -985,7 +985,7 @@ class 管道补偿(QWidget):
             safety_icon = "✗"
         
         result = f"""═══════════
-📋 输入参数
+输入参数
 ══════════
 
     计算模式: L形直角弯补偿
@@ -1002,7 +1002,7 @@ class 管道补偿(QWidget):
     许用应力: {allowable_mpa:.0f} MPa
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     几何参数:
@@ -1030,7 +1030,7 @@ class 管道补偿(QWidget):
     • {safety_icon} {safety}
 
 ══════════
-💡 计算说明
+计算说明
 ══════════
 
     • L形补偿利用管道直角转弯吸收热膨胀
@@ -1091,10 +1091,10 @@ class 管道补偿(QWidget):
             safety_icon = "⚠"
         else:
             safety = "不安全"
-            safety_icon = "✗"
+            safety_icon = "[NO]"
         
         result = f"""═══════════
-📋 输入参数
+输入参数
 ══════════
 
     计算模式: Z形折角弯补偿
@@ -1112,7 +1112,7 @@ class 管道补偿(QWidget):
     许用应力: {allowable_mpa:.0f} MPa
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     几何参数:
@@ -1140,7 +1140,7 @@ class 管道补偿(QWidget):
     • {safety_icon} {safety}
 
 ══════════
-💡 计算说明
+计算说明
 ══════════
 
     • Z形补偿通过三个臂的变形吸收热膨胀
@@ -1309,7 +1309,7 @@ class 管道补偿(QWidget):
             
             # 添加工程信息部分
             report += f"""══════════
-📋 工程信息
+工程信息
 ══════════
 
     公司名称: {project_info['company_name']}
@@ -1320,7 +1320,7 @@ class 管道补偿(QWidget):
     计算日期: {datetime.now().strftime('%Y-%m-%d')}
 
 ══════════
-📝 备注说明
+备注说明
 ══════════
 
     1. 本计算书基于热力学原理及相关标准规范
@@ -1491,26 +1491,8 @@ class 管道补偿(QWidget):
     
     def process_content_for_pdf(self, content):
         """处理内容，使其适合PDF显示"""
-        # 替换表情图标为文字描述
-        replacements = {
-            "📋": "",
-            "📊": "", 
-            "🧮": "",
-            "💡": "",
-            "📤": "",
-            "📥": "",
-            "⚠️": "",
-            "✓": "",
-            "✗": "",
-            "✓✓": "",
-            "•": "",
-            "🏷️": "",
-            "📝": ""
-        }
-        
-        # 替换表情图标
-        for emoji, text in replacements.items():
-            content = content.replace(emoji, text)
+        # 清理bullet符号
+        content = content.replace("•", "")
         
         # 替换单位符号
         content = content.replace("×10⁻⁶", "e-6")

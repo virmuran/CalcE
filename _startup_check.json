@@ -1,0 +1,4 @@
+{
+  "exit": 1,
+  "stdout": "Traceback (most recent call last):\r\n  File \"C:\\Users\\Administrator\\Desktop\\CalcE\\main.py\", line 22, in <module>\r\n    from data_manager import DataManager\r\n  File \"C:\\Users\\Administrator\\Desktop\\CalcE\\data_manager.py\", line 10\r\n    class JSONEncoder(json.JSONEncoder):\"\"\"�Զ���JSON������������datetime��date����\"\"\"def default(self, obj):\r\n                                                                          ^^^\r\nSyntaxError: invalid syntax\r\n"
+}

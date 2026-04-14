@@ -33,25 +33,25 @@ class ChemicalDetailDialog(QDialog):
         basic_info_tab = QWidget()
         basic_layout = QVBoxLayout(basic_info_tab)
         basic_layout.addWidget(self.create_basic_info_widget())
-        self.tab_widget.addTab(basic_info_tab, "📋 基本信息")
+        self.tab_widget.addTab(basic_info_tab, " 基本信息")
         
         # 危险性标签页
         hazard_tab = QWidget()
         hazard_layout = QVBoxLayout(hazard_tab)
         hazard_layout.addWidget(self.create_hazard_info_widget())
-        self.tab_widget.addTab(hazard_tab, "⚠️ 危险性")
+        self.tab_widget.addTab(hazard_tab, "危险性")
         
         # 安全措施标签页
         safety_tab = QWidget()
         safety_layout = QVBoxLayout(safety_tab)
         safety_layout.addWidget(self.create_safety_info_widget())
-        self.tab_widget.addTab(safety_tab, "🛡️ 安全措施")
+        self.tab_widget.addTab(safety_tab, "安全措施")
         
         # 应急处理标签页
         emergency_tab = QWidget()
         emergency_layout = QVBoxLayout(emergency_tab)
         emergency_layout.addWidget(self.create_emergency_info_widget())
-        self.tab_widget.addTab(emergency_tab, "🚨 应急处理")
+        self.tab_widget.addTab(emergency_tab, "应急处理")
         
         layout.addWidget(self.tab_widget)
         
@@ -82,7 +82,7 @@ class ChemicalDetailDialog(QDialog):
         layout.setHorizontalSpacing(15)
         
         # 标题
-        title_label = QLabel(f"🔬 {self.chemical_data.get('name', '未知化学品')}")
+        title_label = QLabel(f"{self.chemical_data.get('name', '未知化学品')}")
         title_label.setStyleSheet("font-size: 18px; font-weight: bold; color: #2c3e50; margin: 10px;")
         layout.addWidget(title_label, 0, 0, 1, 2)
         
@@ -188,7 +188,7 @@ class ChemicalDetailDialog(QDialog):
             symbols = self.chemical_data['ghs_symbols'].split(';')
             for symbol in symbols:
                 if symbol.strip():
-                    label = QLabel(f"⚠️ {symbol.strip()}")
+                    label = QLabel(f"{symbol.strip()}")
                     ghs_layout.addWidget(label)
             layout.addWidget(ghs_group)
         
@@ -333,7 +333,7 @@ class HazardousChemicalsQuery(QWidget):
         left_layout.addWidget(description)
         
         # 搜索区域
-        search_group = QGroupBox("🔍 搜索条件")
+        search_group = QGroupBox("搜索条件")
         search_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -393,7 +393,7 @@ class HazardousChemicalsQuery(QWidget):
         left_layout.addWidget(search_group)
         
         # 化学品列表
-        list_group = QGroupBox("📋 化学品列表")
+        list_group = QGroupBox(" 化学品列表")
         list_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -443,7 +443,7 @@ class HazardousChemicalsQuery(QWidget):
         right_layout.setSpacing(15)
         
         # 详细信息
-        self.detail_group = QGroupBox("📖 化学品详情")
+        self.detail_group = QGroupBox("化学品详情")
         self.detail_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -474,7 +474,7 @@ class HazardousChemicalsQuery(QWidget):
         detail_layout.addWidget(self.detail_text)
         
         # 查看详情按钮
-        self.detail_btn = QPushButton("📄 查看完整详情")
+        self.detail_btn = QPushButton("查看完整详情")
         self.detail_btn.clicked.connect(self.show_full_detail)
         self.detail_btn.setStyleSheet("""
             QPushButton {
@@ -799,10 +799,10 @@ class HazardousChemicalsQuery(QWidget):
                 </tr>
             </table>
             
-            <h3 style="color: #e74c3c;">⚠️ 危险性说明</h3>
+            <h3 style="color: #e74c3c;">危险性说明</h3>
             <p>{chemical.get('hazard_statements', '无').replace(';', '<br>• ')}</p>
             
-            <h3 style="color: #3498db;">🛡️ 主要防范措施</h3>
+            <h3 style="color: #3498db;">[1F6E1]️ 主要防范措施</h3>
             <p>{chemical.get('precautionary_statements', '无').replace(';', '<br>• ')}</p>
         </div>
         """

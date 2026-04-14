@@ -21,7 +21,7 @@ class PureSubstanceProperties(QWidget):
         main_layout.setSpacing(15)
         
         # 标题
-        title_label = QLabel("🧪 纯物质物性数据查询")
+        title_label = QLabel("纯物质物性数据查询")
         title_label.setFont(QFont("Arial", 14, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setStyleSheet("color: #2c3e50; margin: 10px;")
@@ -32,15 +32,15 @@ class PureSubstanceProperties(QWidget):
         
         # 添加查询标签页
         self.query_tab = self.create_query_tab()
-        self.tab_widget.addTab(self.query_tab, "🔍 物性查询")
+        self.tab_widget.addTab(self.query_tab, "物性查询")
         
         # 添加物质库标签页
         self.substance_lib_tab = self.create_substance_lib_tab()
-        self.tab_widget.addTab(self.substance_lib_tab, "📚 物质库")
+        self.tab_widget.addTab(self.substance_lib_tab, "物质库")
         
         # 添加计算公式标签页
         self.formula_tab = self.create_formula_tab()
-        self.tab_widget.addTab(self.formula_tab, "📐 计算公式")
+        self.tab_widget.addTab(self.formula_tab, "计算公式")
         
         main_layout.addWidget(self.tab_widget)
     
@@ -50,7 +50,7 @@ class PureSubstanceProperties(QWidget):
         layout = QVBoxLayout(tab)
         
         # 查询条件组
-        query_group = QGroupBox("🔍 查询条件")
+        query_group = QGroupBox("查询条件")
         query_layout = QVBoxLayout(query_group)
         
         # 物质选择
@@ -99,17 +99,17 @@ class PureSubstanceProperties(QWidget):
         
         # 按钮组
         button_layout = QHBoxLayout()
-        self.query_btn = QPushButton("🚀 查询物性数据")
+        self.query_btn = QPushButton("查询物性数据")
         self.query_btn.clicked.connect(self.query_properties)
         self.query_btn.setStyleSheet("QPushButton { background-color: #8e44ad; color: white; font-weight: bold; }")
         button_layout.addWidget(self.query_btn)
         
-        self.temp_calc_btn = QPushButton("🔧 温度影响计算")
+        self.temp_calc_btn = QPushButton("温度影响计算")
         self.temp_calc_btn.clicked.connect(self.temperature_calculation)
         self.temp_calc_btn.setStyleSheet("QPushButton { background-color: #3498db; color: white; }")
         button_layout.addWidget(self.temp_calc_btn)
         
-        self.clear_btn = QPushButton("🗑️ 清空")
+        self.clear_btn = QPushButton("清空")
         self.clear_btn.clicked.connect(self.clear_inputs)
         self.clear_btn.setStyleSheet("QPushButton { background-color: #95a5a6; color: white; }")
         button_layout.addWidget(self.clear_btn)
@@ -117,7 +117,7 @@ class PureSubstanceProperties(QWidget):
         layout.addLayout(button_layout)
         
         # 基本物性组
-        basic_prop_group = QGroupBox("📊 基本物性")
+        basic_prop_group = QGroupBox("基本物性")
         basic_prop_layout = QVBoxLayout(basic_prop_group)
         
         self.basic_prop_table = QTableWidget()
@@ -128,7 +128,7 @@ class PureSubstanceProperties(QWidget):
         layout.addWidget(basic_prop_group)
         
         # 热力学性质组
-        thermo_prop_group = QGroupBox("🔥 热力学性质")
+        thermo_prop_group = QGroupBox("热力学性质")
         thermo_prop_layout = QVBoxLayout(thermo_prop_group)
         
         self.thermo_prop_table = QTableWidget()
@@ -272,7 +272,7 @@ class PureSubstanceProperties(QWidget):
     def get_formula_html(self):
         """获取计算公式HTML内容"""
         return """
-        <h2>📐 物性计算公式</h2>
+        <h2>物性计算公式</h2>
         
         <h3>1. 密度计算</h3>
         <p><b>理想气体密度：</b>ρ = P × M / (R × T)</p>
@@ -310,7 +310,7 @@ class PureSubstanceProperties(QWidget):
         <p><b>熵变：</b>ΔS = ∫(C<sub>p</sub>/T)dT</p>
         <p><b>Gibbs自由能：</b>ΔG = ΔH - TΔS</p>
         
-        <h3>📖 常用常数</h3>
+        <h3>常用常数</h3>
         <table border="1" style="border-collapse: collapse; width: 100%;">
         <tr style="background-color: #3498db; color: white;">
             <th style="padding: 8px;">常数</th>
@@ -344,7 +344,7 @@ class PureSubstanceProperties(QWidget):
         </tr>
         </table>
         
-        <h3>📚 参考数据源</h3>
+        <h3>参考数据源</h3>
         <ul>
             <li>CRC Handbook of Chemistry and Physics</li>
             <li>Perry's Chemical Engineers' Handbook</li>
@@ -552,7 +552,7 @@ class PureSubstanceProperties(QWidget):
             temperatures = [0, 25, 50, 75, 100]
             data = self.substance_data[substance]["thermal"]
             
-            result_text = f"<h3>🌡️ {substance} 温度影响分析</h3>"
+            result_text = f"<h3>{substance} 温度影响分析</h3>"
             result_text += "<table border='1' style='border-collapse: collapse; width: 100%;'>"
             result_text += "<tr style='background-color: #f8f9fa;'>"
             result_text += "<th style='padding: 8px;'>温度(°C)</th>"

@@ -264,7 +264,7 @@ class 管道间距(QWidget):
         button_layout.setSpacing(10)
         
         # 计算按钮
-        self.calc_btn = QPushButton("📐 计算间距")
+        self.calc_btn = QPushButton("计算间距")
         self.calc_btn.setFixedHeight(40)
         self.calc_btn.setStyleSheet("""
             QPushButton {
@@ -285,7 +285,7 @@ class 管道间距(QWidget):
         self.calc_btn.clicked.connect(self.calculate_spacing)
         
         # 重置按钮
-        reset_btn = QPushButton("🔄 重置")
+        reset_btn = QPushButton("重置")
         reset_btn.setFixedHeight(40)
         reset_btn.setStyleSheet("""
             QPushButton {
@@ -303,7 +303,7 @@ class 管道间距(QWidget):
         reset_btn.clicked.connect(self.reset_inputs)
         
         # 导出按钮
-        export_btn = QPushButton("💾 导出结果")
+        export_btn = QPushButton("导出结果")
         export_btn.setFixedHeight(40)
         export_btn.setStyleSheet("""
             QPushButton {

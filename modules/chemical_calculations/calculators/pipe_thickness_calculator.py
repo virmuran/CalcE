@@ -59,7 +59,7 @@ class 管道壁厚(QWidget):
         left_layout.addWidget(description)
         
         # 2. 计算标准选择
-        standard_group = QGroupBox("📏 计算标准")
+        standard_group = QGroupBox("计算标准")
         standard_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -90,7 +90,7 @@ class 管道壁厚(QWidget):
         left_layout.addWidget(standard_group)
         
         # 3. 输入参数组 - 使用GridLayout实现整齐的布局
-        input_group = QGroupBox("📥 输入参数")
+        input_group = QGroupBox("输入参数")
         input_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -285,7 +285,7 @@ class 管道壁厚(QWidget):
         self.thinning_combo.addItems([
             "0.00 mm - 无减薄",
             "0.25 mm - 轻微减薄",
-            "0.50 mm - 标准减薄 ✅",
+            "0.50 mm - 标准减薄",
             "0.75 mm - 中等减薄",
             "1.00 mm - 较大减薄"
         ])
@@ -314,7 +314,7 @@ class 管道壁厚(QWidget):
         self.corrosion_combo = QComboBox()
         self.corrosion_combo.addItems([
             "0.00 mm - 无腐蚀",
-            "0.05 mm - 轻微腐蚀 ✅",
+            "0.05 mm - 轻微腐蚀",
             "0.10 mm - 一般腐蚀",
             "0.50 mm - 中等腐蚀",
             "1.00 mm - 较强腐蚀",
@@ -328,7 +328,7 @@ class 管道壁厚(QWidget):
         left_layout.addWidget(input_group)
         
         # 4. 计算按钮
-        calculate_btn = QPushButton("🧮 计算壁厚")
+        calculate_btn = QPushButton("计算壁厚")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate_thickness)
         calculate_btn.setStyleSheet("""
@@ -349,7 +349,7 @@ class 管道壁厚(QWidget):
         
         # 5. 下载按钮布局
         download_layout = QHBoxLayout()
-        download_txt_btn = QPushButton("📄 下载计算书(TXT)")
+        download_txt_btn = QPushButton("下载计算书(TXT)")
         download_txt_btn.clicked.connect(self.download_txt_report)
         download_txt_btn.setStyleSheet("""
             QPushButton {
@@ -365,7 +365,7 @@ class 管道壁厚(QWidget):
             }
         """)
 
-        download_pdf_btn = QPushButton("📊 下载计算书(PDF)")
+        download_pdf_btn = QPushButton("下载计算书(PDF)")
         download_pdf_btn.clicked.connect(self.generate_pdf_report)
         download_pdf_btn.setStyleSheet("""
             QPushButton {
@@ -395,7 +395,7 @@ class 管道壁厚(QWidget):
         right_layout.setSpacing(15)
         
         # 结果显示
-        self.result_group = QGroupBox("📤 计算结果")
+        self.result_group = QGroupBox("计算结果")
         self.result_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -506,7 +506,7 @@ class 管道壁厚(QWidget):
             "76.1 mm - DN65 [2.50\"]",
             "88.9 mm - DN80 [3.00\"]",
             "101.6 mm - DN90 [3.50\"]",
-            "108.0 mm - DN100 [4.00\"] ✅",
+            "108.0 mm - DN100 [4.00\"]",
             "114.3 mm - DN100 [4.00\"]",
             "139.7 mm - DN125 [5.00\"]",
             "165.1 mm - DN150 [6.00\"]",
@@ -525,7 +525,7 @@ class 管道壁厚(QWidget):
         """设置焊接接头系数选项"""
         weld_options = [
             "- 请选择焊接接头系数 -",
-            "1.0 - 电熔焊 100%无损检测 双面对接焊 ✅",
+            "1.0 - 电熔焊 100%无损检测 双面对接焊",
             "0.9 - 电熔焊 100%无损检测 单面对接焊",
             "0.85 - 电熔焊 局部无损检测 双面对接焊",
             "0.8 - 电熔焊 局部无损检测 单面对接焊",
@@ -544,7 +544,7 @@ class 管道壁厚(QWidget):
         """设置系数Y选项"""
         y_options = [
             "- 请选择系数Y -",
-            "0.4 - 铁素体钢 (温度≤482°C) ✅",
+            "0.4 - 铁素体钢 (温度≤482°C)",
             "0.5 - 铁素体钢 (温度>482°C)",
             "0.4 - 奥氏体钢 (温度≤482°C)",
             "0.7 - 奥氏体钢 (温度>482°C)",
@@ -573,7 +573,7 @@ class 管道壁厚(QWidget):
         """设置材料选项"""
         materials = [
             "- 请选择材料 -",  # 添加空值选项
-            "304(0Cr18Ni9) (20°C) - GB/T1277 奥氏体不锈钢 ✅",
+            "304(0Cr18Ni9) (20°C) - GB/T1277 奥氏体不锈钢",
             "304(0Cr18Ni9) (100°C) - GB/T1277 奥氏体不锈钢",
             "304(0Cr18Ni9) (200°C) - GB/T1277 奥氏体不锈钢",
             "304(0Cr18Ni9) (300°C) - GB/T1277 奥氏体不锈钢",
@@ -621,7 +621,7 @@ class 管道壁厚(QWidget):
             else:  # 铁素体钢和其他
                 if design_temp <= 482:
                     y_value = 0.4
-                    y_text = "0.4 - 铁素体钢 (温度≤482°C) ✅"
+                    y_text = "0.4 - 铁素体钢 (温度≤482°C)"
                 else:
                     y_value = 0.5
                     y_text = "0.5 - 铁素体钢 (温度>482°C)"
@@ -793,7 +793,7 @@ class 管道壁厚(QWidget):
                       standard_thickness, actual_stress, safety_factor, weight_increase):
         """格式化计算结果"""
         return f"""═══════════
-📋 输入参数
+ 输入参数
 ══════════
 
     计算标准: {standard}
@@ -808,7 +808,7 @@ class 管道壁厚(QWidget):
     总附加量 C: {total_additional:.2f} mm
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     壁厚计算:
@@ -820,7 +820,7 @@ class 管道壁厚(QWidget):
     强度校核:
     • 实际计算应力: {actual_stress:.1f} MPa
     • 安全系数: {safety_factor:.2f}
-    • 强度状态: {'✅ 安全 (安全系数≥1.0)' if safety_factor >= 1.0 else '⚠️ 需重新设计 (安全系数<1.0)'}
+    • 强度状态: {'安全 (安全系数≥1.0)' if safety_factor >= 1.0 else '需重新设计 (安全系数<1.0)'}
 
     经济性分析:
     • 重量增加: {weight_increase:.1f} %
@@ -833,7 +833,7 @@ class 管道壁厚(QWidget):
     • Sch 160: ~{standard_thickness * 1.4:.1f} mm
 
 ══════════
-💡 计算说明
+计算说明
 ══════════
 
     • 采用标准壁厚计算公式: t = P×D / (2×S×E + 2×P×Y) + C
@@ -997,7 +997,7 @@ class 管道壁厚(QWidget):
             
             # 添加工程信息部分
             report += f"""══════════
-📋 工程信息
+ 工程信息
 ══════════
 
     公司名称: {project_info['company_name']}
@@ -1007,7 +1007,7 @@ class 管道壁厚(QWidget):
     计算日期: {datetime.now().strftime('%Y-%m-%d')}
 
 ══════════
-🏷️ 计算书标识
+计算书标识
 ══════════
 
     计算书编号: PT-{datetime.now().strftime('%Y%m%d')}-001
@@ -1015,7 +1015,7 @@ class 管道壁厚(QWidget):
     状态: 正式计算书
 
 ══════════
-📝 备注说明
+备注说明
 ══════════
 
     1. 本计算书基于压力容器设计规范及相关标准
@@ -1192,45 +1192,8 @@ class 管道壁厚(QWidget):
 
     def process_content_for_pdf(self, content):
         """处理内容，使其适合PDF显示"""
-        # 替换表情图标为文字描述
-        replacements = {
-            "📋": "",
-            "📊": "", 
-            "🧮": "",
-            "💡": "",
-            "📤": "",
-            "📥": "",
-            "⚠️": "",
-            "🔬": "",
-            "📏": "",
-            "🌪️": "",
-            "💨": "",
-            "🌫️": "",
-            "⚡": "",
-            "💧": "",
-            "🔄": "",
-            "🌬️": "",
-            "🔧": "",
-            "🚒": "",
-            "⚖️": "",
-            "🧊": "",
-            "🧪": "",
-            "🔩": "",
-            "🛡️": "",
-            "🔥": "",
-            "⚗️": "",
-            "🚨": "",
-            "⚛️": "",
-            "❄️": "",
-            "📄": "",
-            "📊": "",
-            "•": "",
-            "🏷️": "",
-            "📝": "",
-            "📚": "",
-            "✅": ""
-        }
-        
+        # 清理bullet符号
+        content = content.replace("•", "")
         # 替换表情图标
         for emoji, text in replacements.items():
             content = content.replace(emoji, text)

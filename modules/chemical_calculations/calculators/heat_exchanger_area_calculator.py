@@ -208,7 +208,7 @@ class 换热器面积(QWidget):
         left_layout.addWidget(mode_group)
         
         # 3. 输入参数组 - 使用GridLayout实现整齐的布局
-        input_group = QGroupBox("📥 输入参数")
+        input_group = QGroupBox("输入参数")
         input_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -252,7 +252,7 @@ class 换热器面积(QWidget):
         left_layout.addWidget(input_group)
         
         # 4. 高级参数组
-        advanced_group = QGroupBox("⚙️ 高级参数")
+        advanced_group = QGroupBox("高级参数")
         advanced_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -301,7 +301,7 @@ class 换热器面积(QWidget):
         left_layout.addWidget(advanced_group)
         
         # 5. 计算按钮
-        calculate_btn = QPushButton("🧮 计算换热面积")
+        calculate_btn = QPushButton("计算换热面积")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate)
         calculate_btn.setStyleSheet("""
@@ -323,7 +323,7 @@ class 换热器面积(QWidget):
         # 6. 下载按钮布局
         download_layout = QHBoxLayout()
         
-        download_txt_btn = QPushButton("📄 下载计算书(TXT)")
+        download_txt_btn = QPushButton("下载计算书(TXT)")
         download_txt_btn.clicked.connect(self.download_txt_report)
         download_txt_btn.setStyleSheet("""
             QPushButton {
@@ -339,7 +339,7 @@ class 换热器面积(QWidget):
             }
         """)
 
-        download_pdf_btn = QPushButton("📊 下载计算书(PDF)")
+        download_pdf_btn = QPushButton("下载计算书(PDF)")
         download_pdf_btn.clicked.connect(self.generate_pdf_report)
         download_pdf_btn.setStyleSheet("""
             QPushButton {
@@ -369,7 +369,7 @@ class 换热器面积(QWidget):
         right_layout.setSpacing(15)
         
         # 结果显示
-        self.result_group = QGroupBox("📤 计算结果")
+        self.result_group = QGroupBox("计算结果")
         self.result_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -935,7 +935,7 @@ class 换热器面积(QWidget):
             
             # 准备结果
             result_text = f"""═══════════
-📋 输入参数
+ 输入参数
 ══════════
 
     计算模式: 直接计算法
@@ -947,7 +947,7 @@ class 换热器面积(QWidget):
     安全系数: {safety_factor:.2f}
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     温差分析:
@@ -966,7 +966,7 @@ class 换热器面积(QWidget):
     • 设计面积: {A_design * 10.7639:.1f} ft²
 
 ══════════
-💡 计算说明
+计算说明
 ══════════
 
     • 使用对数平均温差法计算
@@ -1068,7 +1068,7 @@ class 换热器面积(QWidget):
             
             # 准备结果
             result_text = f"""═══════════
-📋 输入参数
+ 输入参数
 ══════════
 
     计算模式: 流体参数法
@@ -1083,7 +1083,7 @@ class 换热器面积(QWidget):
     安全系数: {safety_factor:.2f}
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     热负荷分析:
@@ -1103,7 +1103,7 @@ class 换热器面积(QWidget):
     • 面积裕量: {A_design - A_theoretical:.3f} m²
 
 ══════════
-💡 计算说明
+计算说明
 ══════════
 
     • 采用较小热负荷值进行设计以确保安全
@@ -1181,7 +1181,7 @@ class 换热器面积(QWidget):
                 balance_error = 0.0  # 设计计算时假设完美平衡
                 design_q = Q_cold
                 steam_flow_used = steam_consumption
-                calculation_note = "✅ 设计计算：根据冷流体需求计算蒸汽消耗"
+                calculation_note = "设计计算：根据冷流体需求计算蒸汽消耗"
             else:
                 # 校核计算：使用输入的蒸汽流量
                 steam_flow_kg_s = steam_flow / 3600  # kg/h → kg/s
@@ -1197,7 +1197,7 @@ class 换热器面积(QWidget):
                 # 设计热负荷取较小值（安全原则）
                 design_q = min(Q_steam, Q_cold)
                 steam_flow_used = steam_flow
-                calculation_note = f"🔍 校核计算：给定蒸汽流量{steam_flow:.0f} kg/h"
+                calculation_note = f"校核计算：给定蒸汽流量{steam_flow:.0f} kg/h"
             
             # 4. 检查冷流体出口温度
             if t2 >= T_steam:
@@ -1224,7 +1224,7 @@ class 换热器面积(QWidget):
             P_abs = steam_pressure + 0.101325  # 表压转绝对压力
             
             result_text = f"""═══════════
-📋 输入参数
+ 输入参数
 ══════════
 
     计算模式: {mode_text}
@@ -1238,7 +1238,7 @@ class 换热器面积(QWidget):
     安全系数: {safety_factor:.2f}
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     蒸汽参数:
@@ -1264,7 +1264,7 @@ class 换热器面积(QWidget):
     • 面积裕度: {((A_design/A_theoretical)-1)*100:.1f}%
 
 ══════════
-💡 计算说明
+计算说明
 ══════════
 
     • 蒸汽压力为表压，绝对压力 = 表压 + 0.101325 MPa
@@ -1369,7 +1369,7 @@ class 换热器面积(QWidget):
         
         # 准备结果
         result_text = f"""═══════════
-📋 输入工况
+ 输入工况
 ══════════
 
     操作压力: {pressure:.2f} MPa
@@ -1379,25 +1379,25 @@ class 换热器面积(QWidget):
     特殊条件: {f"易结垢 " if fouling_tendency else ""}{f"高压 " if high_pressure else ""}{f"腐蚀性 " if corrosive else ""}{f"相变 " if phase_change else ""}
 
 ══════════
-🏆 推荐换热器类型
+推荐换热器类型
 ══════════
 
 """
         
         if not top_recommendations:
-            result_text += "❌ 未找到合适的换热器类型，请调整工况条件。\n"
+            result_text += "未找到合适的换热器类型，请调整工况条件。\n"
         else:
             for i, rec in enumerate(top_recommendations, 1):
                 score_percent = rec["score"] / 12 * 100
                 result_text += f"{i}. {rec['type']} (匹配度: {score_percent:.0f}%)\n"
-                result_text += f"   📊 传热系数范围: {rec['k_range'][0]}-{rec['k_range'][1]} W/(m²·K)\n"
-                result_text += f"   📝 特点: {rec['description']}\n"
+                result_text += f"   传热系数范围: {rec['k_range'][0]}-{rec['k_range'][1]} W/(m²·K)\n"
+                result_text += f"   特点: {rec['description']}\n"
                 if rec['reasons']:
-                    result_text += f"   ✅ 推荐理由: {', '.join(rec['reasons'])}\n"
+                    result_text += f"   推荐理由: {', '.join(rec['reasons'])}\n"
                 result_text += "\n"
         
         result_text += """══════════
-💡 选型建议
+选型建议
 ══════════
 
     通用原则:
@@ -1516,7 +1516,7 @@ class 换热器面积(QWidget):
             
             # 添加工程信息部分
             report += f"""══════════
-📋 工程信息
+ 工程信息
 ══════════
 
     公司名称: {project_info['company_name']}
@@ -1525,7 +1525,7 @@ class 换热器面积(QWidget):
     计算日期: {project_info['date']}
 
 ══════════
-🏷️ 计算书标识
+计算书标识
 ══════════
 
     计算书编号: HE-{datetime.now().strftime('%Y%m%d')}-001
@@ -1533,7 +1533,7 @@ class 换热器面积(QWidget):
     状态: 正式计算书
 
 ══════════
-📝 备注说明
+备注说明
 ══════════
 
     1. 本计算书基于《传热技术、设备与工业应用》原理
@@ -1710,27 +1710,6 @@ class 换热器面积(QWidget):
 
     def process_content_for_pdf(self, content):
         """处理内容，使其适合PDF显示"""
-        # 替换表情图标为文字描述
-        replacements = {
-            "📋": "",
-            "📊": "", 
-            "🧮": "",
-            "💡": "",
-            "📤": "",
-            "📥": "",
-            "⚙️": "",
-            "🏷️": "",
-            "📝": "",
-            "🏆": "",
-            "❌": "",
-            "✅": "",
-            "🔍": ""
-        }
-        
-        # 替换表情图标
-        for emoji, text in replacements.items():
-            content = content.replace(emoji, text)
-        
         # 替换单位符号
         content = content.replace("m²", "m2")
         content = content.replace("W/(m²·K)", "W/(m2·K)")

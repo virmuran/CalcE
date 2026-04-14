@@ -37,7 +37,7 @@ class PomodoroTimer(QWidget):
         main_layout.setSpacing(15)
         
         # 主框架 - 使用卡片式设计
-        main_group = QGroupBox("🍅 番茄时钟")
+        main_group = QGroupBox("番茄时钟")
         main_group.setStyleSheet("""
             QGroupBox {
                 font-size: 16px;
@@ -141,7 +141,7 @@ class PomodoroTimer(QWidget):
         """)
         button_layout.addWidget(self.pause_button)
         
-        self.reset_button = QPushButton("🔄 重置")
+        self.reset_button = QPushButton("重置")
         self.reset_button.setFont(QFont("Arial", 12, QFont.Bold))
         self.reset_button.clicked.connect(self.reset_timer)
         self.reset_button.setStyleSheet("""
@@ -162,7 +162,7 @@ class PomodoroTimer(QWidget):
         group_layout.addLayout(button_layout)
         
         # 设置框架
-        settings_group = QGroupBox("⚙️ 时间设置")
+        settings_group = QGroupBox("时间设置")
         settings_group.setStyleSheet("""
             QGroupBox {
                 font-size: 14px;
@@ -314,7 +314,7 @@ class PomodoroTimer(QWidget):
         # 重置按钮状态
         self.start_button.setText("▶ 开始")
         
-        self.status_label.setText("🔄 准备开始")
+        self.status_label.setText("准备开始")
         self.status_label.setStyleSheet("""
             QLabel {
                 color: #2c3e50;
@@ -335,7 +335,7 @@ class PomodoroTimer(QWidget):
                 return
             
             if work_minutes > 120 or break_minutes > 60:
-                QMessageBox.warning(self, "提示", "⚠️ 建议工作时间不超过120分钟，休息时间不超过60分钟")
+                QMessageBox.warning(self, "提示", "建议工作时间不超过120分钟，休息时间不超过60分钟")
             
             self.work_duration = work_minutes * 60
             self.break_duration = break_minutes * 60
@@ -344,9 +344,9 @@ class PomodoroTimer(QWidget):
                 self.remaining_time = self.work_duration
                 self.update_display()
             
-            QMessageBox.information(self, "成功", "✅ 时间设置已应用")
+            QMessageBox.information(self, "成功", "时间设置已应用")
         except ValueError:
-            QMessageBox.critical(self, "错误", "❌ 请输入有效的数字")
+            QMessageBox.critical(self, "错误", "请输入有效的数字")
     
     def update_timer(self):
         """定时器更新回调"""
@@ -365,10 +365,10 @@ class PomodoroTimer(QWidget):
         
         if self.is_break:
             self.remaining_time = self.break_duration
-            QMessageBox.information(self, "🍅 番茄时钟", "✅ 工作时间结束! 开始休息。")
+            QMessageBox.information(self, "番茄时钟", "工作时间结束! 开始休息。")
         else:
             self.remaining_time = self.work_duration
-            QMessageBox.information(self, "🍅 番茄时钟", "🔄 休息时间结束! 开始工作。")
+            QMessageBox.information(self, "番茄时钟", "休息时间结束! 开始工作。")
             
             # 记录完成的番茄钟
             session = {
@@ -397,7 +397,7 @@ class PomodoroTimer(QWidget):
     def update_status_display(self):
         """更新状态显示"""
         if self.is_break:
-            status = "☕ 休息中"
+            status = "休息中"
             status_color = """
                 QLabel {
                     color: #2c3e50;
@@ -417,7 +417,7 @@ class PomodoroTimer(QWidget):
                 }
             """
         else:
-            status = "💼 工作中"
+            status = "工作中"
             status_color = """
                 QLabel {
                     color: #2c3e50;

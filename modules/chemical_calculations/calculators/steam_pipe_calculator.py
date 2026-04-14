@@ -130,7 +130,7 @@ class 蒸汽管径流量(QWidget):
         left_layout.addWidget(mode_group)
         
         # 3. 输入参数组 - 使用GridLayout实现整齐的布局
-        input_group = QGroupBox("📥 输入参数")
+        input_group = QGroupBox("输入参数")
         input_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -249,7 +249,7 @@ class 蒸汽管径流量(QWidget):
         left_layout.addWidget(input_group)
         
         # 4. 计算按钮
-        calculate_btn = QPushButton("🧮 计算")
+        calculate_btn = QPushButton("计算")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate_steam_pipe)
         calculate_btn.setStyleSheet("""
@@ -270,7 +270,7 @@ class 蒸汽管径流量(QWidget):
         
         # 5. 下载按钮布局
         download_layout = QHBoxLayout()
-        download_txt_btn = QPushButton("📄 下载计算书(TXT)")
+        download_txt_btn = QPushButton("下载计算书(TXT)")
         download_txt_btn.clicked.connect(self.download_txt_report)
         download_txt_btn.setStyleSheet("""
             QPushButton {
@@ -286,7 +286,7 @@ class 蒸汽管径流量(QWidget):
             }
         """)
 
-        download_pdf_btn = QPushButton("📊 下载计算书(PDF)")
+        download_pdf_btn = QPushButton("下载计算书(PDF)")
         download_pdf_btn.clicked.connect(self.generate_pdf_report)
         download_pdf_btn.setStyleSheet("""
             QPushButton {
@@ -316,7 +316,7 @@ class 蒸汽管径流量(QWidget):
         right_layout.setSpacing(15)
         
         # 结果显示
-        self.result_group = QGroupBox("📤 计算结果")
+        self.result_group = QGroupBox("计算结果")
         self.result_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -633,7 +633,7 @@ class 蒸汽管径流量(QWidget):
                                actual_velocity, required_area):
         """格式化管径计算结果"""
         return f"""═══════════
-📋 输入参数
+ 输入参数
 ══════════
 
     计算模式: {mode}
@@ -644,7 +644,7 @@ class 蒸汽管径流量(QWidget):
     蒸汽流量: {flow_rate} kg/h
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     流量分析:
@@ -659,14 +659,14 @@ class 蒸汽管径流量(QWidget):
     流速分析:
     • 推荐蒸汽流速: 25.0 m/s
     • 实际蒸汽流速: {actual_velocity:.1f} m/s
-    • 流速状态: {"✓ 正常" if 20 <= actual_velocity <= 40 else "⚠ 注意"}
+    • 流速状态: {"正常" if 20 <= actual_velocity <= 40 else "注意"}
 
     技术参数:
     • 所需流通面积: {required_area:.6f} m²
     • 标准管流通面积: {math.pi * (recommended_diameter / 1000 / 2) ** 2:.6f} m²
 
 ══════════
-💡 计算说明
+计算说明
 ══════════
 
     • 推荐蒸汽流速范围: 20-40 m/s
@@ -679,7 +679,7 @@ class 蒸汽管径流量(QWidget):
                           diameter, area, volume_flow, max_flow_rate, recommended_velocity):
         """格式化流量计算结果"""
         return f"""═══════════
-📋 输入参数
+ 输入参数
 ══════════
 
     计算模式: {mode}
@@ -690,7 +690,7 @@ class 蒸汽管径流量(QWidget):
     管道内径: {diameter} mm
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     管道参数:
@@ -709,7 +709,7 @@ class 蒸汽管径流量(QWidget):
     • 40 m/s (高流速): {volume_flow / recommended_velocity * 40 / specific_volume * 3600:.0f} kg/h
 
 ══════════
-💡 计算说明
+计算说明
 ══════════
 
     • 推荐蒸汽流速范围: 20-40 m/s
@@ -884,7 +884,7 @@ class 蒸汽管径流量(QWidget):
             
             # 添加工程信息部分
             report += f"""══════════
-📋 工程信息
+ 工程信息
 ══════════
 
     公司名称: {project_info['company_name']}
@@ -894,7 +894,7 @@ class 蒸汽管径流量(QWidget):
     计算日期: {datetime.now().strftime('%Y-%m-%d')}
 
 ══════════
-🏷️ 计算书标识
+计算书标识
 ══════════
 
     计算书编号: STEAM-{datetime.now().strftime('%Y%m%d')}-001
@@ -902,7 +902,7 @@ class 蒸汽管径流量(QWidget):
     状态: 正式计算书
 
 ══════════
-📝 备注说明
+备注说明
 ══════════
 
     1. 本计算书基于蒸汽工程原理及相关标准规范
@@ -1073,45 +1073,8 @@ class 蒸汽管径流量(QWidget):
 
     def process_content_for_pdf(self, content):
         """处理内容，使其适合PDF显示"""
-        # 替换表情图标为文字描述
-        replacements = {
-            "📋": "",
-            "📊": "", 
-            "🧮": "",
-            "💡": "",
-            "📤": "",
-            "📥": "",
-            "⚠️": "",
-            "🔬": "",
-            "📏": "",
-            "🌪️": "",
-            "💨": "",
-            "🌫️": "",
-            "⚡": "",
-            "💧": "",
-            "🔄": "",
-            "🌬️": "",
-            "🔧": "",
-            "🚒": "",
-            "⚖️": "",
-            "🧊": "",
-            "🧪": "",
-            "🔩": "",
-            "🛡️": "",
-            "🔥": "",
-            "⚗️": "",
-            "🚨": "",
-            "⚛️": "",
-            "❄️": "",
-            "📄": "",
-            "📊": "",
-            "•": "",
-            "🏷️": "",
-            "📝": "",
-            "✓": "",
-            "⚠": ""
-        }
-        
+        # 清理bullet符号
+        content = content.replace("•", "")
         # 替换表情图标
         for emoji, text in replacements.items():
             content = content.replace(emoji, text)

@@ -265,7 +265,7 @@ class MixedLiquidFlashPointCalculator(QWidget):
         left_layout.addWidget(description)
         
         # 计算方法选择
-        method_group = QGroupBox("📊 计算方法")
+        method_group = QGroupBox("计算方法")
         method_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -296,7 +296,7 @@ class MixedLiquidFlashPointCalculator(QWidget):
         left_layout.addWidget(method_group)
         
         # 组分管理
-        components_group = QGroupBox("🧪 混合物组分")
+        components_group = QGroupBox("混合物组分")
         components_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -336,7 +336,7 @@ class MixedLiquidFlashPointCalculator(QWidget):
         # 按钮布局
         button_layout = QHBoxLayout()
         
-        add_btn = QPushButton("➕ 添加组分")
+        add_btn = QPushButton("添加组分")
         add_btn.clicked.connect(self.add_component)
         add_btn.setStyleSheet("""
             QPushButton {
@@ -353,7 +353,7 @@ class MixedLiquidFlashPointCalculator(QWidget):
         """)
         button_layout.addWidget(add_btn)
         
-        clear_btn = QPushButton("🗑️ 清空所有")
+        clear_btn = QPushButton("清空所有")
         clear_btn.clicked.connect(self.clear_all_components)
         clear_btn.setStyleSheet("""
             QPushButton {
@@ -376,7 +376,7 @@ class MixedLiquidFlashPointCalculator(QWidget):
         left_layout.addWidget(components_group)
         
         # 计算按钮
-        calculate_btn = QPushButton("🧮 计算混合闪点")
+        calculate_btn = QPushButton("计算混合闪点")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate_flash_point)
         calculate_btn.setStyleSheet("""
@@ -402,7 +402,7 @@ class MixedLiquidFlashPointCalculator(QWidget):
         right_layout.setSpacing(15)
         
         # 结果显示
-        self.result_group = QGroupBox("📤 计算结果")
+        self.result_group = QGroupBox("计算结果")
         self.result_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -563,7 +563,7 @@ class MixedLiquidFlashPointCalculator(QWidget):
         if self.components:
             status_text = f"总质量分数: {total_fraction:.2f}%"
             if abs(total_fraction - 100.0) > 0.1:
-                status_text += f" ⚠️ (建议调整为100%)"
+                status_text += f" (建议调整为100%)"
             
             # 在表格下方显示状态
             if hasattr(self, 'fraction_label'):
@@ -709,20 +709,20 @@ class MixedLiquidFlashPointCalculator(QWidget):
         """格式化计算结果"""
         # 安全等级评估
         if flash_point < 0:
-            safety_level = "🔥 极度危险 (易燃液体)"
+            safety_level = "极度危险 (易燃液体)"
             safety_color = "#e74c3c"
         elif flash_point < 23:
-            safety_level = "⚠️ 高度危险 (易燃液体)"
+            safety_level = "高度危险 (易燃液体)"
             safety_color = "#e67e22"
         elif flash_point < 60:
-            safety_level = "🔶 中等危险 (可燃液体)"
+            safety_level = "中等危险 (可燃液体)"
             safety_color = "#f39c12"
         else:
-            safety_level = "✅ 相对安全 (难燃液体)"
+            safety_level = "相对安全 (难燃液体)"
             safety_color = "#27ae60"
         
         return f"""═══════════════════════════════════════════════════
-                        📋 输入参数
+                         输入参数
 ═══════════════════════════════════════════════════
 
 计算方法: {method}
@@ -733,7 +733,7 @@ class MixedLiquidFlashPointCalculator(QWidget):
 {self.format_components_list()}
 
 ═══════════════════════════════════════════════════
-                        📊 计算结果
+                        计算结果
 ═══════════════════════════════════════════════════
 
 混合液体闪点: {flash_point:.1f} °C
@@ -749,7 +749,7 @@ class MixedLiquidFlashPointCalculator(QWidget):
 • 摩尔加权平均: {self.calculate_weighted_average_molar():.1f} °C
 
 ═══════════════════════════════════════════════════
-                        💡 计算说明
+                        计算说明
 ═══════════════════════════════════════════════════
 
 • Le Chatelier法则适用于理想混合物

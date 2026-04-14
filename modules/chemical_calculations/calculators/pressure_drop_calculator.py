@@ -220,7 +220,7 @@ class 压降计算(QWidget):
         left_layout.addWidget(mode_group)
         
         # 3. 输入参数组 - 使用GridLayout实现整齐的布局
-        input_group = QGroupBox("📥 输入参数")
+        input_group = QGroupBox("输入参数")
         input_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -464,7 +464,7 @@ class 压降计算(QWidget):
         left_layout.addWidget(input_group)
         
         # 4. 管件和阀门按钮
-        self.fittings_btn = QPushButton("🔧 选择管件和阀门")
+        self.fittings_btn = QPushButton("选择管件和阀门")
         self.fittings_btn.setFont(QFont("Arial", 10))
         self.fittings_btn.clicked.connect(self.select_fittings)
         self.fittings_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # 水平扩展
@@ -484,7 +484,7 @@ class 压降计算(QWidget):
         left_layout.addWidget(self.fittings_btn)
         
         # 5. 计算按钮
-        calculate_btn = QPushButton("🧮 计算压降")
+        calculate_btn = QPushButton("计算压降")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate_pressure_drop)
         calculate_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # 水平扩展
@@ -506,7 +506,7 @@ class 压降计算(QWidget):
         
         # 6. 下载按钮布局
         download_layout = QHBoxLayout()
-        download_txt_btn = QPushButton("📄 下载计算书(TXT)")
+        download_txt_btn = QPushButton("下载计算书(TXT)")
         download_txt_btn.clicked.connect(self.download_txt_report)
         download_txt_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # 水平扩展
         download_txt_btn.setStyleSheet("""
@@ -523,7 +523,7 @@ class 压降计算(QWidget):
             }
         """)
 
-        download_pdf_btn = QPushButton("📊 下载计算书(PDF)")
+        download_pdf_btn = QPushButton("下载计算书(PDF)")
         download_pdf_btn.clicked.connect(self.generate_pdf_report)
         download_pdf_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # 水平扩展
         download_pdf_btn.setStyleSheet("""
@@ -554,7 +554,7 @@ class 压降计算(QWidget):
         right_layout.setSpacing(15)
         
         # 结果显示
-        self.result_group = QGroupBox("📤 计算结果")
+        self.result_group = QGroupBox("计算结果")
         self.result_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -1024,7 +1024,7 @@ class 压降计算(QWidget):
                                    pressure_drop_local, pressure_drop_elevation, total_pressure_drop):
         """格式化不可压缩流体计算结果"""
         return f"""═══════════
-📋 输入参数
+ 输入参数
 ══════════
 
     计算模式: {mode}
@@ -1038,7 +1038,7 @@ class 压降计算(QWidget):
     局部阻力系数: {self.local_resistance_coeff:.3f}
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     流动特性:
@@ -1058,7 +1058,7 @@ class 压降计算(QWidget):
     • 总压力损失: {total_pressure_drop/100000:.6f} bar
 
 ══════════
-💡 计算说明
+计算说明
 ══════════
 
     • 使用Darcy-Weisbach公式计算沿程阻力
@@ -1073,7 +1073,7 @@ class 压降计算(QWidget):
         """格式化绝热流动计算结果"""
         return f"""
 ══════════
-📋 输入参数
+ 输入参数
 ══════════
 
     计算模式: {mode}
@@ -1087,7 +1087,7 @@ class 压降计算(QWidget):
     起始压力: {start_pressure:.1f} kPa
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     流动特性:
@@ -1106,7 +1106,7 @@ class 压降计算(QWidget):
     • 总压力损失: {total_pressure_drop/100000:.6f} bar
 
 ══════════
-💡 计算说明
+计算说明
 ══════════
 
     • 使用绝热流动(Fanno流动)关系式计算
@@ -1120,7 +1120,7 @@ class 压降计算(QWidget):
         """格式化等温流动计算结果"""
         return f"""
 ══════════
-📋 输入参数
+ 输入参数
 ══════════
 
     计算模式: {mode}
@@ -1133,7 +1133,7 @@ class 压降计算(QWidget):
     起始压力: {start_pressure:.1f} kPa
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     流动特性:
@@ -1151,7 +1151,7 @@ class 压降计算(QWidget):
     • 总压力损失: {total_pressure_drop/100000:.6f} bar
 
 ══════════
-💡 计算说明
+计算说明
 ══════════
 
     • 使用等温流动公式计算
@@ -1324,7 +1324,7 @@ class 压降计算(QWidget):
             
             # 添加工程信息部分
             report += f"""══════════
-📋 工程信息
+ 工程信息
 ══════════
 
     公司名称: {project_info['company_name']}
@@ -1334,7 +1334,7 @@ class 压降计算(QWidget):
     计算日期: {datetime.now().strftime('%Y-%m-%d')}
 
 ══════════
-🏷️ 计算书标识
+计算书标识
 ══════════
 
     计算书编号: PD-{datetime.now().strftime('%Y%m%d')}-001
@@ -1342,7 +1342,7 @@ class 压降计算(QWidget):
     状态: 正式计算书
 
 ══════════
-📝 备注说明
+备注说明
 ══════════
 
     1. 本计算书基于流体力学原理及相关标准规范
@@ -1519,46 +1519,8 @@ class 压降计算(QWidget):
 
     def process_content_for_pdf(self, content):
         """处理内容，使其适合PDF显示"""
-        # 替换表情图标为文字描述
-        replacements = {
-            "📋": "",
-            "📊": "", 
-            "🧮": "",
-            "💡": "",
-            "📤": "",
-            "📥": "",
-            "⚠️": "",
-            "🔬": "",
-            "📏": "",
-            "🌪️": "",
-            "💨": "",
-            "🌫️": "",
-            "⚡": "",
-            "💧": "",
-            "🔄": "",
-            "🌬️": "",
-            "🔧": "",
-            "🚒": "",
-            "⚖️": "",
-            "🧊": "",
-            "🧪": "",
-            "🔩": "",
-            "🛡️": "",
-            "🔥": "",
-            "⚗️": "",
-            "🚨": "",
-            "⚛️": "",
-            "❄️": "",
-            "📄": "",
-            "📊": "",
-            "•": "",
-            "🏷️": "",
-            "📝": ""
-        }
-        
-        # 替换表情图标
-        for emoji, text in replacements.items():
-            content = content.replace(emoji, text)
+        # 清理bullet符号
+        content = content.replace("•", "")
         
         # 替换单位符号
         content = content.replace("m³", "m3")

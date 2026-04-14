@@ -20,7 +20,7 @@ class CompressibleFlowPressureDrop(QWidget):
         main_layout.setSpacing(15)
         
         # 标题
-        title_label = QLabel("🌪️ 可压缩流体压降计算")
+        title_label = QLabel("可压缩流体压降计算")
         title_label.setFont(QFont("Arial", 14, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setStyleSheet("color: #2c3e50; margin: 10px;")
@@ -31,11 +31,11 @@ class CompressibleFlowPressureDrop(QWidget):
         
         # 添加计算标签页
         self.calculation_tab = self.create_calculation_tab()
-        self.tab_widget.addTab(self.calculation_tab, "📊 压降计算")
+        self.tab_widget.addTab(self.calculation_tab, "压降计算")
         
         # 添加理论说明标签页
         self.theory_tab = self.create_theory_tab()
-        self.tab_widget.addTab(self.theory_tab, "📖 理论说明")
+        self.tab_widget.addTab(self.theory_tab, "理论说明")
         
         main_layout.addWidget(self.tab_widget)
     
@@ -45,7 +45,7 @@ class CompressibleFlowPressureDrop(QWidget):
         layout = QVBoxLayout(tab)
         
         # 流体性质组
-        fluid_group = QGroupBox("💨 流体性质")
+        fluid_group = QGroupBox("流体性质")
         fluid_layout = QVBoxLayout(fluid_group)
         
         # 流体类型和参数
@@ -96,7 +96,7 @@ class CompressibleFlowPressureDrop(QWidget):
         layout.addWidget(fluid_group)
         
         # 管道参数组
-        pipe_group = QGroupBox("📏 管道参数")
+        pipe_group = QGroupBox("管道参数")
         pipe_layout = QVBoxLayout(pipe_group)
         
         # 管道尺寸
@@ -145,7 +145,7 @@ class CompressibleFlowPressureDrop(QWidget):
         layout.addWidget(pipe_group)
         
         # 操作条件组
-        condition_group = QGroupBox("⚙️ 操作条件")
+        condition_group = QGroupBox("操作条件")
         condition_layout = QVBoxLayout(condition_group)
         
         # 压力和温度
@@ -194,7 +194,7 @@ class CompressibleFlowPressureDrop(QWidget):
         layout.addWidget(condition_group)
         
         # 计算方法选择
-        method_group = QGroupBox("🔧 计算方法")
+        method_group = QGroupBox("计算方法")
         method_layout = QHBoxLayout(method_group)
         
         self.method_group = QButtonGroup(self)
@@ -221,17 +221,17 @@ class CompressibleFlowPressureDrop(QWidget):
         
         # 按钮组
         button_layout = QHBoxLayout()
-        self.calculate_btn = QPushButton("🚀 计算压降")
+        self.calculate_btn = QPushButton("计算压降")
         self.calculate_btn.clicked.connect(self.calculate_pressure_drop)
         self.calculate_btn.setStyleSheet("QPushButton { background-color: #9b59b6; color: white; font-weight: bold; }")
         button_layout.addWidget(self.calculate_btn)
         
-        self.auto_calc_btn = QPushButton("🔧 自动计算流量")
+        self.auto_calc_btn = QPushButton("自动计算流量")
         self.auto_calc_btn.clicked.connect(self.auto_calculate_flow)
         self.auto_calc_btn.setStyleSheet("QPushButton { background-color: #3498db; color: white; }")
         button_layout.addWidget(self.auto_calc_btn)
         
-        self.clear_btn = QPushButton("🗑️ 清空")
+        self.clear_btn = QPushButton("清空")
         self.clear_btn.clicked.connect(self.clear_inputs)
         self.clear_btn.setStyleSheet("QPushButton { background-color: #95a5a6; color: white; }")
         button_layout.addWidget(self.clear_btn)
@@ -239,7 +239,7 @@ class CompressibleFlowPressureDrop(QWidget):
         layout.addLayout(button_layout)
         
         # 结果显示组
-        result_group = QGroupBox("📈 计算结果")
+        result_group = QGroupBox("计算结果")
         result_layout = QVBoxLayout(result_group)
         
         self.result_text = QTextEdit()
@@ -250,7 +250,7 @@ class CompressibleFlowPressureDrop(QWidget):
         layout.addWidget(result_group)
         
         # 详细参数表
-        detail_group = QGroupBox("📋 详细参数")
+        detail_group = QGroupBox(" 详细参数")
         detail_layout = QVBoxLayout(detail_group)
         
         self.detail_table = QTableWidget()
@@ -300,9 +300,9 @@ class CompressibleFlowPressureDrop(QWidget):
     def get_theory_html(self):
         """获取理论说明HTML内容"""
         return """
-        <h2>📚 可压缩流体压降计算理论</h2>
+        <h2>可压缩流体压降计算理论</h2>
         
-        <h3>🔍 可压缩流体特点</h3>
+        <h3>可压缩流体特点</h3>
         <p>可压缩流体（气体、蒸汽等）在流动过程中密度会随压力和温度变化，这与不可压缩流体有本质区别。计算可压缩流体压降时需要考虑：</p>
         <ul>
             <li>密度变化对流速的影响</li>
@@ -311,7 +311,7 @@ class CompressibleFlowPressureDrop(QWidget):
             <li>音速限制（阻塞流）</li>
         </ul>
         
-        <h3>📊 常用计算方法</h3>
+        <h3>常用计算方法</h3>
         
         <h4>1. Darcy-Weisbach方程（通用方法）</h4>
         <p>ΔP = f × (L/D) × (ρ × v²/2)</p>
@@ -338,7 +338,7 @@ class CompressibleFlowPressureDrop(QWidget):
             <li>气体压缩因子</li>
         </ul>
         
-        <h3>📐 关键参数说明</h3>
+        <h3>关键参数说明</h3>
         
         <h4>比热比 (γ)</h4>
         <p>γ = Cₚ/Cᵥ，定压比热与定容比热的比值：</p>
@@ -367,7 +367,7 @@ class CompressibleFlowPressureDrop(QWidget):
             <li>Ma = 1：音速流动（阻塞）</li>
         </ul>
         
-        <h3>⚠️ 注意事项</h3>
+        <h3>注意事项</h3>
         <ul>
             <li>可压缩流体计算通常需要迭代求解</li>
             <li>高压差时需要考虑真实气体效应</li>
@@ -375,7 +375,7 @@ class CompressibleFlowPressureDrop(QWidget):
             <li>温度变化显著时需要考虑能量方程</li>
         </ul>
         
-        <h3>📖 参考标准</h3>
+        <h3>参考标准</h3>
         <ul>
             <li>ASME MFC-3M 气体流量测量</li>
             <li>ISO 5167 流量测量</li>
@@ -625,7 +625,7 @@ class CompressibleFlowPressureDrop(QWidget):
         compressibility = "不可压缩" if mach_number < 0.3 else "可压缩" if mach_number < 0.8 else "高速可压缩"
         
         result_text = f"""
-        <h3>🌪️ 可压缩流体压降计算结果</h3>
+        <h3>可压缩流体压降计算结果</h3>
         
         <table border="1" style="border-collapse: collapse; width: 100%;">
         <tr style="background-color: #f8f9fa;">
@@ -673,13 +673,13 @@ class CompressibleFlowPressureDrop(QWidget):
         # 添加警告信息
         if mach_number > 0.8:
             result_text += """
-            <h4 style="color: red;">⚠️ 警告：接近音速流动</h4>
+            <h4 style="color: red;">警告：接近音速流动</h4>
             <p>马赫数大于0.8，流动可能接近音速，需要考虑阻塞流效应。</p>
             """
         
         if reynolds > 100000:
             result_text += """
-            <h4 style="color: orange;">💡 提示：完全湍流</h4>
+            <h4 style="color: orange;">提示：完全湍流</h4>
             <p>雷诺数较高，流动处于完全湍流状态，摩擦系数主要取决于管道粗糙度。</p>
             """
         

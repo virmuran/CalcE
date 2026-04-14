@@ -20,7 +20,7 @@ class 压力管道定义(QWidget):
         main_layout.setSpacing(15)
         
         # 标题
-        title_label = QLabel("🔧 压力管道定义计算")
+        title_label = QLabel("压力管道定义计算")
         title_label.setFont(QFont("Arial", 14, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setStyleSheet("color: #2c3e50; margin: 10px;")
@@ -31,11 +31,11 @@ class 压力管道定义(QWidget):
         
         # 添加计算标签页
         self.calculation_tab = self.create_calculation_tab()
-        self.tab_widget.addTab(self.calculation_tab, "📊 管道定义计算")
+        self.tab_widget.addTab(self.calculation_tab, "管道定义计算")
         
         # 添加标准说明标签页
         self.standard_tab = self.create_standard_tab()
-        self.tab_widget.addTab(self.standard_tab, "📖 标准说明")
+        self.tab_widget.addTab(self.standard_tab, "标准说明")
         
         main_layout.addWidget(self.tab_widget)
     
@@ -45,7 +45,7 @@ class 压力管道定义(QWidget):
         layout = QVBoxLayout(tab)
         
         # 输入参数组
-        input_group = QGroupBox("📋 输入参数")
+        input_group = QGroupBox(" 输入参数")
         input_layout = QVBoxLayout(input_group)
         
         # 压力输入
@@ -93,12 +93,12 @@ class 压力管道定义(QWidget):
         
         # 按钮组
         button_layout = QHBoxLayout()
-        self.calculate_btn = QPushButton("🚀 计算管道定义")
+        self.calculate_btn = QPushButton("计算管道定义")
         self.calculate_btn.clicked.connect(self.calculate_pipe_definition)
         self.calculate_btn.setStyleSheet("QPushButton { background-color: #3498db; color: white; font-weight: bold; }")
         button_layout.addWidget(self.calculate_btn)
         
-        self.clear_btn = QPushButton("🗑️ 清空")
+        self.clear_btn = QPushButton("清空")
         self.clear_btn.clicked.connect(self.clear_inputs)
         self.clear_btn.setStyleSheet("QPushButton { background-color: #e74c3c; color: white; }")
         button_layout.addWidget(self.clear_btn)
@@ -106,7 +106,7 @@ class 压力管道定义(QWidget):
         layout.addLayout(button_layout)
         
         # 结果显示组
-        result_group = QGroupBox("📈 计算结果")
+        result_group = QGroupBox("计算结果")
         result_layout = QVBoxLayout(result_group)
         
         self.result_text = QTextEdit()
@@ -117,7 +117,7 @@ class 压力管道定义(QWidget):
         layout.addWidget(result_group)
         
         # 压力管道分类表
-        classification_group = QGroupBox("📋 压力管道分类参考")
+        classification_group = QGroupBox(" 压力管道分类参考")
         classification_layout = QVBoxLayout(classification_group)
         
         self.classification_table = QTableWidget()
@@ -172,14 +172,14 @@ class 压力管道定义(QWidget):
     def get_standard_html(self):
         """获取标准说明HTML内容"""
         return """
-        <h2>📚 压力管道定义与分类标准</h2>
+        <h2>压力管道定义与分类标准</h2>
         
-        <h3>🔍 压力管道定义</h3>
+        <h3>压力管道定义</h3>
         <p>根据《压力管道安全技术监察规程》，压力管道是指利用一定的压力，用于输送气体或者液体的管状设备，其范围规定为最高工作压力大于或者等于0.1MPa（表压）的气体、液化气体、蒸汽介质或者可燃、易爆、有毒、有腐蚀性、最高工作温度高于或者等于标准沸点的液体介质，且公称直径大于25mm的管道。</p>
         
-        <h3>📊 压力管道分类</h3>
+        <h3>压力管道分类</h3>
         
-        <h4>🏭 GA类 - 长输管道</h4>
+        <h4>GA类 - 长输管道</h4>
         <ul>
             <li><b>GA1级：</b>
                 <ul>
@@ -191,13 +191,13 @@ class 压力管道定义(QWidget):
             <li><b>GA2级：</b>GA1级以外的长输管道</li>
         </ul>
         
-        <h4>🏙️ GB类 - 公用管道</h4>
+        <h4>GB类 - 公用管道</h4>
         <ul>
             <li><b>GB1级：</b>城镇燃气管道</li>
             <li><b>GB2级：</b>城镇热力管道</li>
         </ul>
         
-        <h4>🏭 GC类 - 工业管道</h4>
+        <h4>GC类 - 工业管道</h4>
         <ul>
             <li><b>GC1级：</b>
                 <ul>
@@ -210,7 +210,7 @@ class 压力管道定义(QWidget):
             <li><b>GC3级：</b>输送无毒、非可燃流体介质，设计压力≤1.0MPa且设计温度>-20℃但不大于185℃的管道</li>
         </ul>
         
-        <h3>⚖️ 主要参考标准</h3>
+        <h3>主要参考标准</h3>
         <ul>
             <li>TSG D0001-2009《压力管道安全技术监察规程—工业管道》</li>
             <li>GB/T 20801-2020《压力管道规范 工业管道》</li>
@@ -218,7 +218,7 @@ class 压力管道定义(QWidget):
             <li>GB 50028-2006《城镇燃气设计规范》</li>
         </ul>
         
-        <h3>⚠️ 注意事项</h3>
+        <h3>注意事项</h3>
         <p>本计算工具仅供参考，实际工程应用请以相关标准和规范为准。压力管道的定义和分类可能因具体项目要求和地方规定而有所不同。</p>
         """
     
@@ -290,7 +290,7 @@ class 压力管道定义(QWidget):
     def display_results(self, is_pressure_pipe, pipe_class, pressure, diameter, media_type):
         """显示计算结果"""
         result_text = f"""
-        <h3>🔍 计算结果</h3>
+        <h3>计算结果</h3>
         
         <table border="1" style="border-collapse: collapse; width: 100%;">
         <tr style="background-color: #f8f9fa;">
@@ -300,7 +300,7 @@ class 压力管道定义(QWidget):
         <tr>
             <td style="padding: 8px; font-weight: bold;">是否为压力管道</td>
             <td style="padding: 8px; {'color: green;' if is_pressure_pipe else 'color: red;'}">
-                {'✅ 是压力管道' if is_pressure_pipe else '❌ 不是压力管道'}
+                {'是压力管道' if is_pressure_pipe else '不是压力管道'}
             </td>
         </tr>
         """
@@ -329,10 +329,10 @@ class 压力管道定义(QWidget):
         
         if is_pressure_pipe:
             result_text += f"""
-            <h4>📋 {pipe_class}级管道说明</h4>
+            <h4> {pipe_class}级管道说明</h4>
             <p>{self.get_class_description(pipe_class)}</p>
             
-            <h4>⚠️ 注意事项</h4>
+            <h4>注意事项</h4>
             <ul>
                 <li>请按照相关规范进行设计、制造和检验</li>
                 <li>需要相应的资质和许可</li>

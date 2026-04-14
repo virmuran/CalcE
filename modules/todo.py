@@ -27,7 +27,7 @@ class TodoManager(QWidget):
         main_layout.setSpacing(15)
         
         # 主框架 - 卡片式设计
-        main_group = QGroupBox("📝 待办事项管理")
+        main_group = QGroupBox("待办事项管理")
         main_group.setStyleSheet("""
             QGroupBox {
                 font-size: 16px;
@@ -53,7 +53,7 @@ class TodoManager(QWidget):
         group_layout.setSpacing(15)
         
         # 添加待办事项框架 - 现代化输入区域
-        add_group = QGroupBox("➕ 添加新任务")
+        add_group = QGroupBox("添加新任务")
         add_group.setStyleSheet("""
             QGroupBox {
                 font-size: 14px;
@@ -100,8 +100,8 @@ class TodoManager(QWidget):
         
         control_layout.addWidget(QLabel("优先级:"))
         self.priority_combo = QComboBox()
-        self.priority_combo.addItems(["🔴 高", "🟡 中", "🟢 低"])
-        self.priority_combo.setCurrentText("🟡 中")
+        self.priority_combo.addItems(["高", "中", "低"])
+        self.priority_combo.setCurrentText("中")
         self.priority_combo.setStyleSheet("""
             QComboBox {
                 border: 2px solid #bdc3c7;
@@ -121,7 +121,7 @@ class TodoManager(QWidget):
         
         control_layout.addStretch()
         
-        add_button = QPushButton("➕ 添加任务")
+        add_button = QPushButton("添加任务")
         add_button.setFont(QFont("Arial", 11, QFont.Bold))
         add_button.clicked.connect(self.add_todo)
         add_button.setStyleSheet("""
@@ -157,7 +157,7 @@ class TodoManager(QWidget):
         left_layout = QVBoxLayout(left_frame)
         
         # 列表标题
-        list_header = QLabel("📋 任务列表")
+        list_header = QLabel("任务列表")
         list_header.setFont(QFont("Arial", 12, QFont.Bold))
         list_header.setStyleSheet("color: #2c3e50; padding: 5px;")
         left_layout.addWidget(list_header)
@@ -190,7 +190,7 @@ class TodoManager(QWidget):
         # 操作按钮
         button_layout = QHBoxLayout()
         
-        toggle_button = QPushButton("✅ 切换完成状态")
+        toggle_button = QPushButton("切换完成状态")
         toggle_button.setFont(QFont("Arial", 10))
         toggle_button.clicked.connect(self.toggle_todo)
         toggle_button.setStyleSheet("""
@@ -207,7 +207,7 @@ class TodoManager(QWidget):
         """)
         button_layout.addWidget(toggle_button)
         
-        delete_button = QPushButton("🗑️ 删除")
+        delete_button = QPushButton("删除")
         delete_button.setFont(QFont("Arial", 10))
         delete_button.clicked.connect(self.delete_todo)
         delete_button.setStyleSheet("""
@@ -224,7 +224,7 @@ class TodoManager(QWidget):
         """)
         button_layout.addWidget(delete_button)
         
-        refresh_button = QPushButton("🔄 刷新")
+        refresh_button = QPushButton("刷新")
         refresh_button.setFont(QFont("Arial", 10))
         refresh_button.clicked.connect(self.refresh_todo_list)
         refresh_button.setStyleSheet("""
@@ -256,7 +256,7 @@ class TodoManager(QWidget):
         right_layout = QVBoxLayout(right_frame)
         
         # 详情标题
-        details_header = QLabel("📄 任务详情")
+        details_header = QLabel("任务详情")
         details_header.setFont(QFont("Arial", 12, QFont.Bold))
         details_header.setStyleSheet("color: #2c3e50; padding: 5px;")
         right_layout.addWidget(details_header)
@@ -314,11 +314,11 @@ class TodoManager(QWidget):
         """添加待办事项"""
         title = self.title_edit.text().strip()
         if not title:
-            QMessageBox.warning(self, "警告", "⚠️ 请输入待办事项标题")
+            QMessageBox.warning(self, "警告", "请输入待办事项标题")
             return
         
         # 将带图标的优先级转换为英文
-        priority_map = {"🔴 高": "high", "🟡 中": "medium", "🟢 低": "low"}
+        priority_map = {"高": "high", "中": "medium", "低": "low"}
         priority_text = self.priority_combo.currentText()
         priority = priority_map.get(priority_text, "medium")
         
@@ -327,13 +327,13 @@ class TodoManager(QWidget):
         self.refresh_todo_list()
         
         # 显示成功消息
-        QMessageBox.information(self, "成功", "✅ 任务添加成功！")
+        QMessageBox.information(self, "成功", "任务添加成功！")
     
     def toggle_todo(self):
         """切换待办事项完成状态"""
         current_row = self.todo_list.currentRow()
         if current_row == -1:
-            QMessageBox.warning(self, "警告", "⚠️ 请选择一个待办事项")
+            QMessageBox.warning(self, "警告", "请选择一个待办事项")
             return
         
         if current_row < len(self.todos):
@@ -343,13 +343,13 @@ class TodoManager(QWidget):
             self.refresh_todo_list()
             
             status = "完成" if completed else "未完成"
-            QMessageBox.information(self, "状态更新", f"✅ 任务标记为{status}！")
+            QMessageBox.information(self, "状态更新", f"任务标记为{status}！")
     
     def delete_todo(self):
         """删除待办事项"""
         current_row = self.todo_list.currentRow()
         if current_row == -1:
-            QMessageBox.warning(self, "警告", "⚠️ 请选择一个待办事项")
+            QMessageBox.warning(self, "警告", "请选择一个待办事项")
             return
         
         if current_row < len(self.todos):
@@ -364,7 +364,7 @@ class TodoManager(QWidget):
                 self.data_manager.delete_todo(todo["id"])
                 self.refresh_todo_list()
                 self.details_label.setText("选择一个待办事项查看详情")
-                QMessageBox.information(self, "成功", "🗑️ 任务已删除！")
+                QMessageBox.information(self, "成功", "任务已删除！")
     
     def on_todo_select(self, row):
         """处理待办事项选择事件"""
@@ -380,15 +380,15 @@ class TodoManager(QWidget):
             
             # 状态文本和颜色
             if todo["completed"]:
-                status = "✅ 已完成"
+                status = "已完成"
                 status_color = "#27ae60"
             else:
-                status = "⏳ 进行中"
+                status = "进行中"
                 status_color = "#f39c12"
             
             # 优先级文本和颜色
-            priority_map = {"low": "🟢 低", "medium": "🟡 中", "high": "🔴 高"}
-            priority_text = priority_map.get(todo["priority"], "🟡 中")
+            priority_map = {"low": "低", "medium": "中", "high": "高"}
+            priority_text = priority_map.get(todo["priority"], "中")
             priority_color_map = {"low": "#27ae60", "medium": "#f39c12", "high": "#e74c3c"}
             priority_color = priority_color_map.get(todo["priority"], "#f39c12")
             
@@ -431,17 +431,18 @@ class TodoManager(QWidget):
         self.stats_label.setText(f"总任务: {total} | 已完成: {completed} | 进行中: {in_progress}")
         
         for todo in self.todos:
-            # 状态图标
-            status_icon = "✅" if todo["completed"] else "⏳"
+            # 状态文本
+            status_text = "已完成" if todo["completed"] else "进行中"
             
-            # 优先级图标
-            priority_icon = {"low": "🟢", "medium": "🟡", "high": "🔴"}.get(todo["priority"], "🟡")
+            # 优先级文本
+            priority_map = {"low": "低", "medium": "中", "high": "高"}
+            priority_text = priority_map.get(todo["priority"], "中")
             
             # 创建时间（简短格式）
             created_at = datetime.fromisoformat(todo["created_at"])
             time_str = created_at.strftime("%m/%d %H:%M")
             
-            display_text = f"{status_icon} {priority_icon} {todo['title']} ({time_str})"
+            display_text = f"[{status_text}/{priority_text}] {todo['title']} ({time_str})"
             
             item = QListWidgetItem(display_text)
             
@@ -474,7 +475,7 @@ class TodoManager(QWidget):
             tab_widget = self.parent()
             for i in range(tab_widget.count()):
                 if tab_widget.widget(i) == self:
-                    tab_widget.setTabText(i, f"📝 待办事项 ({completed}/{total})")
+                    tab_widget.setTabText(i, f"待办事项 ({completed}/{total})")
                     break
 
 
@@ -552,7 +553,7 @@ if __name__ == "__main__":
     
     data_manager = MockDataManager()
     todo_widget = TodoManager(data_manager=data_manager)
-    tab_widget.addTab(todo_widget, "📝 待办事项")
+    tab_widget.addTab(todo_widget, "待办事项")
     
     tab_widget.resize(800, 600)
     tab_widget.show()

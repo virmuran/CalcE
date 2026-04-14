@@ -24,7 +24,7 @@ class VLEActivityCoefficientCalculator(QWidget):
         main_layout.setSpacing(15)
         
         # 标题
-        title_label = QLabel("⚗️ 气液平衡计算（活度系数法）")
+        title_label = QLabel("气液平衡计算（活度系数法）")
         title_label.setFont(QFont("Arial", 14, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setStyleSheet("color: #2c3e50; margin: 10px;")

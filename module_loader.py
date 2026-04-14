@@ -33,7 +33,7 @@ class ModuleLoader:
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
-        title_label = QLabel(f"❌ {title}")
+        title_label = QLabel(f"{title}")
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setStyleSheet("color: red; font-size: 16px; font-weight: bold; padding: 10px;")
         layout.addWidget(title_label)
@@ -47,7 +47,7 @@ class ModuleLoader:
         )
         layout.addWidget(detail)
 
-        hint = QLabel("💡 请检查：1. 模块文件是否存在  2. 是否有语法错误  3. 依赖是否安装")
+        hint = QLabel("请检查：1. 模块文件是否存在  2. 是否有语法错误  3. 依赖是否安装")
         hint.setAlignment(Qt.AlignCenter)
         hint.setStyleSheet("color: gray; font-size: 12px; padding: 10px;")
         layout.addWidget(hint)

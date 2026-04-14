@@ -37,7 +37,7 @@ class RefrigerationCycleCalculator(QWidget):
         left_layout.addWidget(description)
         
         # 循环类型选择
-        cycle_group = QGroupBox("❄️ 循环类型")
+        cycle_group = QGroupBox("循环类型")
         cycle_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -91,7 +91,7 @@ class RefrigerationCycleCalculator(QWidget):
         left_layout.addWidget(cycle_group)
         
         # 输入参数组
-        input_group = QGroupBox("📥 输入参数")
+        input_group = QGroupBox("输入参数")
         input_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -228,7 +228,7 @@ class RefrigerationCycleCalculator(QWidget):
         left_layout.addWidget(input_group)
         
         # 计算按钮
-        calculate_btn = QPushButton("🧮 计算制冷循环")
+        calculate_btn = QPushButton("计算制冷循环")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate_cycle)
         calculate_btn.setStyleSheet("""
@@ -254,7 +254,7 @@ class RefrigerationCycleCalculator(QWidget):
         right_layout.setSpacing(15)
         
         # 结果显示
-        self.result_group = QGroupBox("📤 计算结果")
+        self.result_group = QGroupBox("计算结果")
         self.result_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -498,7 +498,7 @@ class RefrigerationCycleCalculator(QWidget):
                       COP, compressor_power, refrigeration_capacity, carnot_COP, efficiency):
         """格式化计算结果"""
         return f"""═══════════════════════════════════════════════════
-                        📋 输入参数
+                         输入参数
 ═══════════════════════════════════════════════════
 
 循环类型: {cycle_type}
@@ -511,7 +511,7 @@ class RefrigerationCycleCalculator(QWidget):
 压缩机效率: {comp_efficiency*100:.1f} %
 
 ═══════════════════════════════════════════════════
-                        📊 状态点参数
+                        状态点参数
 ═══════════════════════════════════════════════════
 
 • 点1 (压缩机进口):
@@ -531,7 +531,7 @@ class RefrigerationCycleCalculator(QWidget):
   焓值: {h4:.2f} kJ/kg
 
 ═══════════════════════════════════════════════════
-                        ⚡ 性能参数
+                        性能参数
 ═══════════════════════════════════════════════════
 
 单位质量参数:
@@ -549,7 +549,7 @@ class RefrigerationCycleCalculator(QWidget):
 • 循环效率: {efficiency:.1f} %
 
 ═══════════════════════════════════════════════════
-                        💡 计算说明
+                        计算说明
 ═══════════════════════════════════════════════════
 
 • 基于蒸汽压缩制冷循环理论计算

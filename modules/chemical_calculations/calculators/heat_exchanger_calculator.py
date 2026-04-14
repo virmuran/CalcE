@@ -193,7 +193,7 @@ class 换热器计算(QWidget):
         left_layout.addWidget(mode_group)
         
         # 3. 输入参数组 - 使用GridLayout实现整齐的布局
-        input_group = QGroupBox("📥 输入参数")
+        input_group = QGroupBox("输入参数")
         input_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -229,7 +229,7 @@ class 换热器计算(QWidget):
         left_layout.addWidget(input_group)
         
         # 4. 计算按钮
-        calculate_btn = QPushButton("🧮 计算")
+        calculate_btn = QPushButton("计算")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate)
         calculate_btn.setStyleSheet("""
@@ -251,7 +251,7 @@ class 换热器计算(QWidget):
         # 5. 下载按钮布局
         download_layout = QHBoxLayout()
         
-        clear_btn = QPushButton("🗑️ 清空")
+        clear_btn = QPushButton("清空")
         clear_btn.clicked.connect(self.clear_inputs)
         clear_btn.setStyleSheet("""
             QPushButton {
@@ -270,7 +270,7 @@ class 换热器计算(QWidget):
         
         download_layout.addStretch()
         
-        download_txt_btn = QPushButton("📄 下载计算书(TXT)")
+        download_txt_btn = QPushButton("下载计算书(TXT)")
         download_txt_btn.clicked.connect(self.download_txt_report)
         download_txt_btn.setStyleSheet("""
             QPushButton {
@@ -286,7 +286,7 @@ class 换热器计算(QWidget):
             }
         """)
 
-        download_pdf_btn = QPushButton("📊 下载计算书(PDF)")
+        download_pdf_btn = QPushButton("下载计算书(PDF)")
         download_pdf_btn.clicked.connect(self.generate_pdf_report)
         download_pdf_btn.setStyleSheet("""
             QPushButton {
@@ -316,7 +316,7 @@ class 换热器计算(QWidget):
         right_layout.setSpacing(15)
         
         # 结果显示
-        self.result_group = QGroupBox("📤 计算结果")
+        self.result_group = QGroupBox("计算结果")
         self.result_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -848,7 +848,7 @@ class 换热器计算(QWidget):
         # 显示结果
         result = f"""
 ═══════════
-📋 输入参数
+ 输入参数
 ═══════════
 
     计算模式: {self.mode_combo.currentText()}
@@ -859,7 +859,7 @@ class 换热器计算(QWidget):
     冷流体出口温度: {cold_t2:.1f} °C
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     蒸汽汽化潜热: {latent_heat:.1f} kJ/kg
@@ -867,7 +867,7 @@ class 换热器计算(QWidget):
     所需饱和蒸汽流量: {steam_flow:.1f} kg/h
 
 ══════════
-💡 计算说明
+计算说明
 ══════════
 
     计算公式:
@@ -905,7 +905,7 @@ class 换热器计算(QWidget):
         # 显示结果
         result = f"""
 ═══════════
-📋 输入参数
+ 输入参数
 ═══════════
 
     计算模式: {self.mode_combo.currentText()}
@@ -916,7 +916,7 @@ class 换热器计算(QWidget):
     冷流体出口温度: {cold_t2:.1f} °C
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     蒸汽汽化潜热: {latent_heat:.1f} kJ/kg
@@ -924,7 +924,7 @@ class 换热器计算(QWidget):
     冷流体流量: {cold_flow:.1f} kg/h
 
 ══════════
-💡 计算说明
+计算说明
 ══════════
 
     计算公式:
@@ -957,7 +957,7 @@ class 换热器计算(QWidget):
         # 显示结果
         result = f"""
 ═══════════
-📋 输入参数
+ 输入参数
 ═══════════
 
     计算模式: {self.mode_combo.currentText()}
@@ -968,7 +968,7 @@ class 换热器计算(QWidget):
     冷流体进口温度: {cold_t1:.1f} °C
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     蒸汽汽化潜热: {latent_heat:.1f} kJ/kg
@@ -977,7 +977,7 @@ class 换热器计算(QWidget):
     冷流体温升: {cold_t2 - cold_t1:.1f} °C
 
 ══════════
-💡 计算说明
+计算说明
 ══════════
 
     计算公式:
@@ -1022,7 +1022,7 @@ class 换热器计算(QWidget):
         # 显示结果
         result = f"""
 ═══════════
-📋 输入参数
+ 输入参数
 ═══════════
 
     计算模式: {self.mode_combo.currentText()}
@@ -1035,7 +1035,7 @@ class 换热器计算(QWidget):
     冷流体进口温度: {cold_t1:.1f} °C
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     热流体放热量: {Q_hot:.1f} kW
@@ -1044,7 +1044,7 @@ class 换热器计算(QWidget):
     对数平均温差(LMTD): {lmtd:.1f} °C
 
 ══════════
-💡 计算说明
+计算说明
 ══════════
 
     计算公式:
@@ -1089,7 +1089,7 @@ class 换热器计算(QWidget):
         # 显示结果
         result = f"""
 ═══════════
-📋 输入参数
+ 输入参数
 ═══════════
 
     计算模式: {self.mode_combo.currentText()}
@@ -1102,7 +1102,7 @@ class 换热器计算(QWidget):
     冷流体出口温度: {cold_t2:.1f} °C
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     冷流体吸热量: {Q_cold:.1f} kW
@@ -1111,7 +1111,7 @@ class 换热器计算(QWidget):
     对数平均温差(LMTD): {lmtd:.1f} °C
 
 ══════════
-💡 计算说明
+计算说明
 ══════════
 
     计算公式:
@@ -1160,7 +1160,7 @@ class 换热器计算(QWidget):
         # 显示结果
         result = f"""
 ═══════════
-📋 输入参数
+ 输入参数
 ═══════════
 
     计算模式: {self.mode_combo.currentText()}
@@ -1173,7 +1173,7 @@ class 换热器计算(QWidget):
     冷流体出口温度: {cold_t2:.1f} °C
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     热流体放热量: {Q_hot:.1f} kW
@@ -1181,7 +1181,7 @@ class 换热器计算(QWidget):
     对数平均温差(LMTD): {lmtd:.1f} °C
 
 ══════════
-💡 计算说明
+计算说明
 ══════════
 
     计算公式:
@@ -1230,7 +1230,7 @@ class 换热器计算(QWidget):
         # 显示结果
         result = f"""
 ═══════════
-📋 输入参数
+ 输入参数
 ═══════════
 
     计算模式: {self.mode_combo.currentText()}
@@ -1243,7 +1243,7 @@ class 换热器计算(QWidget):
     冷流体出口温度: {cold_t2:.1f} °C
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     冷流体吸热量: {Q_cold:.1f} kW
@@ -1251,7 +1251,7 @@ class 换热器计算(QWidget):
     对数平均温差(LMTD): {lmtd:.1f} °C
 
 ══════════
-💡 计算说明
+计算说明
 ══════════
 
     计算公式:
@@ -1430,7 +1430,7 @@ class 换热器计算(QWidget):
             
             # 添加工程信息部分
             report += f"""══════════
-📋 工程信息
+ 工程信息
 ══════════
 
     公司名称: {project_info['company_name']}
@@ -1440,7 +1440,7 @@ class 换热器计算(QWidget):
     计算日期: {datetime.now().strftime('%Y-%m-%d')}
 
 ══════════
-🏷️ 计算书标识
+计算书标识
 ══════════
 
     计算书编号: {project_info['report_number']}
@@ -1448,7 +1448,7 @@ class 换热器计算(QWidget):
     状态: 正式计算书
 
 ══════════
-📝 备注说明
+备注说明
 ══════════
 
     1. 本计算书基于热力学原理及相关标准规范
@@ -1618,43 +1618,8 @@ class 换热器计算(QWidget):
 
     def process_content_for_pdf(self, content):
         """处理内容，使其适合PDF显示"""
-        # 替换表情图标为文字描述
-        replacements = {
-            "📋": "",
-            "📊": "", 
-            "🧮": "",
-            "💡": "",
-            "📤": "",
-            "📥": "",
-            "⚠️": "",
-            "🔬": "",
-            "📏": "",
-            "🌪️": "",
-            "💨": "",
-            "🌫️": "",
-            "⚡": "",
-            "💧": "",
-            "🔄": "",
-            "🌬️": "",
-            "🔧": "",
-            "🚒": "",
-            "⚖️": "",
-            "🧊": "",
-            "🧪": "",
-            "🔩": "",
-            "🛡️": "",
-            "🔥": "",
-            "⚗️": "",
-            "🚨": "",
-            "⚛️": "",
-            "❄️": "",
-            "📄": "",
-            "📊": "",
-            "•": "",
-            "🏷️": "",
-            "📝": ""
-        }
-        
+        # 清理bullet符号
+        content = content.replace("•", "")
         # 替换表情图标
         for emoji, text in replacements.items():
             content = content.replace(emoji, text)

@@ -34,7 +34,7 @@ class CentrifugalPumpCalculator(QWidget):
         left_layout.addWidget(description)
         
         # 输入参数组 - 使用GridLayout实现整齐的布局
-        input_group = QGroupBox("📥 输入参数")
+        input_group = QGroupBox("输入参数")
         input_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -230,7 +230,7 @@ class CentrifugalPumpCalculator(QWidget):
         left_layout.addWidget(input_group)
         
         # 计算按钮
-        calculate_btn = QPushButton("🧮 计算功率")
+        calculate_btn = QPushButton("计算功率")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate_pump_power)
         calculate_btn.setStyleSheet("""
@@ -256,7 +256,7 @@ class CentrifugalPumpCalculator(QWidget):
         right_layout.setSpacing(15)
         
         # 结果显示
-        self.result_group = QGroupBox("📤 计算结果")
+        self.result_group = QGroupBox("计算结果")
         self.result_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -444,7 +444,7 @@ class CentrifugalPumpCalculator(QWidget):
             
             # 显示结果 - 使用格式化的输出
             result = f"""═══════════════════════════════════════════════════
-                        📋 输入参数
+                         输入参数
 ═══════════════════════════════════════════════════
 
 运行参数:
@@ -456,7 +456,7 @@ class CentrifugalPumpCalculator(QWidget):
 • 安全系数: {safety_factor}
 
 ═══════════════════════════════════════════════════
-                        📊 计算结果
+                        计算结果
 ═══════════════════════════════════════════════════
 
 功率计算:
@@ -474,7 +474,7 @@ class CentrifugalPumpCalculator(QWidget):
 • 功率余量: {(recommended_motor - motor_power) / motor_power * 100:.1f}%
 
 ═══════════════════════════════════════════════════
-                        🧮 计算公式
+                        计算公式
 ═══════════════════════════════════════════════════
 
 P_有效 = (Q × ρ × g × H) / 3600000
@@ -496,7 +496,7 @@ P_轴 = {effective_power:.2f} / {efficiency/100:.3f} = {shaft_power:.2f} kW
 P_电机 = {shaft_power:.2f} / {motor_efficiency/100:.3f} × {safety_factor} = {motor_power:.2f} kW
 
 ═══════════════════════════════════════════════════
-                        💡 应用说明
+                        应用说明
 ═══════════════════════════════════════════════════
 
 • 实际选型应选择比计算功率大的标准电机

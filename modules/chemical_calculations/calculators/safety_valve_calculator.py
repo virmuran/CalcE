@@ -20,7 +20,7 @@ class SafetyValveCalculator(QWidget):
         main_layout.setSpacing(15)
         
         # 标题
-        title_label = QLabel("🛡️ 安全阀计算")
+        title_label = QLabel("安全阀计算")
         title_label.setFont(QFont("Arial", 14, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setStyleSheet("color: #2c3e50; margin: 10px;")
@@ -31,11 +31,11 @@ class SafetyValveCalculator(QWidget):
         
         # 添加计算标签页
         self.calculation_tab = self.create_calculation_tab()
-        self.tab_widget.addTab(self.calculation_tab, "📊 安全阀计算")
+        self.tab_widget.addTab(self.calculation_tab, "安全阀计算")
         
         # 添加选型指南标签页
         self.selection_tab = self.create_selection_tab()
-        self.tab_widget.addTab(self.selection_tab, "📋 选型指南")
+        self.tab_widget.addTab(self.selection_tab, " 选型指南")
         
         main_layout.addWidget(self.tab_widget)
     
@@ -45,7 +45,7 @@ class SafetyValveCalculator(QWidget):
         layout = QVBoxLayout(tab)
         
         # 工况条件组
-        condition_group = QGroupBox("⚙️ 工况条件")
+        condition_group = QGroupBox("工况条件")
         condition_layout = QVBoxLayout(condition_group)
         
         # 介质和压力
@@ -125,7 +125,7 @@ class SafetyValveCalculator(QWidget):
         layout.addWidget(condition_group)
         
         # 泄放条件组
-        relief_group = QGroupBox("💨 泄放条件")
+        relief_group = QGroupBox("泄放条件")
         relief_layout = QVBoxLayout(relief_group)
         
         # 泄放量计算
@@ -168,7 +168,7 @@ class SafetyValveCalculator(QWidget):
         layout.addWidget(relief_group)
         
         # 安全阀参数组
-        valve_group = QGroupBox("🔧 安全阀参数")
+        valve_group = QGroupBox("安全阀参数")
         valve_layout = QVBoxLayout(valve_group)
         
         # 阀门类型和材料
@@ -194,17 +194,17 @@ class SafetyValveCalculator(QWidget):
         
         # 按钮组
         button_layout = QHBoxLayout()
-        self.calculate_btn = QPushButton("🚀 计算安全阀")
+        self.calculate_btn = QPushButton("计算安全阀")
         self.calculate_btn.clicked.connect(self.calculate_safety_valve)
         self.calculate_btn.setStyleSheet("QPushButton { background-color: #c0392b; color: white; font-weight: bold; }")
         button_layout.addWidget(self.calculate_btn)
         
-        self.standard_btn = QPushButton("📖 查看标准")
+        self.standard_btn = QPushButton("查看标准")
         self.standard_btn.clicked.connect(self.show_standards)
         self.standard_btn.setStyleSheet("QPushButton { background-color: #3498db; color: white; }")
         button_layout.addWidget(self.standard_btn)
         
-        self.clear_btn = QPushButton("🗑️ 清空")
+        self.clear_btn = QPushButton("清空")
         self.clear_btn.clicked.connect(self.clear_inputs)
         self.clear_btn.setStyleSheet("QPushButton { background-color: #95a5a6; color: white; }")
         button_layout.addWidget(self.clear_btn)
@@ -212,7 +212,7 @@ class SafetyValveCalculator(QWidget):
         layout.addLayout(button_layout)
         
         # 结果显示组
-        result_group = QGroupBox("📈 计算结果")
+        result_group = QGroupBox("计算结果")
         result_layout = QVBoxLayout(result_group)
         
         self.result_text = QTextEdit()
@@ -223,7 +223,7 @@ class SafetyValveCalculator(QWidget):
         layout.addWidget(result_group)
         
         # 详细参数表
-        detail_group = QGroupBox("📋 详细参数")
+        detail_group = QGroupBox(" 详细参数")
         detail_layout = QVBoxLayout(detail_group)
         
         self.detail_table = QTableWidget()
@@ -266,9 +266,9 @@ class SafetyValveCalculator(QWidget):
     def get_selection_guide_html(self):
         """获取选型指南HTML内容"""
         return """
-        <h2>📋 安全阀选型指南</h2>
+        <h2> 安全阀选型指南</h2>
         
-        <h3>🛡️ 安全阀类型选择</h3>
+        <h3>安全阀类型选择</h3>
         
         <h4>1. 弹簧式安全阀</h4>
         <p><b>特点：</b>结构简单，动作可靠，应用广泛</p>
@@ -299,7 +299,7 @@ class SafetyValveCalculator(QWidget):
             <li>温度不高的场合</li>
         </ul>
         
-        <h3>📊 泄放量计算原则</h3>
+        <h3>泄放量计算原则</h3>
         
         <h4>1. 阻塞流判断</h4>
         <p>对于气体和蒸汽，需要判断是否为阻塞流（临界流）：</p>
@@ -317,12 +317,12 @@ class SafetyValveCalculator(QWidget):
         <p>Q = 43.2 × F × A<sup>0.82</sup></p>
         <p>其中：F为环境因子，A为润湿面积</p>
         
-        <h3>🔧 喉径计算</h3>
+        <h3>喉径计算</h3>
         <p>根据泄放量和工况条件计算最小泄放面积：</p>
         <p>A = W / (C × K × P × √(M / (Z × T)))</p>
         <p>然后根据面积确定喉径： d = √(4A / π)</p>
         
-        <h3>⚠️ 选型注意事项</h3>
+        <h3>选型注意事项</h3>
         <ul>
             <li>考虑介质的腐蚀性选择材料</li>
             <li>根据背压情况选择平衡型或非平衡型</li>
@@ -331,7 +331,7 @@ class SafetyValveCalculator(QWidget):
             <li>符合相关安全标准和规范</li>
         </ul>
         
-        <h3>📖 参考标准</h3>
+        <h3>参考标准</h3>
         <ul>
             <li>ASME Boiler and Pressure Vessel Code Section VIII</li>
             <li>API RP 520 Sizing, Selection, and Installation</li>
@@ -440,7 +440,7 @@ class SafetyValveCalculator(QWidget):
         selected_diameter = min(standard_diameters, key=lambda x: abs(x - diameter))
         
         result_text = f"""
-        <h3>🛡️ 安全阀计算结果</h3>
+        <h3>安全阀计算结果</h3>
         
         <table border="1" style="border-collapse: collapse; width: 100%;">
         <tr style="background-color: #f8f9fa;">
@@ -475,7 +475,7 @@ class SafetyValveCalculator(QWidget):
         </tr>
         </table>
         
-        <h4>🔧 选型建议</h4>
+        <h4>选型建议</h4>
         <ul>
             <li>选择喉径不小于 {selected_diameter} mm 的安全阀</li>
             <li>确保安全阀的额定排量大于计算泄放量</li>
@@ -514,7 +514,7 @@ class SafetyValveCalculator(QWidget):
     def show_standards(self):
         """显示标准信息"""
         standards_text = """
-        <h3>📖 安全阀相关标准</h3>
+        <h3>安全阀相关标准</h3>
         
         <h4>国际标准</h4>
         <ul>

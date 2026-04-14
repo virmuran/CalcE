@@ -34,7 +34,7 @@ class NPSHaCalculator(QWidget):
         left_layout.addWidget(description)
         
         # 输入参数组 - 使用GridLayout实现整齐的布局
-        input_group = QGroupBox("📥 输入参数")
+        input_group = QGroupBox("输入参数")
         input_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -236,7 +236,7 @@ class NPSHaCalculator(QWidget):
         left_layout.addWidget(input_group)
         
         # 计算按钮
-        calculate_btn = QPushButton("🧮 计算NPSHa")
+        calculate_btn = QPushButton("计算NPSHa")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate_npsha)
         calculate_btn.setStyleSheet("""
@@ -262,7 +262,7 @@ class NPSHaCalculator(QWidget):
         right_layout.setSpacing(15)
         
         # 结果显示
-        self.result_group = QGroupBox("📤 计算结果")
+        self.result_group = QGroupBox("计算结果")
         self.result_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -428,7 +428,7 @@ class NPSHaCalculator(QWidget):
             
             # 显示结果 - 使用格式化的输出
             result = f"""═══════════════════════════════════════════════════
-                        📋 输入参数
+                         输入参数
 ═══════════════════════════════════════════════════
 
 • 大气压力: {atm_pressure} kPa
@@ -439,7 +439,7 @@ class NPSHaCalculator(QWidget):
 {f"• 泵必需汽蚀余量 NPSHr: {npshr_value} m" if npshr_value else "• 泵必需汽蚀余量 NPSHr: 未指定"}
 
 ═══════════════════════════════════════════════════
-                        📊 计算结果
+                        计算结果
 ═══════════════════════════════════════════════════
 
 中间计算:
@@ -460,15 +460,15 @@ class NPSHaCalculator(QWidget):
 安全评估:"""
                 
                 if safety_margin >= 1.0:
-                    result += "\n✅ 优秀 - 汽蚀余量非常充足，泵运行安全"
+                    result += "\n 优秀 - 汽蚀余量非常充足，泵运行安全"
                 elif safety_margin >= 0.5:
-                    result += "\n✅ 良好 - 汽蚀余量充足，泵运行安全"
+                    result += "\n 良好 - 汽蚀余量充足，泵运行安全"
                 elif safety_margin >= 0.3:
-                    result += "\n⚠️ 注意 - 汽蚀余量基本满足，建议监控"
+                    result += "\n️ 注意 - 汽蚀余量基本满足，建议监控"
                 elif safety_margin >= 0:
-                    result += "\n⚠️ 警告 - 汽蚀余量刚好满足，风险较高"
+                    result += "\n️ 警告 - 汽蚀余量刚好满足，风险较高"
                 else:
-                    result += "\n❌ 危险 - 汽蚀余量不足，可能发生汽蚀"
+                    result += "\n 危险 - 汽蚀余量不足，可能发生汽蚀"
                     
                 result += f"\n• NPSHa/NPSHr 比值: {npsha/npshr_value:.2f}"
             else:
@@ -484,7 +484,7 @@ class NPSHaCalculator(QWidget):
             result += f"""
 
 ═══════════════════════════════════════════════════
-                        🧮 计算公式
+                        计算公式
 ═══════════════════════════════════════════════════
 
 NPSHa = (P_atm / (ρ·g)) + H_static - (P_vapor / (ρ·g)) - H_friction
@@ -503,7 +503,7 @@ H_friction = {friction_loss} m (摩擦损失)
 = {npsha:.3f} m
 
 ═══════════════════════════════════════════════════
-                        💡 应用说明
+                        应用说明
 ═══════════════════════════════════════════════════
 
 • NPSHa必须大于NPSHr才能避免汽蚀

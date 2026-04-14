@@ -254,7 +254,7 @@ class 设备尺寸计算(QWidget):
         left_layout.addWidget(mode_group)
 
         # ----- 输入参数组 -----
-        input_group = QGroupBox("📥 设备参数")
+        input_group = QGroupBox("设备参数")
         input_group.setStyleSheet(self.group_box_style())
         grid = QGridLayout(input_group)
         grid.setVerticalSpacing(12)
@@ -407,7 +407,7 @@ class 设备尺寸计算(QWidget):
         left_layout.addWidget(input_group)
 
         # 附件选择按钮
-        self.accessory_btn = QPushButton("🔧 选择附件 (支腿/挂耳)")
+        self.accessory_btn = QPushButton("选择附件 (支腿/挂耳)")
         self.accessory_btn.setFont(QFont("Arial", 10))
         self.accessory_btn.clicked.connect(self.select_accessories)
         self.accessory_btn.setStyleSheet("""
@@ -420,7 +420,7 @@ class 设备尺寸计算(QWidget):
         left_layout.addWidget(self.accessory_btn)
 
         # 计算按钮
-        calc_btn = QPushButton("🧮 计算设备尺寸")
+        calc_btn = QPushButton("计算设备尺寸")
         calc_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calc_btn.clicked.connect(self.calculate)
         calc_btn.setStyleSheet("""
@@ -435,10 +435,10 @@ class 设备尺寸计算(QWidget):
 
         # 下载按钮
         download_layout = QHBoxLayout()
-        txt_btn = QPushButton("📄 下载计算书(TXT)")
+        txt_btn = QPushButton("下载计算书(TXT)")
         txt_btn.clicked.connect(self.download_txt_report)
         txt_btn.setStyleSheet("background-color: #27ae60; color: white;")
-        pdf_btn = QPushButton("📊 下载计算书(PDF)")
+        pdf_btn = QPushButton("下载计算书(PDF)")
         pdf_btn.clicked.connect(self.generate_pdf_report)
         pdf_btn.setStyleSheet("background-color: #e74c3c; color: white;")
         download_layout.addWidget(txt_btn)
@@ -451,7 +451,7 @@ class 设备尺寸计算(QWidget):
         right_widget.setMinimumWidth(300)
         right_layout = QVBoxLayout(right_widget)
 
-        self.result_group = QGroupBox("📤 计算结果")
+        self.result_group = QGroupBox("计算结果")
         self.result_group.setStyleSheet(self.group_box_style())
         result_layout = QVBoxLayout(self.result_group)
 
@@ -913,7 +913,7 @@ class 设备尺寸计算(QWidget):
         """格式化计算结果"""
         lines = []
         lines.append("══════════════════════════════════════")
-        lines.append("📋 输入参数")
+        lines.append(" 输入参数")
         lines.append("══════════════════════════════════════")
         lines.append(f"    填充系数: {float(self.fill_factor_input.text()):.2f}")
         lines.append(f"    高径比 H/D: {float(self.hd_ratio_input.text()):.2f}")
@@ -930,7 +930,7 @@ class 设备尺寸计算(QWidget):
         lines.append(f"    壁厚: {t*1000:.1f} mm")
 
         lines.append("\n══════════════════════════════════════")
-        lines.append("📊 计算结果")
+        lines.append("计算结果")
         lines.append("══════════════════════════════════════")
         lines.append(f"    设备直径: {D_m*1000:.1f} mm")
         lines.append(f"    圆柱高度: {H_cyl_m*1000:.1f} mm")
@@ -943,7 +943,7 @@ class 设备尺寸计算(QWidget):
         lines.append(f"    设备重量（近似）: {weight:.1f} kg")
 
         lines.append("\n══════════════════════════════════════")
-        lines.append("🚨 液位报警推荐值 (mm，从底部起算)")
+        lines.append("液位报警推荐值 (mm，从底部起算)")
         lines.append("══════════════════════════════════════")
         lines.append(f"    低低位 LL: {alarms['LL']:.0f} mm")
         lines.append(f"    低位 L:   {alarms['L']:.0f} mm")
@@ -952,7 +952,7 @@ class 设备尺寸计算(QWidget):
         lines.append("    (仅供参考，请根据工艺最终确定)")
 
         lines.append("\n══════════════════════════════════════")
-        lines.append("🔧 附件信息")
+        lines.append("附件信息")
         lines.append("══════════════════════════════════════")
         if leg_info['count'] > 0:
             lines.append(f"    支腿: {leg_info['count']}个, 高{leg_info['height']:.0f} mm, 截面{leg_info['section']} {leg_info['size']:.0f} mm")
@@ -965,7 +965,7 @@ class 设备尺寸计算(QWidget):
         lines.append(f"    操作平台: {'有' if platform else '无'}")
 
         lines.append("\n══════════════════════════════════════")
-        lines.append("💡 计算说明")
+        lines.append("计算说明")
         lines.append("══════════════════════════════════════")
         lines.append("    • 反向计算采用二分法求解直径")
         lines.append("    • 容积和表面积基于几何公式近似计算")
@@ -1079,7 +1079,7 @@ class 设备尺寸计算(QWidget):
 """
         footer = f"""
 ══════════
-📋 工程信息
+ 工程信息
 ══════════
 
     公司名称: {proj_info['company_name']}
@@ -1089,7 +1089,7 @@ class 设备尺寸计算(QWidget):
     计算日期: {datetime.now().strftime('%Y-%m-%d')}
 
 ══════════
-🏷️ 计算书标识
+计算书标识
 ══════════
 
     计算书编号: {proj_info.get('report_number', 'VS-'+datetime.now().strftime('%Y%m%d')+'-001')}
@@ -1097,7 +1097,7 @@ class 设备尺寸计算(QWidget):
     状态: 正式计算书
 
 ══════════
-📝 备注说明
+备注说明
 ══════════
 
     1. 本计算书基于相关设计规范

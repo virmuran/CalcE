@@ -135,7 +135,7 @@ class SteamPropertyCalculator(QWidget):
         left_layout.addWidget(self.input_stack)
         
         # 4. 计算按钮
-        self.calculate_btn = QPushButton("🧮 查询水蒸气性质")
+        self.calculate_btn = QPushButton("查询水蒸气性质")
         self.calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         self.calculate_btn.clicked.connect(self.calculate_steam_properties)
         self.calculate_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -158,7 +158,7 @@ class SteamPropertyCalculator(QWidget):
         # 5. 下载按钮布局
         download_layout = QHBoxLayout()
         
-        self.download_txt_btn = QPushButton("📄 下载计算书(TXT)")
+        self.download_txt_btn = QPushButton("下载计算书(TXT)")
         self.download_txt_btn.clicked.connect(self.download_txt_report)
         self.download_txt_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.download_txt_btn.setStyleSheet("""
@@ -175,7 +175,7 @@ class SteamPropertyCalculator(QWidget):
             }
         """)
         
-        self.download_pdf_btn = QPushButton("📊 下载计算书(PDF)")
+        self.download_pdf_btn = QPushButton("下载计算书(PDF)")
         self.download_pdf_btn.clicked.connect(self.download_pdf_report)
         self.download_pdf_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.download_pdf_btn.setStyleSheet("""
@@ -206,7 +206,7 @@ class SteamPropertyCalculator(QWidget):
         right_layout.setSpacing(15)
         
         # 结果显示
-        self.result_group = QGroupBox("📤 计算结果")
+        self.result_group = QGroupBox("计算结果")
         self.result_group.setStyleSheet(self.get_groupbox_style())
         result_layout = QVBoxLayout(self.result_group)
         
@@ -772,13 +772,13 @@ class SteamPropertyCalculator(QWidget):
         # 判断蒸汽状态
         if dryness == 0:
             state = "饱和水"
-            state_icon = "💧"
+            state_icon = ""
         elif dryness == 1:
             state = "干饱和蒸汽"
-            state_icon = "🔥"
+            state_icon = ""
         else:
             state = f"湿蒸汽 (干度={dryness:.3f})"
-            state_icon = "💧🔥"
+            state_icon = ""
         
         # 格式化结果
         result = self.format_saturation_result(
@@ -829,15 +829,15 @@ class SteamPropertyCalculator(QWidget):
             
             if temperature_c < saturation_temp - 0.1:
                 state = "过冷水"
-                state_icon = "💧"
+                state_icon = ""
                 dryness = 0
             elif abs(temperature_c - saturation_temp) < 0.1:
                 state = "饱和状态"
-                state_icon = "💧🔥"
+                state_icon = ""
                 dryness = 1  # 默认干饱和蒸汽
             else:
                 state = "过热蒸汽"
-                state_icon = "🔥"
+                state_icon = ""
                 dryness = 1
         
         elif "压力 P 和比焓 H" in param_combo:
@@ -851,17 +851,17 @@ class SteamPropertyCalculator(QWidget):
             
             if enthalpy_kjkg <= h_f:
                 state = "过冷水"
-                state_icon = "💧"
+                state_icon = ""
                 temperature_c = enthalpy_kjkg / 4.18  # 简化计算
                 dryness = 0
             elif h_f < enthalpy_kjkg < h_g:
                 state = "湿蒸汽"
-                state_icon = "💧🔥"
+                state_icon = ""
                 dryness = (enthalpy_kjkg - h_f) / (h_g - h_f)
                 temperature_c = saturation_temp
             else:
                 state = "过热蒸汽"
-                state_icon = "🔥"
+                state_icon = ""
                 dryness = 1
                 # 简化计算过热蒸汽温度
                 temperature_c = saturation_temp + (enthalpy_kjkg - h_g) / 2.0
@@ -877,17 +877,17 @@ class SteamPropertyCalculator(QWidget):
             
             if entropy_kjkgk <= s_f:
                 state = "过冷水"
-                state_icon = "💧"
+                state_icon = ""
                 temperature_c = saturation_temp - 5  # 简化
                 dryness = 0
             elif s_f < entropy_kjkgk < s_g:
                 state = "湿蒸汽"
-                state_icon = "💧🔥"
+                state_icon = ""
                 dryness = (entropy_kjkgk - s_f) / (s_g - s_f)
                 temperature_c = saturation_temp
             else:
                 state = "过热蒸汽"
-                state_icon = "🔥"
+                state_icon = ""
                 dryness = 1
                 temperature_c = saturation_temp + 50  # 简化
         
@@ -1032,7 +1032,7 @@ class SteamPropertyCalculator(QWidget):
                                 state, state_icon, density, specific_volume, enthalpy, entropy):
         """格式化饱和状态结果"""
         return f"""═══════════════════════════════════════════════════
-                        📋 输入参数
+                         输入参数
 ═══════════════════════════════════════════════════
 
 • 查询模式: 饱和状态
@@ -1041,7 +1041,7 @@ class SteamPropertyCalculator(QWidget):
 • 干度: {dryness:.3f}
 
 ═══════════════════════════════════════════════════
-                        📊 计算结果
+                        计算结果
 ═══════════════════════════════════════════════════
 
 • 压力: {pressure:.4f} MPa
@@ -1060,7 +1060,7 @@ class SteamPropertyCalculator(QWidget):
 • 汽化潜热: {self.calculate_enthalpy(pressure, temperature, 1) - self.calculate_enthalpy(pressure, temperature, 0):.1f} kJ/kg
 
 ═══════════════════════════════════════════════════
-                        💡 状态说明
+                        状态说明
 ═══════════════════════════════════════════════════
 
 {state_icon} {state}
@@ -1070,7 +1070,7 @@ class SteamPropertyCalculator(QWidget):
 {f"• 干饱和蒸汽，可用于动力或工艺过程" if dryness == 1 else ""}
 
 ═══════════════════════════════════════════════════
-                        🎯 应用建议
+                        应用建议
 ═══════════════════════════════════════════════════
 
 • 以上数据为工程近似值
@@ -1082,7 +1082,7 @@ class SteamPropertyCalculator(QWidget):
                            state, state_icon, dryness, density, specific_volume, enthalpy, entropy, superheat):
         """格式化其他状态结果"""
         return f"""═══════════════════════════════════════════════════
-                        📋 输入参数
+                         输入参数
 ═══════════════════════════════════════════════════
 
 • 查询模式: 其他状态
@@ -1091,7 +1091,7 @@ class SteamPropertyCalculator(QWidget):
 • {param_combo.split("和")[1].strip()}: {param2_value:.4f}
 
 ═══════════════════════════════════════════════════
-                        📊 计算结果
+                        计算结果
 ═══════════════════════════════════════════════════
 
 • 压力: {pressure:.4f} MPa
@@ -1112,7 +1112,7 @@ class SteamPropertyCalculator(QWidget):
 {f"• 过热度: {superheat:.2f} °C" if superheat > 0 else f"• 过冷度: {saturation_temp - temperature:.2f} °C" if temperature < saturation_temp else ""}
 
 ═══════════════════════════════════════════════════
-                        💡 状态说明
+                        状态说明
 ═══════════════════════════════════════════════════
 
 {state_icon} {state}
@@ -1123,7 +1123,7 @@ class SteamPropertyCalculator(QWidget):
 {f"• 处于过冷水状态，需要加热才能产生蒸汽" if temperature < saturation_temp - 0.1 else ""}
 
 ═══════════════════════════════════════════════════
-                        🎯 应用建议
+                        应用建议
 ═══════════════════════════════════════════════════
 
 • 以上数据为工程近似值
@@ -1273,26 +1273,6 @@ class SteamPropertyCalculator(QWidget):
     
     def process_content_for_pdf(self, content):
         """处理内容，使其适合PDF显示"""
-        # 替换表情图标为文字描述
-        replacements = {
-            "📋": "",
-            "📊": "", 
-            "🧮": "",
-            "💡": "",
-            "📤": "",
-            "📥": "",
-            "⚠️": "",
-            "🔬": "",
-            "💧": "",
-            "🔥": "",
-            "💧🔥": "(湿蒸汽)",
-            "🎯": ""
-        }
-        
-        # 替换表情图标
-        for emoji, text in replacements.items():
-            content = content.replace(emoji, text)
-        
         # 替换单位符号
         content = content.replace("m³", "m3")
         content = content.replace("kg/m³", "kg/m3")

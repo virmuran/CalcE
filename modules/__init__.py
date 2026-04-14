@@ -64,10 +64,10 @@ def init_database(data_file=None):
         return data_manager
         
     except ImportError as e:
-        print(f"❌ 无法导入 DataManager: {e}")
+        print(f"无法导入 DataManager: {e}")
         raise
     except Exception as e:
-        print(f"❌ 数据库初始化失败: {e}")
+        print(f"数据库初始化失败: {e}")
         raise
 
 def get_data_manager(data_file=None):
@@ -75,7 +75,7 @@ def get_data_manager(data_file=None):
         from ..data_manager import DataManager
         return DataManager.get_instance(data_file)
     except ImportError as e:
-        print(f"❌ 无法导入 DataManager: {e}")
+        print(f"无法导入 DataManager: {e}")
         raise
 
 def setup_module_paths():
@@ -132,7 +132,7 @@ def check_module_dependencies():
 # 自动设置模块路径
 _added_paths = setup_module_paths()
 if _added_paths:
-    print(f"📁 已添加模块路径: {_added_paths}")
+    print(f"已添加模块路径: {_added_paths}")
 
 # 导出常用函数和类
 __all__ = [
@@ -150,14 +150,14 @@ if __name__ == "__main__":
     print(f"CalcE 模块包 v{__version__}")
     print(f"作者: {__author__}")
     
-    print("\n📊 检查模块依赖...")
+    print("\n检查模块依赖...")
     deps = check_module_dependencies()
     for dep, status in deps.items():
         if isinstance(status, bool):
-            status_str = "✅" if status else "❌"
+            status_str = "OK" if status else "FAIL"
             print(f"  {status_str} {dep}")
     
-    print("\n🛠️  测试数据库初始化...")
+    print("\n测试数据库初始化...")
     try:
         # 使用测试数据文件
         test_data_file = "test_CalcE_data.json"
@@ -165,19 +165,19 @@ if __name__ == "__main__":
             os.remove(test_data_file)
         
         dm = init_database(test_data_file)
-        print(f"✅ 数据管理器初始化成功，实例ID: {id(dm)}")
+        print(f"数据管理器初始化成功，实例ID: {id(dm)}")
         
         # 检查工艺设计数据
         if "process_design" in dm.data:
             materials_count = len(dm.data["process_design"].get("materials", []))
-            print(f"✅ 工艺设计数据存在，包含 {materials_count} 个物料")
+            print(f"工艺设计数据存在，包含 {materials_count} 个物料")
         
         # 清理测试文件
         if os.path.exists(test_data_file):
             os.remove(test_data_file)
-            print(f"🧹 已清理测试文件: {test_data_file}")
+            print(f"已清理测试文件: {test_data_file}")
             
     except Exception as e:
-        print(f"❌ 数据库初始化测试失败: {e}")
+        print(f"数据库初始化测试失败: {e}")
     
-    print("\n🚀 CalcE 模块初始化完成")
+    print("\nCalcE 模块初始化完成")

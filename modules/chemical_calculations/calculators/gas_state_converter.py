@@ -56,7 +56,7 @@ class 气体标态转压缩态(QWidget):
         left_layout.addWidget(description)
         
         # 2. 输入参数组 - 使用GridLayout实现整齐的布局
-        input_group = QGroupBox("📥 输入参数")
+        input_group = QGroupBox("输入参数")
         input_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -266,7 +266,7 @@ class 气体标态转压缩态(QWidget):
         left_layout.addWidget(input_group)
         
         # 3. 计算按钮
-        calculate_btn = QPushButton("🧮 转换状态")
+        calculate_btn = QPushButton("转换状态")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.convert_gas_state)
         calculate_btn.setStyleSheet("""
@@ -287,7 +287,7 @@ class 气体标态转压缩态(QWidget):
         
         # 4. 下载按钮布局
         download_layout = QHBoxLayout()
-        download_txt_btn = QPushButton("📄 下载计算书(TXT)")
+        download_txt_btn = QPushButton("下载计算书(TXT)")
         download_txt_btn.clicked.connect(self.download_txt_report)
         download_txt_btn.setStyleSheet("""
             QPushButton {
@@ -303,7 +303,7 @@ class 气体标态转压缩态(QWidget):
             }
         """)
 
-        download_pdf_btn = QPushButton("📊 下载计算书(PDF)")
+        download_pdf_btn = QPushButton("下载计算书(PDF)")
         download_pdf_btn.clicked.connect(self.generate_pdf_report)
         download_pdf_btn.setStyleSheet("""
             QPushButton {
@@ -333,7 +333,7 @@ class 气体标态转压缩态(QWidget):
         right_layout.setSpacing(15)
         
         # 结果显示
-        self.result_group = QGroupBox("📤 转换结果")
+        self.result_group = QGroupBox("转换结果")
         self.result_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -465,7 +465,7 @@ class 气体标态转压缩态(QWidget):
             
             # 显示结果 - 使用格式化的输出
             result = f"""═══════════
-📋 输入参数
+ 输入参数
 ═══════════
 
 标准状态:
@@ -479,7 +479,7 @@ class 气体标态转压缩态(QWidget):
 • 压缩因子 Z: {compress_factor}
 
 ═══════════
-📊 转换结果
+转换结果
 ═══════════
 
 流量转换:
@@ -500,7 +500,7 @@ class 气体标态转压缩态(QWidget):
             result += f"""
 
 ═══════════
-🧮 计算公式
+计算公式
 ═══════════
 
 Q_actual = Q_std × (P_std / P_actual) × (T_actual / T_std) × Z
@@ -516,7 +516,7 @@ Q_actual = Q_std × (P_std / P_actual) × (T_actual / T_std) × Z
 = {actual_flow:.2f} m³/h
 
 ═══════════
-💡 应用说明
+应用说明
 ═══════════
 
 • 标准状态通常指 0°C, 101.325 kPa
@@ -687,7 +687,7 @@ Q_actual = Q_std × (P_std / P_actual) × (T_actual / T_std) × Z
             
             # 添加工程信息部分
             report += f"""══════════
-📋 工程信息
+ 工程信息
 ══════════
 
     公司名称: {project_info['company_name']}
@@ -697,7 +697,7 @@ Q_actual = Q_std × (P_std / P_actual) × (T_actual / T_std) × Z
     计算日期: {datetime.now().strftime('%Y-%m-%d')}
 
 ══════════
-🏷️ 计算书标识
+计算书标识
 ══════════
 
     计算书编号: {project_info['report_number']}
@@ -705,7 +705,7 @@ Q_actual = Q_std × (P_std / P_actual) × (T_actual / T_std) × Z
     状态: 正式计算书
 
 ══════════
-📝 备注说明
+备注说明
 ══════════
 
     1. 本计算书基于理想气体状态方程及相关标准规范
@@ -877,46 +877,8 @@ Q_actual = Q_std × (P_std / P_actual) × (T_actual / T_std) × Z
 
     def process_content_for_pdf(self, content):
         """处理内容，使其适合PDF显示"""
-        # 替换表情图标为文字描述
-        replacements = {
-            "📋": "",
-            "📊": "", 
-            "🧮": "",
-            "💡": "",
-            "📤": "",
-            "📥": "",
-            "⚠️": "",
-            "🔬": "",
-            "📏": "",
-            "🌪️": "",
-            "💨": "",
-            "🌫️": "",
-            "⚡": "",
-            "💧": "",
-            "🔄": "",
-            "🌬️": "",
-            "🔧": "",
-            "🚒": "",
-            "⚖️": "",
-            "🧊": "",
-            "🧪": "",
-            "🔩": "",
-            "🛡️": "",
-            "🔥": "",
-            "⚗️": "",
-            "🚨": "",
-            "⚛️": "",
-            "❄️": "",
-            "📄": "",
-            "📊": "",
-            "•": "",
-            "🏷️": "",
-            "📝": ""
-        }
-        
-        # 替换表情图标
-        for emoji, text in replacements.items():
-            content = content.replace(emoji, text)
+        # 清理bullet符号
+        content = content.replace("•", "")
         
         # 替换单位符号
         content = content.replace("m³", "m3")

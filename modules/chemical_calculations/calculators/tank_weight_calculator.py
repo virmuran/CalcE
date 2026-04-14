@@ -54,7 +54,7 @@ class 罐体重量(QWidget):
         left_layout.addWidget(description)
         
         # 2. 罐体类型选择
-        type_group = QGroupBox("🏺 罐体类型")
+        type_group = QGroupBox("罐体类型")
         type_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -115,7 +115,7 @@ class 罐体重量(QWidget):
         left_layout.addWidget(type_group)
         
         # 3. 输入参数组 - 使用GridLayout实现整齐的布局
-        input_group = QGroupBox("📏 尺寸参数")
+        input_group = QGroupBox("尺寸参数")
         input_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -315,7 +315,7 @@ class 罐体重量(QWidget):
         left_layout.addWidget(input_group)
         
         # 4. 材料参数组
-        material_group = QGroupBox("🔩 材料参数")
+        material_group = QGroupBox("材料参数")
         material_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -400,7 +400,7 @@ class 罐体重量(QWidget):
         left_layout.addWidget(material_group)
         
         # 5. 计算按钮
-        calculate_btn = QPushButton("🧮 计算重量")
+        calculate_btn = QPushButton("计算重量")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate_weight)
         calculate_btn.setStyleSheet("""
@@ -421,7 +421,7 @@ class 罐体重量(QWidget):
         
         # 6. 下载按钮布局
         download_layout = QHBoxLayout()
-        download_txt_btn = QPushButton("📄 下载计算书(TXT)")
+        download_txt_btn = QPushButton("下载计算书(TXT)")
         download_txt_btn.clicked.connect(self.download_txt_report)
         download_txt_btn.setStyleSheet("""
             QPushButton {
@@ -437,7 +437,7 @@ class 罐体重量(QWidget):
             }
         """)
 
-        download_pdf_btn = QPushButton("📊 下载计算书(PDF)")
+        download_pdf_btn = QPushButton("下载计算书(PDF)")
         download_pdf_btn.clicked.connect(self.generate_pdf_report)
         download_pdf_btn.setStyleSheet("""
             QPushButton {
@@ -458,7 +458,7 @@ class 罐体重量(QWidget):
         left_layout.addLayout(download_layout)
         
         # 7. 清空按钮
-        clear_btn = QPushButton("🗑️ 清空输入")
+        clear_btn = QPushButton("清空输入")
         clear_btn.clicked.connect(self.clear_inputs)
         clear_btn.setStyleSheet("""
             QPushButton {
@@ -485,7 +485,7 @@ class 罐体重量(QWidget):
         right_layout.setSpacing(15)
         
         # 结果显示
-        self.result_group = QGroupBox("📊 计算结果")
+        self.result_group = QGroupBox("计算结果")
         self.result_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -899,7 +899,7 @@ class 罐体重量(QWidget):
         total_weight = tank_weight + liquid_weight
         
         result_text = f"""═══════════
-📋 输入参数
+ 输入参数
 ══════════
 
     罐体类型: {tank_type}
@@ -907,7 +907,7 @@ class 罐体重量(QWidget):
     液体密度: {liquid_density:,} kg/m³
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     重量分析:
@@ -921,7 +921,7 @@ class 罐体重量(QWidget):
     • 总重量: {total_weight/1000:,.3f} 吨
 
 ══════════
-💡 设计建议
+设计建议
 ══════════
 
     • 总重量: {total_weight/1000:,.2f} 吨
@@ -930,7 +930,7 @@ class 罐体重量(QWidget):
     • 运输时需考虑最大总重量
 
 ══════════
-📝 备注说明
+备注说明
 ══════════
 
     • 计算结果为理论值，实际重量可能因制造工艺、附件等因素有所不同
@@ -1119,7 +1119,7 @@ class 罐体重量(QWidget):
             
             # 添加工程信息部分
             report += f"""══════════
-📋 工程信息
+ 工程信息
 ══════════
 
     公司名称: {project_info['company_name']}
@@ -1129,7 +1129,7 @@ class 罐体重量(QWidget):
     计算日期: {datetime.now().strftime('%Y-%m-%d')}
 
 ══════════
-🏷️ 计算书标识
+计算书标识
 ══════════
 
     计算书编号: {project_info['report_number']}
@@ -1137,7 +1137,7 @@ class 罐体重量(QWidget):
     状态: 正式计算书
 
 ══════════
-📝 备注说明
+备注说明
 ══════════
 
     1. 本计算书基于几何模型及材料密度计算
@@ -1310,29 +1310,11 @@ class 罐体重量(QWidget):
 
     def process_content_for_pdf(self, content):
         """处理内容，使其适合PDF显示"""
-        # 替换表情图标为文字描述
-        replacements = {
-            "📋": "",
-            "📊": "", 
-            "🧮": "",
-            "💡": "",
-            "📤": "",
-            "📏": "",
-            "🔩": "",
-            "🏺": "",
-            "📝": "",
-            "🏷️": "",
-            "•": ""
-        }
-        
-        # 替换表情图标
-        for emoji, text in replacements.items():
-            content = content.replace(emoji, text)
-        
+        # 清理bullet符号
+        content = content.replace("•", "")
         # 替换单位符号
         content = content.replace("m³", "m3")
         content = content.replace("kg/m³", "kg/m3")
-        
         return content
 
 

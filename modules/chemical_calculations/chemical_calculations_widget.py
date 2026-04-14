@@ -96,7 +96,7 @@ class ChemicalCalculationsWidget(QWidget):
         left_layout.setSpacing(15)
         
         # 主标题
-        title_label = QLabel("🔬 工程计算")
+        title_label = QLabel("工程计算")
         title_label.setFont(QFont("Arial", 16, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setStyleSheet("color: #2c3e50; margin: 0px; padding: 10px;")
@@ -124,42 +124,42 @@ class ChemicalCalculationsWidget(QWidget):
         # 定义计算器页面配置
         page_configs = [
             # (显示名称, 计算器类名, 模块文件名, 是否支持data_manager)
-            ("🧹 篮式过滤器", "篮式过滤器", "basket_filter_design_calculator", True),
-            ("📊 压降计算", "压降计算", "pressure_drop_calculator", True),
-            ("📏 管径计算", "管径计算", "pipe_diameter_calculator", True),
-            ("📐 管道跨距", "管道跨距", "pipe_span_calculator", True),
-            ("📏 管道间距", "管道间距", "pipe_spacing_calculator", True),
-            ("🔄 管道补偿", "管道补偿", "pipe_compensation_calculator", True),
-            ("📏 管道壁厚", "管道壁厚", "pipe_thickness_calculator", True),
-            ("💨 蒸汽管径流量", "蒸汽管径流量", "steam_pipe_calculator", True),
-            ("🌬️ 气体标态转压缩态", "气体标态转压缩态", "gas_state_converter", True),
-            # ("🔧 压力管道定义", "压力管道定义", "pressure_pipe_definition", False),
-            # ("🚒 消火栓计算", "消火栓计算", "fire_hydrant_calculator", False),
-            ("🔥 换热器计算", "换热器计算", "heat_exchanger_calculator", True),
-            ("🔥 换热器面积", "换热器面积", "heat_exchanger_area_calculator", True),
-            ("⚖️ 罐体重量", "罐体重量", "tank_weight_calculator", False),
-            ("📏 设备尺寸计算", "设备尺寸计算", "vessel_sizing_calculator", True),
-            ("🧊 保温厚度计算", "InsulationThicknessCalculator", "insulation_thickness_calculator", False),
-            # ("🔩 法兰查询", "FlangeSizeCalculator", "flange_size_calculator", False),
-            # ("🛡️ 安全阀计算", "SafetyValveCalculator", "safety_valve_calculator", False),
-            # ("🔥 长输蒸汽管道温降计算", "LongDistanceSteamPipeCalculator", "long_distance_steam_pipe_calculator", False),
-            # ("🚨 泄压面积计算", "ReliefAreaCalculator", "relief_area_calculator", False),
-            # ("🌬️ 风机功率计算", "FanPowerCalculator", "fan_power_calculator", False),
-            ("🌫️ 水蒸气性质", "SteamPropertyCalculator", "steam_property_calculator", False),
-            # ("🧪 纯物质物性查询", "PureSubstanceProperties", "pure_substance_properties", False),
-            # ("💨 湿空气计算", "WetAirCalculator", "wet_air_calculator", False),
-            # ("🔥 混合液体闪点", "MixedLiquidFlashPointCalculator", "mixed_liquid_flash_point_calculator", False),
-            # ("⚛️ EOS状态方程", "EOSCalculator", "eos_calculator", False),
-            # ("⚗️ 汽液平衡(活度系数)", "VLEActivityCoefficientCalculator", "vle_activity_coefficient_calculator", False),
-            # ("🌫️ 气体混合物(EOS)", "GasMixturePropertiesCalculator", "gas_mixture_properties_calculator", False),
-            # ("⚠️ 腐蚀查询", "CorrosionDataQuery", "corrosion_data_query", False),
-            # ("🧪 固体溶解度", "SolidSolubilityCalculator", "solid_solubility_calculator", False),
-            # ("❄️ 制冷剂物性", "RefrigerantPropertiesCalculator", "refrigerant_properties_calculator", False),
-            # ("🔄 制冷循环计算", "RefrigerationCycleCalculator", "refrigeration_cycle_calculator", False),
-            # ("⚠️ 危险化学品", "HazardousChemicalsQuery", "hazardous_chemicals_query", False),
-            # ("⚡ 离心泵功率计算", "CentrifugalPumpCalculator", "pump_power_calculator", False),
-            # ("💧 离心泵NPSHa计算", "NPSHaCalculator", "npsha_calculator", False),
-            # ("🌪️ 可压缩流体压降", "CompressibleFlowPressureDrop", "compressible_flow_pressure_drop", False),
+            ("篮式过滤器", "篮式过滤器", "basket_filter_design_calculator", True),
+            ("压降计算", "压降计算", "pressure_drop_calculator", True),
+            ("管径计算", "管径计算", "pipe_diameter_calculator", True),
+            ("管道跨距", "管道跨距", "pipe_span_calculator", True),
+            ("管道间距", "管道间距", "pipe_spacing_calculator", True),
+            ("管道补偿", "管道补偿", "pipe_compensation_calculator", True),
+            ("管道壁厚", "管道壁厚", "pipe_thickness_calculator", True),
+            ("蒸汽管径流量", "蒸汽管径流量", "steam_pipe_calculator", True),
+            ("气体标态转压缩态", "气体标态转压缩态", "gas_state_converter", True),
+            ("压力管道定义", "压力管道定义", "pressure_pipe_definition", False),
+            ("消火栓计算", "消火栓计算", "fire_hydrant_calculator", False),
+            ("换热器计算", "换热器计算", "heat_exchanger_calculator", True),
+            ("换热器面积", "换热器面积", "heat_exchanger_area_calculator", True),
+            ("罐体重量", "罐体重量", "tank_weight_calculator", False),
+            ("设备尺寸计算", "设备尺寸计算", "vessel_sizing_calculator", True),
+            ("保温厚度计算", "InsulationThicknessCalculator", "insulation_thickness_calculator", False),
+            ("法兰查询", "FlangeSizeCalculator", "flange_size_calculator", False),
+            ("安全阀计算", "SafetyValveCalculator", "safety_valve_calculator", False),
+            ("长输蒸汽管道温降计算", "LongDistanceSteamPipeCalculator", "long_distance_steam_pipe_calculator", False),
+            ("泄压面积计算", "ReliefAreaCalculator", "relief_area_calculator", False),
+            ("风机功率计算", "FanPowerCalculator", "fan_power_calculator", False),
+            ("水蒸气性质", "SteamPropertyCalculator", "steam_property_calculator", False),
+            ("纯物质物性查询", "PureSubstanceProperties", "pure_substance_properties", False),
+            ("湿空气计算", "WetAirCalculator", "wet_air_calculator", False),
+            ("混合液体闪点", "MixedLiquidFlashPointCalculator", "mixed_liquid_flash_point_calculator", False),
+            ("EOS状态方程", "EOSCalculator", "eos_calculator", False),
+            ("汽液平衡(活度系数)", "VLEActivityCoefficientCalculator", "vle_activity_coefficient_calculator", False),
+            ("气体混合物(EOS)", "GasMixturePropertiesCalculator", "gas_mixture_properties_calculator", False),
+            ("腐蚀查询", "CorrosionDataQuery", "corrosion_data_query", False),
+            ("固体溶解度", "SolidSolubilityCalculator", "solid_solubility_calculator", False),
+            ("制冷剂物性", "RefrigerantPropertiesCalculator", "refrigerant_properties_calculator", False),
+            ("制冷循环计算", "RefrigerationCycleCalculator", "refrigeration_cycle_calculator", False),
+            ("危险化学品", "HazardousChemicalsQuery", "hazardous_chemicals_query", False),
+            ("离心泵功率计算", "CentrifugalPumpCalculator", "pump_power_calculator", False),
+            ("离心泵NPSHa计算", "NPSHaCalculator", "npsha_calculator", False),
+            ("可压缩流体压降", "CompressibleFlowPressureDrop", "compressible_flow_pressure_drop", False),
         ]
         
         # 添加所有页面
@@ -170,7 +170,7 @@ class ChemicalCalculationsWidget(QWidget):
                 self.add_page(title, widget)
                 success_count += 1
             except Exception as e:
-                print(f"❌ {title} 页面创建失败: {e}")
+                print(f"FAIL: {title} 页面创建失败: {e}")
                 # 创建错误页面
                 error_widget = self.create_error_widget(title, str(e))
                 self.add_page(f"{title} (错误)", error_widget)
@@ -215,7 +215,7 @@ class ChemicalCalculationsWidget(QWidget):
         widget = QWidget()
         layout = QVBoxLayout(widget)
         
-        title_label = QLabel(f"🛠️ {calculator_name}")
+        title_label = QLabel(f"{calculator_name}")
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setStyleSheet("font-size: 16px; font-weight: bold; color: #3498db; padding: 20px;")
         layout.addWidget(title_label)
@@ -232,7 +232,7 @@ class ChemicalCalculationsWidget(QWidget):
         widget = QWidget()
         layout = QVBoxLayout(widget)
         
-        title_label = QLabel("🔧 工程计算模块")
+        title_label = QLabel("工程计算模块")
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setStyleSheet("font-size: 18px; font-weight: bold; color: #2c3e50; padding: 30px;")
         layout.addWidget(title_label)
@@ -257,7 +257,7 @@ class ChemicalCalculationsWidget(QWidget):
         widget = QWidget()
         layout = QVBoxLayout(widget)
         
-        error_label = QLabel(f"❌ {title}\n加载失败\n错误: {error_msg}")
+        error_label = QLabel(f"{title}\n加载失败\n错误: {error_msg}")
         error_label.setAlignment(Qt.AlignCenter)
         error_label.setStyleSheet("color: red; font-size: 14px; padding: 20px;")
         layout.addWidget(error_label)

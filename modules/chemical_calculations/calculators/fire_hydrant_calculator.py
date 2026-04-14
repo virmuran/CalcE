@@ -21,7 +21,7 @@ class 消火栓计算(QWidget):
         main_layout.setSpacing(15)
         
         # 标题
-        title_label = QLabel("🚒 消火栓系统计算")
+        title_label = QLabel("消火栓系统计算")
         title_label.setFont(QFont("Arial", 14, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setStyleSheet("color: #2c3e50; margin: 10px;")
@@ -32,11 +32,11 @@ class 消火栓计算(QWidget):
         
         # 添加计算标签页
         self.calculation_tab = self.create_calculation_tab()
-        self.tab_widget.addTab(self.calculation_tab, "📊 消火栓计算")
+        self.tab_widget.addTab(self.calculation_tab, "消火栓计算")
         
         # 添加标准说明标签页
         self.standard_tab = self.create_standard_tab()
-        self.tab_widget.addTab(self.standard_tab, "📖 消防规范")
+        self.tab_widget.addTab(self.standard_tab, "消防规范")
         
         main_layout.addWidget(self.tab_widget)
     
@@ -46,7 +46,7 @@ class 消火栓计算(QWidget):
         layout = QVBoxLayout(tab)
         
         # 建筑信息组
-        building_group = QGroupBox("🏢 建筑信息")
+        building_group = QGroupBox("建筑信息")
         building_layout = QVBoxLayout(building_group)
         
         # 建筑类型和高度
@@ -93,7 +93,7 @@ class 消火栓计算(QWidget):
         layout.addWidget(building_group)
         
         # 消火栓参数组
-        hydrant_group = QGroupBox("💧 消火栓参数")
+        hydrant_group = QGroupBox("消火栓参数")
         hydrant_layout = QVBoxLayout(hydrant_group)
         
         # 基本参数
@@ -162,12 +162,12 @@ class 消火栓计算(QWidget):
         
         # 按钮组
         button_layout = QHBoxLayout()
-        self.calculate_btn = QPushButton("🚀 计算消火栓系统")
+        self.calculate_btn = QPushButton("计算消火栓系统")
         self.calculate_btn.clicked.connect(self.calculate_hydrant_system)
         self.calculate_btn.setStyleSheet("QPushButton { background-color: #e74c3c; color: white; font-weight: bold; }")
         button_layout.addWidget(self.calculate_btn)
         
-        self.clear_btn = QPushButton("🗑️ 清空")
+        self.clear_btn = QPushButton("清空")
         self.clear_btn.clicked.connect(self.clear_inputs)
         self.clear_btn.setStyleSheet("QPushButton { background-color: #95a5a6; color: white; }")
         button_layout.addWidget(self.clear_btn)
@@ -175,7 +175,7 @@ class 消火栓计算(QWidget):
         layout.addLayout(button_layout)
         
         # 结果显示组
-        result_group = QGroupBox("📈 计算结果")
+        result_group = QGroupBox("计算结果")
         result_layout = QVBoxLayout(result_group)
         
         self.result_text = QTextEdit()
@@ -186,7 +186,7 @@ class 消火栓计算(QWidget):
         layout.addWidget(result_group)
         
         # 消火栓配置表
-        config_group = QGroupBox("🔧 推荐配置")
+        config_group = QGroupBox("推荐配置")
         config_layout = QVBoxLayout(config_group)
         
         self.config_table = QTableWidget()
@@ -231,18 +231,18 @@ class 消火栓计算(QWidget):
     def get_standard_html(self):
         """获取标准说明HTML内容"""
         return """
-        <h2>📚 消火栓系统设计规范</h2>
+        <h2>消火栓系统设计规范</h2>
         
-        <h3>🔍 设计依据</h3>
+        <h3>设计依据</h3>
         <ul>
             <li>GB 50016-2014《建筑设计防火规范》</li>
             <li>GB 50974-2014《消防给水及消火栓系统技术规范》</li>
             <li>GB 50084-2017《自动喷水灭火系统设计规范》</li>
         </ul>
         
-        <h3>💧 消防用水量标准</h3>
+        <h3>消防用水量标准</h3>
         
-        <h4>🏢 民用建筑</h4>
+        <h4>民用建筑</h4>
         <table border="1" style="border-collapse: collapse; width: 100%;">
         <tr style="background-color: #3498db; color: white;">
             <th style="padding: 8px;">建筑类型</th>
@@ -274,7 +274,7 @@ class 消火栓计算(QWidget):
         </tr>
         </table>
         
-        <h4>🏭 工业建筑</h4>
+        <h4>工业建筑</h4>
         <table border="1" style="border-collapse: collapse; width: 100%;">
         <tr style="background-color: #e74c3c; color: white;">
             <th style="padding: 8px;">火灾危险等级</th>
@@ -308,7 +308,7 @@ class 消火栓计算(QWidget):
         </tr>
         </table>
         
-        <h3>📏 消火栓布置要求</h3>
+        <h3>消火栓布置要求</h3>
         <ul>
             <li><b>室内消火栓间距：</b>高层建筑≤30m，其他建筑≤50m</li>
             <li><b>保护半径：</b>水带长度×0.8 + 充实水柱水平投影</li>
@@ -317,7 +317,7 @@ class 消火栓计算(QWidget):
             <li><b>水枪流量：</b>≥5L/s</li>
         </ul>
         
-        <h3>🔧 管道设计要求</h3>
+        <h3>管道设计要求</h3>
         <ul>
             <li><b>管材：</b>热镀锌钢管、不锈钢管等</li>
             <li><b>管径：</b>室内立管≥DN100，水平干管≥DN150</li>
@@ -325,7 +325,7 @@ class 消火栓计算(QWidget):
             <li><b>工作压力：</b>≤2.4MPa</li>
         </ul>
         
-        <h3>⚠️ 注意事项</h3>
+        <h3>注意事项</h3>
         <p>本计算工具仅供参考，实际工程设计应遵循最新国家标准和当地消防部门的要求。重要项目应聘请专业消防设计单位进行设计。</p>
         """
     
@@ -540,7 +540,7 @@ class 消火栓计算(QWidget):
     def display_results(self, total_flow, pipe_results, pump_results, tank_capacity, hydrant_count):
         """显示计算结果"""
         result_text = f"""
-        <h3>🚒 消火栓系统计算结果</h3>
+        <h3>消火栓系统计算结果</h3>
         
         <table border="1" style="border-collapse: collapse; width: 100%;">
         <tr style="background-color: #f8f9fa;">
@@ -563,7 +563,7 @@ class 消火栓计算(QWidget):
             <td style="padding: 8px; {'color: red;' if pipe_results['velocity'] > 2.5 else 'color: green;'}">
                 {pipe_results['velocity']:.2f} m/s
             </td>
-            <td style="padding: 8px;">{'⚠️ 流速偏高' if pipe_results['velocity'] > 2.5 else '✅ 流速正常'}</td>
+            <td style="padding: 8px;">{'流速偏高' if pipe_results['velocity'] > 2.5 else '流速正常'}</td>
         </tr>
         <tr>
             <td style="padding: 8px; font-weight: bold;">水泵扬程</td>
@@ -587,7 +587,7 @@ class 消火栓计算(QWidget):
         </tr>
         </table>
         
-        <h4>📋 设计建议</h4>
+        <h4> 设计建议</h4>
         <ul>
             <li>主管道建议采用DN{pipe_results['recommended_diameter']}管道</li>
             <li>水泵选型应满足{pump_results['required_head']:.0f}m扬程和{total_flow:.1f}L/s流量要求</li>

@@ -43,7 +43,7 @@ class DataManager(QObject):
             data_file = self._get_default_data_file_path()
         
         self.data_file = data_file
-        print(f"📁 数据文件路径: {self.data_file}")
+        print(f"数据文件路径: {self.data_file}")
         self.data = self._load_or_create_data()
         
         DataManager._initialized = True
@@ -80,7 +80,7 @@ class DataManager(QObject):
             try:
                 with open(self.data_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
-                    print("✅ 数据文件加载成功")
+                    print("数据文件加载成功")
                     
                     # 迁移旧版本的工程信息数据
                     data = self._migrate_project_info_data(data)
@@ -93,10 +93,10 @@ class DataManager(QObject):
                     
                     return data
             except (json.JSONDecodeError, FileNotFoundError, Exception) as e:
-                print(f"❌ 加载数据文件失败: {e}")
+                print(f"加载数据文件失败: {e}")
         
         # 如果文件不存在或加载失败，创建默认数据
-        print("📝 创建默认数据文件")
+        print("创建默认数据文件")
         default_data = self.get_default_data()
         self._save_data(default_data)
         return default_data
@@ -205,10 +205,10 @@ class DataManager(QObject):
             # 使用自定义编码器处理datetime对象
             with open(self.data_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=4, cls=JSONEncoder)
-            print("✅ 数据保存成功")
+            print("数据保存成功")
             return True
         except Exception as e:
-            print(f"❌ 保存数据失败: {e}")
+            print(f"保存数据失败: {e}")
             return False
 
     # ==================== 工程信息存储方法（新格式）====================
@@ -339,15 +339,15 @@ class DataManager(QObject):
             if existing_idx >= 0:
                 # 更新现有设备
                 equipment_list[existing_idx] = equipment_data
-                print(f"🔄 更新设备: {eq_id}")
+                print(f"更新设备: {eq_id}")
             else:
                 # 添加新设备
                 equipment_list.append(equipment_data)
-                print(f"✅ 添加设备: {eq_id}")
+                print(f"添加设备: {eq_id}")
             
             return self._save_data()
         except Exception as e:
-            print(f"❌ 添加设备失败: {e}")
+            print(f"添加设备失败: {e}")
             traceback.print_exc()
             return False
     
@@ -362,13 +362,13 @@ class DataManager(QObject):
                     # 更新更新时间
                     equipment_list[i]["updated_at"] = datetime.now().isoformat()
                     
-                    print(f"🔄 更新设备: {equipment_id}")
+                    print(f"更新设备: {equipment_id}")
                     return self._save_data()
             
-            print(f"⚠️ 设备未找到: {equipment_id}")
+            print(f"设备未找到: {equipment_id}")
             return False
         except Exception as e:
-            print(f"❌ 更新设备失败: {e}")
+            print(f"更新设备失败: {e}")
             return False
     
     def delete_equipment(self, equipment_id: str) -> bool:
@@ -378,13 +378,13 @@ class DataManager(QObject):
             for i, eq in enumerate(equipment_list):
                 if eq.get("equipment_id") == equipment_id:
                     del equipment_list[i]
-                    print(f"🗑️ 删除设备: {equipment_id}")
+                    print(f"删除设备: {equipment_id}")
                     return self._save_data()
             
-            print(f"⚠️ 设备未找到: {equipment_id}")
+            print(f"设备未找到: {equipment_id}")
             return False
         except Exception as e:
-            print(f"❌ 删除设备失败: {e}")
+            print(f"删除设备失败: {e}")
             return False
     
     def get_equipment_by_id(self, equipment_id: str) -> Optional[Dict]:
@@ -441,7 +441,7 @@ class DataManager(QObject):
             materials_list.append(material_data)
             return self._save_data()
         except Exception as e:
-            print(f"❌ 添加物料失败: {e}")
+            print(f"添加物料失败: {e}")
             return False
     
     # ==================== MSDS相关方法 ====================
@@ -456,7 +456,7 @@ class DataManager(QObject):
             msds_list.append(msds_data)
             return self._save_data()
         except Exception as e:
-            print(f"❌ 添加MSDS文档失败: {e}")
+            print(f"添加MSDS文档失败: {e}")
             return False
     
     # ==================== 项目相关方法 ====================
@@ -471,7 +471,7 @@ class DataManager(QObject):
             projects_list.append(project_data)
             return self._save_data()
         except Exception as e:
-            print(f"❌ 添加项目失败: {e}")
+            print(f"添加项目失败: {e}")
             return False
     
     # ==================== 通用CRUD操作方法 ====================
@@ -912,7 +912,7 @@ class DataManager(QObject):
             
             return self._save_data()
         except Exception as e:
-            print(f"❌ 保存工艺流程图数据失败: {e}")
+            print(f"保存工艺流程图数据失败: {e}")
             return False
 
     def load_flow_diagram(self) -> dict:
@@ -927,6 +927,6 @@ class DataManager(QObject):
             
             return diagram_data
         except Exception as e:
-            print(f"❌ 加载工艺流程图数据失败: {e}")
+            print(f"加载工艺流程图数据失败: {e}")
             return {}
 

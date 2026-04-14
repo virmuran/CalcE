@@ -22,7 +22,7 @@ class ImportantDatesWidget(QWidget):
         main_layout = QVBoxLayout(self)
         
         # 标题
-        title_label = QLabel("📅 重要日期管理")
+        title_label = QLabel("重要日期管理")
         title_label.setFont(QFont("Microsoft YaHei", 14, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(title_label)
@@ -66,7 +66,7 @@ class ImportantDatesWidget(QWidget):
         input_layout.addWidget(self.anniversary_type_label)
         input_layout.addWidget(self.anniversary_type_combo)
         
-        add_btn = QPushButton("➕ 添加")
+        add_btn = QPushButton("添加")
         add_btn.clicked.connect(self.add_date)
         input_layout.addWidget(add_btn)
         
@@ -90,15 +90,15 @@ class ImportantDatesWidget(QWidget):
         # 操作按钮
         button_layout = QHBoxLayout()
         
-        edit_btn = QPushButton("✏️ 编辑")
+        edit_btn = QPushButton("编辑")
         edit_btn.clicked.connect(self.edit_date)
         button_layout.addWidget(edit_btn)
         
-        delete_btn = QPushButton("🗑️ 删除")
+        delete_btn = QPushButton("删除")
         delete_btn.clicked.connect(self.delete_date)
         button_layout.addWidget(delete_btn)
         
-        refresh_btn = QPushButton("🔄 刷新")
+        refresh_btn = QPushButton("刷新")
         refresh_btn.clicked.connect(self.refresh_all)
         button_layout.addWidget(refresh_btn)
         
@@ -116,7 +116,7 @@ class ImportantDatesWidget(QWidget):
         details_layout.addWidget(self.details_label)
         
         # 即将到来的日期
-        upcoming_group = QGroupBox("📊 即将到来的重要日期")
+        upcoming_group = QGroupBox("即将到来的重要日期")
         main_layout.addWidget(upcoming_group)
         
         upcoming_layout = QVBoxLayout(upcoming_group)
@@ -322,7 +322,7 @@ class ImportantDatesWidget(QWidget):
             if date_item["type"] == "birthday":
                 age = self.calculate_age(date_item["date"])
                 days_until = self.days_until_next_birthday(date_item["date"])
-                display_text = f"🎂 {date_item['name']} - {date_item['date']} ({age}岁)"
+                display_text = f"{date_item['name']} - {date_item['date']} ({age}岁)"
                 item = QListWidgetItem(display_text)
                 
                 # 颜色标记
@@ -337,7 +337,7 @@ class ImportantDatesWidget(QWidget):
                 days_passed = self.days_since_date(date_item["date"])
                 years = days_passed // 365
                 days_until = self.days_until_next_anniversary(date_item["date"])
-                display_text = f"💝 {date_item['name']} - {date_item['date']} ({years}周年)"
+                display_text = f"{date_item['name']} - {date_item['date']} ({years}周年)"
                 item = QListWidgetItem(display_text)
                 
                 # 颜色标记
@@ -406,7 +406,7 @@ class ImportantDatesWidget(QWidget):
         age = self.calculate_age(birthday["date"])
         days_until = self.days_until_next_birthday(birthday["date"])
         
-        details = f"<b>🎂 {birthday['name']}</b><br>"
+        details = f"<b>{birthday['name']}</b><br>"
         details += f"生日: {birthday['date']}<br>"
         details += f"当前年龄: {age} 岁<br>"
         details += f"下次生日: 还有 {days_until} 天<br>"
@@ -421,7 +421,7 @@ class ImportantDatesWidget(QWidget):
         months = (days_passed % 365) // 30
         days_until = self.days_until_next_anniversary(anniversary["date"])
         
-        details = f"<b>💝 {anniversary['name']}</b><br>"
+        details = f"<b>{anniversary['name']}</b><br>"
         details += f"日期: {anniversary['date']}<br>"
         details += f"类型: {anniversary.get('type', '个人')}<br>"
         details += f"已过去: {days_passed} 天 ({years}年{months}个月)<br>"
@@ -445,7 +445,7 @@ class ImportantDatesWidget(QWidget):
         
         upcoming_birthdays.sort(key=lambda x: x[1])
         if upcoming_birthdays:
-            upcoming_lines.append("<b>🎂 即将到来的生日:</b>")
+            upcoming_lines.append("<b>即将到来的生日:</b>")
             for name, days, age in upcoming_birthdays[:5]:
                 upcoming_lines.append(f"• {name}: 还有{days}天 ({age}岁)")
         
@@ -461,7 +461,7 @@ class ImportantDatesWidget(QWidget):
         if upcoming_anniversaries:
             if upcoming_lines:
                 upcoming_lines.append("")  # 添加空行分隔
-            upcoming_lines.append("<b>💝 即将到来的纪念日:</b>")
+            upcoming_lines.append("<b>即将到来的纪念日:</b>")
             for name, days, years in upcoming_anniversaries[:5]:
                 upcoming_lines.append(f"• {name}: 还有{days}天 ({years}周年)")
         

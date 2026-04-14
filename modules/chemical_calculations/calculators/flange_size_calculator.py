@@ -21,7 +21,7 @@ class FlangeSizeCalculator(QWidget):
         main_layout.setSpacing(15)
         
         # 标题
-        title_label = QLabel("🔩 法兰尺寸查询")
+        title_label = QLabel("法兰尺寸查询")
         title_label.setFont(QFont("Arial", 14, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setStyleSheet("color: #2c3e50; margin: 10px;")
@@ -32,15 +32,15 @@ class FlangeSizeCalculator(QWidget):
         
         # 添加查询标签页
         self.query_tab = self.create_query_tab()
-        self.tab_widget.addTab(self.query_tab, "🔍 尺寸查询")
+        self.tab_widget.addTab(self.query_tab, "尺寸查询")
         
         # 添加标准库标签页
         self.standard_tab = self.create_standard_tab()
-        self.tab_widget.addTab(self.standard_tab, "📚 标准库")
+        self.tab_widget.addTab(self.standard_tab, "标准库")
         
         # 添加选型指南标签页
         self.selection_tab = self.create_selection_tab()
-        self.tab_widget.addTab(self.selection_tab, "📋 选型指南")
+        self.tab_widget.addTab(self.selection_tab, " 选型指南")
         
         main_layout.addWidget(self.tab_widget)
     
@@ -50,7 +50,7 @@ class FlangeSizeCalculator(QWidget):
         layout = QVBoxLayout(tab)
         
         # 查询条件组
-        query_group = QGroupBox("🔍 查询条件")
+        query_group = QGroupBox("查询条件")
         query_layout = QVBoxLayout(query_group)
         
         # 法兰标准和类型
@@ -98,17 +98,17 @@ class FlangeSizeCalculator(QWidget):
         
         # 按钮组
         button_layout = QHBoxLayout()
-        self.query_btn = QPushButton("🚀 查询法兰尺寸")
+        self.query_btn = QPushButton("查询法兰尺寸")
         self.query_btn.clicked.connect(self.query_flange_size)
         self.query_btn.setStyleSheet("QPushButton { background-color: #34495e; color: white; font-weight: bold; }")
         button_layout.addWidget(self.query_btn)
         
-        self.bolt_calc_btn = QPushButton("🔧 螺栓计算")
+        self.bolt_calc_btn = QPushButton("螺栓计算")
         self.bolt_calc_btn.clicked.connect(self.bolt_calculation)
         self.bolt_calc_btn.setStyleSheet("QPushButton { background-color: #3498db; color: white; }")
         button_layout.addWidget(self.bolt_calc_btn)
         
-        self.clear_btn = QPushButton("🗑️ 清空")
+        self.clear_btn = QPushButton("清空")
         self.clear_btn.clicked.connect(self.clear_inputs)
         self.clear_btn.setStyleSheet("QPushButton { background-color: #95a5a6; color: white; }")
         button_layout.addWidget(self.clear_btn)
@@ -116,7 +116,7 @@ class FlangeSizeCalculator(QWidget):
         layout.addLayout(button_layout)
         
         # 基本尺寸组
-        basic_size_group = QGroupBox("📏 基本尺寸")
+        basic_size_group = QGroupBox("基本尺寸")
         basic_size_layout = QVBoxLayout(basic_size_group)
         
         self.basic_size_table = QTableWidget()
@@ -127,7 +127,7 @@ class FlangeSizeCalculator(QWidget):
         layout.addWidget(basic_size_group)
         
         # 螺栓尺寸组
-        bolt_size_group = QGroupBox("🔩 螺栓尺寸")
+        bolt_size_group = QGroupBox("螺栓尺寸")
         bolt_size_layout = QVBoxLayout(bolt_size_group)
         
         self.bolt_size_table = QTableWidget()
@@ -138,7 +138,7 @@ class FlangeSizeCalculator(QWidget):
         layout.addWidget(bolt_size_group)
         
         # 重量和材料组
-        weight_material_group = QGroupBox("⚖️ 重量和材料")
+        weight_material_group = QGroupBox("[2696]️ 重量和材料")
         weight_material_layout = QVBoxLayout(weight_material_group)
         
         self.weight_material_table = QTableWidget()
@@ -247,7 +247,7 @@ class FlangeSizeCalculator(QWidget):
         layout.addWidget(standard_table)
         
         # 压力等级对照
-        pressure_group = QGroupBox("📊 压力等级对照")
+        pressure_group = QGroupBox("压力等级对照")
         pressure_layout = QVBoxLayout(pressure_group)
         
         pressure_table = QTableWidget()
@@ -295,9 +295,9 @@ class FlangeSizeCalculator(QWidget):
     def get_selection_guide_html(self):
         """获取选型指南HTML内容"""
         return """
-        <h2>📋 法兰选型指南</h2>
+        <h2> 法兰选型指南</h2>
         
-        <h3>🔩 法兰类型选择</h3>
+        <h3>法兰类型选择</h3>
         
         <h4>1. 对焊法兰 (WN)</h4>
         <p><b>特点：</b>颈部与管道对焊连接，强度高，密封性好</p>
@@ -338,7 +338,7 @@ class FlangeSizeCalculator(QWidget):
             <li>检修口</li>
         </ul>
         
-        <h3>🔧 密封面形式选择</h3>
+        <h3>密封面形式选择</h3>
         
         <h4>1. 全平面 (FF)</h4>
         <p><b>特点：</b>密封面与法兰面平齐</p>
@@ -360,7 +360,7 @@ class FlangeSizeCalculator(QWidget):
         <p><b>特点：</b>金属环垫密封</p>
         <p><b>适用：</b>高温高压工况，Class600及以上</p>
         
-        <h3>📊 压力温度等级</h3>
+        <h3>压力温度等级</h3>
         
         <h4>压力-温度额定值</h4>
         <p>法兰的压力等级随温度升高而降低，选型时应根据最高工作温度确定许用压力。</p>
@@ -373,7 +373,7 @@ class FlangeSizeCalculator(QWidget):
             <li><b>低温钢：</b>低温工况(≤-20°C)</li>
         </ul>
         
-        <h3>⚠️ 选型注意事项</h3>
+        <h3>选型注意事项</h3>
         <ul>
             <li>考虑介质腐蚀性选择材料</li>
             <li>根据最高工作温度和压力确定压力等级</li>
@@ -383,7 +383,7 @@ class FlangeSizeCalculator(QWidget):
             <li>符合项目统一标准要求</li>
         </ul>
         
-        <h3>📖 参考标准</h3>
+        <h3>参考标准</h3>
         <ul>
             <li>HG/T 20592~20635 钢制管法兰、垫片、紧固件</li>
             <li>GB/T 9112~9124 钢制管法兰</li>
@@ -660,7 +660,7 @@ class FlangeSizeCalculator(QWidget):
             total_preload = preload * bolt_count
             
             result_text = f"""
-            <h3>🔩 螺栓计算报告</h3>
+            <h3>螺栓计算报告</h3>
             
             <table border="1" style="border-collapse: collapse; width: 100%;">
             <tr style="background-color: #f8f9fa;">
@@ -693,7 +693,7 @@ class FlangeSizeCalculator(QWidget):
             </tr>
             </table>
             
-            <h4>🔧 安装建议</h4>
+            <h4>安装建议</h4>
             <ul>
                 <li>使用扭矩扳手按十字交叉顺序紧固</li>
                 <li>最终扭矩值参考螺栓材料等级确定</li>

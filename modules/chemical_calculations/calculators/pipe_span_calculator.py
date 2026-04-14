@@ -145,7 +145,7 @@ class 管道跨距(QWidget):
         left_layout.addWidget(description)
         
         # 2. 输入参数组 - 使用GridLayout实现整齐的布局
-        input_group = QGroupBox("📥 输入参数")
+        input_group = QGroupBox("输入参数")
         input_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -321,7 +321,7 @@ class 管道跨距(QWidget):
         left_layout.addWidget(input_group)
         
         # 3. 计算按钮
-        calculate_btn = QPushButton("🧮 计算跨距")
+        calculate_btn = QPushButton("计算跨距")
         calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         calculate_btn.clicked.connect(self.calculate_span)
         calculate_btn.setStyleSheet("""
@@ -342,7 +342,7 @@ class 管道跨距(QWidget):
         
         # 4. 下载按钮布局
         download_layout = QHBoxLayout()
-        download_txt_btn = QPushButton("📄 下载计算书(TXT)")
+        download_txt_btn = QPushButton("下载计算书(TXT)")
         download_txt_btn.clicked.connect(self.download_txt_report)
         download_txt_btn.setStyleSheet("""
             QPushButton {
@@ -358,7 +358,7 @@ class 管道跨距(QWidget):
             }
         """)
 
-        download_pdf_btn = QPushButton("📊 下载计算书(PDF)")
+        download_pdf_btn = QPushButton("下载计算书(PDF)")
         download_pdf_btn.clicked.connect(self.generate_pdf_report)
         download_pdf_btn.setStyleSheet("""
             QPushButton {
@@ -388,7 +388,7 @@ class 管道跨距(QWidget):
         right_layout.setSpacing(15)
         
         # 结果显示
-        self.result_group = QGroupBox("📤 计算结果")
+        self.result_group = QGroupBox("计算结果")
         self.result_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -841,7 +841,7 @@ class 管道跨距(QWidget):
             
             # 显示结果
             result = f"""═══════════
-📋 输入参数
+ 输入参数
 ══════════
 
     管道参数:
@@ -860,7 +860,7 @@ class 管道跨距(QWidget):
     • 保温层密度: {insulation_density} kg/m³
 
 ══════════
-📊 计算结果
+计算结果
 ══════════
 
     重量计算:
@@ -879,7 +879,7 @@ class 管道跨距(QWidget):
     • 挠度利用率: {total_weight * recommended_span**4 / (384 * elastic_modulus * I) / max_deflection * 100:.1f}%
 
 ══════════
-🧮 计算公式
+计算公式
 ══════════
 
     应力限制跨距: L = √(8·σ·Z / w)
@@ -894,7 +894,7 @@ class 管道跨距(QWidget):
     δ_max = L/360 (最大允许挠度)
 
 ══════════
-💡 应用说明
+应用说明
 ══════════
 
     • 实际跨距应小于计算值，建议取 0.8-0.9 的安全系数
@@ -979,7 +979,7 @@ class 管道跨距(QWidget):
             
             # 添加工程信息部分
             report += f"""══════════
-📋 工程信息
+ 工程信息
 ══════════
 
     公司名称: {project_info['company_name']}
@@ -989,7 +989,7 @@ class 管道跨距(QWidget):
     计算日期: {datetime.now().strftime('%Y-%m-%d')}
 
 ══════════
-🏷️ 计算书标识
+计算书标识
 ══════════
 
     计算书编号: {project_info['report_number']}
@@ -997,7 +997,7 @@ class 管道跨距(QWidget):
     状态: 正式计算书
 
 ══════════
-📝 备注说明
+备注说明
 ══════════
 
     1. 本计算书基于结构力学原理及相关标准规范
@@ -1174,46 +1174,8 @@ class 管道跨距(QWidget):
 
     def process_content_for_pdf(self, content):
         """处理内容，使其适合PDF显示"""
-        # 替换表情图标为文字描述
-        replacements = {
-            "📋": "",
-            "📊": "", 
-            "🧮": "",
-            "💡": "",
-            "📤": "",
-            "📥": "",
-            "⚠️": "",
-            "🔬": "",
-            "📏": "",
-            "🌪️": "",
-            "💨": "",
-            "🌫️": "",
-            "⚡": "",
-            "💧": "",
-            "🔄": "",
-            "🌬️": "",
-            "🔧": "",
-            "🚒": "",
-            "⚖️": "",
-            "🧊": "",
-            "🧪": "",
-            "🔩": "",
-            "🛡️": "",
-            "🔥": "",
-            "⚗️": "",
-            "🚨": "",
-            "⚛️": "",
-            "❄️": "",
-            "📄": "",
-            "📊": "",
-            "•": "",
-            "🏷️": "",
-            "📝": ""
-        }
-        
-        # 替换表情图标
-        for emoji, text in replacements.items():
-            content = content.replace(emoji, text)
+        # 清理bullet符号
+        content = content.replace("•", "")
         
         # 替换单位符号
         content = content.replace("m³", "m3")

@@ -21,7 +21,7 @@ class CorrosionDataQuery(QWidget):
         main_layout.setSpacing(15)
         
         # 标题
-        title_label = QLabel("⚠️ 腐蚀数据查询")
+        title_label = QLabel("腐蚀数据查询")
         title_label.setFont(QFont("Arial", 14, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setStyleSheet("color: #2c3e50; margin: 10px;")
@@ -32,15 +32,15 @@ class CorrosionDataQuery(QWidget):
         
         # 添加查询标签页
         self.query_tab = self.create_query_tab()
-        self.tab_widget.addTab(self.query_tab, "🔍 腐蚀查询")
+        self.tab_widget.addTab(self.query_tab, "腐蚀查询")
         
         # 添加材料库标签页
         self.material_tab = self.create_material_tab()
-        self.tab_widget.addTab(self.material_tab, "📚 材料库")
+        self.tab_widget.addTab(self.material_tab, "材料库")
         
         # 添加腐蚀类型标签页
         self.corrosion_types_tab = self.create_corrosion_types_tab()
-        self.tab_widget.addTab(self.corrosion_types_tab, "🔬 腐蚀类型")
+        self.tab_widget.addTab(self.corrosion_types_tab, "腐蚀类型")
         
         main_layout.addWidget(self.tab_widget)
     
@@ -50,7 +50,7 @@ class CorrosionDataQuery(QWidget):
         layout = QVBoxLayout(tab)
         
         # 查询条件组
-        query_group = QGroupBox("🔍 查询条件")
+        query_group = QGroupBox("查询条件")
         query_layout = QVBoxLayout(query_group)
         
         # 材料选择
@@ -114,17 +114,17 @@ class CorrosionDataQuery(QWidget):
         
         # 按钮组
         button_layout = QHBoxLayout()
-        self.query_btn = QPushButton("🚀 查询腐蚀数据")
+        self.query_btn = QPushButton("查询腐蚀数据")
         self.query_btn.clicked.connect(self.query_corrosion_data)
         self.query_btn.setStyleSheet("QPushButton { background-color: #c0392b; color: white; font-weight: bold; }")
         button_layout.addWidget(self.query_btn)
         
-        self.advanced_query_btn = QPushButton("🔧 高级查询")
+        self.advanced_query_btn = QPushButton("高级查询")
         self.advanced_query_btn.clicked.connect(self.advanced_query)
         self.advanced_query_btn.setStyleSheet("QPushButton { background-color: #3498db; color: white; }")
         button_layout.addWidget(self.advanced_query_btn)
         
-        self.clear_btn = QPushButton("🗑️ 清空")
+        self.clear_btn = QPushButton("清空")
         self.clear_btn.clicked.connect(self.clear_inputs)
         self.clear_btn.setStyleSheet("QPushButton { background-color: #95a5a6; color: white; }")
         button_layout.addWidget(self.clear_btn)
@@ -132,7 +132,7 @@ class CorrosionDataQuery(QWidget):
         layout.addLayout(button_layout)
         
         # 结果显示组
-        result_group = QGroupBox("📈 查询结果")
+        result_group = QGroupBox("查询结果")
         result_layout = QVBoxLayout(result_group)
         
         self.result_text = QTextEdit()
@@ -143,7 +143,7 @@ class CorrosionDataQuery(QWidget):
         layout.addWidget(result_group)
         
         # 详细数据表
-        detail_group = QGroupBox("📋 详细数据")
+        detail_group = QGroupBox(" 详细数据")
         detail_layout = QVBoxLayout(detail_group)
         
         self.detail_table = QTableWidget()
@@ -256,7 +256,7 @@ class CorrosionDataQuery(QWidget):
     def get_corrosion_types_html(self):
         """获取腐蚀类型HTML内容"""
         return """
-        <h2>🔬 常见腐蚀类型</h2>
+        <h2>常见腐蚀类型</h2>
         
         <h3>1. 均匀腐蚀</h3>
         <p><b>特征：</b>整个金属表面均匀减薄</p>
@@ -298,7 +298,7 @@ class CorrosionDataQuery(QWidget):
         <p><b>原因：</b>机械磨损与化学腐蚀协同作用</p>
         <p><b>防护：</b>降低流速、选用耐磨材料</p>
         
-        <h3>📊 腐蚀速率等级</h3>
+        <h3>腐蚀速率等级</h3>
         <table border="1" style="border-collapse: collapse; width: 100%;">
         <tr style="background-color: #3498db; color: white;">
             <th style="padding: 8px;">腐蚀速率(mm/年)</th>
@@ -332,7 +332,7 @@ class CorrosionDataQuery(QWidget):
         </tr>
         </table>
         
-        <h3>📖 参考标准</h3>
+        <h3>参考标准</h3>
         <ul>
             <li>GB/T 10123-2001 金属和合金的腐蚀基本术语</li>
             <li>GB/T 18590-2001 金属和合金的腐蚀点蚀评定方法</li>
@@ -415,7 +415,7 @@ class CorrosionDataQuery(QWidget):
         
         if related_data:
             # 显示相关数据
-            result_text = f"<h3>🔍 相关腐蚀数据</h3>"
+            result_text = f"<h3>相关腐蚀数据</h3>"
             result_text += f"<p>未找到精确匹配，以下是相关数据：</p>"
             result_text += "<table border='1' style='border-collapse: collapse; width: 100%;'>"
             result_text += "<tr style='background-color: #f8f9fa;'><th>材料-介质</th><th>腐蚀速率(mm/年)</th><th>评级</th><th>说明</th></tr>"
@@ -455,7 +455,7 @@ class CorrosionDataQuery(QWidget):
         rate_color = self.get_rate_color(data["rate"])
         
         result_text = f"""
-        <h3>⚠️ 腐蚀数据查询结果</h3>
+        <h3>腐蚀数据查询结果</h3>
         
         <table border="1" style="border-collapse: collapse; width: 100%;">
         <tr style="background-color: #f8f9fa;">
@@ -490,17 +490,17 @@ class CorrosionDataQuery(QWidget):
         </tr>
         </table>
         
-        <h4>📝 说明与建议</h4>
+        <h4>说明与建议</h4>
         <p>{data['notes']}</p>
         """
         
         # 添加建议
         if data["rate"] < 0.05:
-            result_text += "<p style='color: green;'>✅ <b>建议：</b>该材料在此介质中耐蚀性良好，可以选用。</p>"
+            result_text += "<p style='color: green;'><b>建议：</b>该材料在此介质中耐蚀性良好，可以选用。</p>"
         elif data["rate"] < 0.125:
-            result_text += "<p style='color: orange;'>⚠️ <b>建议：</b>该材料在此介质中耐蚀性一般，需要定期检查和维护。</p>"
+            result_text += "<p style='color: orange;'><b>建议：</b>该材料在此介质中耐蚀性一般，需要定期检查和维护。</p>"
         else:
-            result_text += "<p style='color: red;'>❌ <b>建议：</b>该材料在此介质中耐蚀性差，不推荐使用，请选用其他材料。</p>"
+            result_text += "<p style='color: red;'><b>建议：</b>该材料在此介质中耐蚀性差，不推荐使用，请选用其他材料。</p>"
         
         self.result_text.setHtml(result_text)
     

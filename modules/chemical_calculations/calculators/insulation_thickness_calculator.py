@@ -301,7 +301,7 @@ class InsulationThicknessCalculator(QWidget):
         # 4. 按钮布局
         button_layout = QHBoxLayout()
         
-        self.calculate_btn = QPushButton("🧮 计算保温厚度")
+        self.calculate_btn = QPushButton("计算保温厚度")
         self.calculate_btn.setFont(QFont("Arial", 12, QFont.Bold))
         self.calculate_btn.clicked.connect(self.calculate)
         self.calculate_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -326,7 +326,7 @@ class InsulationThicknessCalculator(QWidget):
         # 5. 下载按钮布局
         download_layout = QHBoxLayout()
         
-        download_txt_btn = QPushButton("📄 下载计算书(TXT)")
+        download_txt_btn = QPushButton("下载计算书(TXT)")
         download_txt_btn.clicked.connect(self.download_txt_report)
         download_txt_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         download_txt_btn.setStyleSheet("""
@@ -343,7 +343,7 @@ class InsulationThicknessCalculator(QWidget):
             }
         """)
         
-        download_pdf_btn = QPushButton("📊 下载计算书(PDF)")
+        download_pdf_btn = QPushButton("下载计算书(PDF)")
         download_pdf_btn.clicked.connect(self.generate_pdf_report)
         download_pdf_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         download_pdf_btn.setStyleSheet("""
@@ -365,7 +365,7 @@ class InsulationThicknessCalculator(QWidget):
         left_layout.addLayout(download_layout)
         
         # 6. 清空按钮
-        clear_btn = QPushButton("🗑️ 清空输入")
+        clear_btn = QPushButton("清空输入")
         clear_btn.clicked.connect(self.clear_inputs)
         clear_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         clear_btn.setStyleSheet("""
@@ -1241,28 +1241,6 @@ class InsulationThicknessCalculator(QWidget):
     
     def process_content_for_pdf(self, content):
         """处理内容，使其适合PDF显示"""
-        # 替换表情图标为文字描述
-        replacements = {
-            "🧊": "",
-            "📋": "",
-            "📊": "", 
-            "🧮": "",
-            "💡": "",
-            "📤": "",
-            "📥": "",
-            "🏭": "",
-            "🧱": "",
-            "🌍": "",
-            "📈": "",
-            "🚀": "",
-            "🗑️": "",
-            "📄": "",
-            "📊": ""
-        }
-        
-        for emoji, text in replacements.items():
-            content = content.replace(emoji, text)
-        
         # 替换单位符号
         content = content.replace("m³", "m3")
         content = content.replace("kg/m³", "kg/m3")

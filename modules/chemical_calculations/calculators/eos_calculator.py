@@ -29,7 +29,7 @@ class EOSCalculator(QWidget):
         main_layout.setSpacing(15)
         
         # 标题
-        title_label = QLabel("⚛️ 状态方程计算")
+        title_label = QLabel("状态方程计算")
         title_label.setFont(QFont("Arial", 14, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setStyleSheet("color: #2c3e50; margin: 10px;")
@@ -43,7 +43,7 @@ class EOSCalculator(QWidget):
         
         # 如果 numpy 不可用，显示警告
         if not NUMPY_AVAILABLE:
-            warning_label = QLabel("⚠️ 警告: numpy 库未安装，部分高级功能受限")
+            warning_label = QLabel("警告: numpy 库未安装，部分高级功能受限")
             warning_label.setStyleSheet("color: #e74c3c; font-weight: bold; padding: 10px; background-color: #ffeaa7; border-radius: 5px;")
             warning_label.setWordWrap(True)
             main_layout.addWidget(warning_label)

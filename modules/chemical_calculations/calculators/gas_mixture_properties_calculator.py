@@ -23,7 +23,7 @@ class GasMixturePropertiesCalculator(QWidget):
         main_layout.setSpacing(15)
         
         # 标题
-        title_label = QLabel("🌫️ 气体混合物物性计算")
+        title_label = QLabel("气体混合物物性计算")
         title_label.setFont(QFont("Arial", 14, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setStyleSheet("color: #2c3e50; margin: 10px;")
