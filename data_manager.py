@@ -637,25 +637,6 @@ class DataManager(QObject):
     def delete_note(self, note_id):
         self._delete_item("notes", note_id)
     
-    # ==================== 书签相关方法 ====================
-    def get_bookmarks(self):
-        return self._get_items("bookmarks")
-    
-    def add_bookmark(self, title, url, folder="默认"):
-        bookmark = {
-            "title": title,
-            "url": url,
-            "folder": folder,
-            "created_at": datetime.now().isoformat()
-        }
-        return self._add_item("bookmarks", bookmark)
-    
-    def update_bookmark(self, bookmark_id, **kwargs):
-        return self._update_item("bookmarks", bookmark_id, kwargs)
-    
-    def delete_bookmark(self, bookmark_id):
-        self._delete_item("bookmarks", bookmark_id)
-    
     # ==================== 日期相关方法 ====================
     def get_birthdays(self):
         return self._get_items("birthdays")
@@ -761,7 +742,6 @@ class DataManager(QObject):
         default_data = {
             "todos": [],
             "notes": [],
-            "bookmarks": [],
             "birthdays": [],
             "holidays": [],
             "anniversaries": [],
