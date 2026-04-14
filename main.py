@@ -46,7 +46,7 @@ class CalcE(QMainWindow):
 
         ("modules.todo", "TodoManager", "待办事项"),
         ("modules.notes", "NotesWidget", "笔记"),
-        ("modules.important_dates", "ImportantDatesWidget", "重要日期"),
+
         ("modules.countdowns", "CountdownsWidget", "倒计时"),
         ("modules.year_progress", "YearProgressWidget", "今年余额"),
     ]
@@ -260,7 +260,6 @@ class CalcE(QMainWindow):
 
 - <b>待办事项</b>：任务管理，优先级标记<br>
 - <b>笔记</b>：分文件夹笔记管理，支持搜索<br>
-- <b>重要日期</b>：生日、节假日、纪念日提醒<br>
 - <b>倒计时</b>：多事件倒计时，实时更新<br>
 - <b>今年余额</b>：年度时间进度可视化<br><br>
 
@@ -420,8 +419,7 @@ Copyright 2025 CalcE Team | virmuran@163.com<br><br>
 <b>核心功能：</b><br>
 - 38+ 化工工程计算器（管道、换热、泵、制冷、安全等）<br>
 - 多类单位换算器<br>
-- 待办事项 / 笔记<br>
-- 重要日期 / 倒计时 / 今年余额<br><br>
+- 待办事项 / 笔记 / 倒计时 / 今年余额<br><br>
 
 <b>数据安全：</b><br>
 - 数据仅本地存储，不联网，不收集隐私<br>
