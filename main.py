@@ -43,7 +43,7 @@ class CalcE(QMainWindow):
     MODULES_CONFIG = [
         ("modules.chemical_calculations", "ChemicalCalculationsWidget", "工程计算"),
         ("modules.converter.converter_widget", "ConverterWidget", "换算器"),
-        ("modules.pomodoro", "PomodoroTimer", "番茄时钟"),
+
         ("modules.todo", "TodoManager", "待办事项"),
         ("modules.notes", "NotesWidget", "笔记"),
         ("modules.bookmarks", "BookmarksWidget", "书签"),
@@ -258,7 +258,7 @@ class CalcE(QMainWindow):
 <b>功能模块：</b><br>
 - <b>工程计算</b>：38+ 化工计算器，涵盖管道、换热、泵、制冷等<br>
 - <b>换算器</b>：长度、重量、温度、压力等多类单位换算<br>
-- <b>番茄时钟</b>：25+5 番茄工作法，自定义时长<br>
+
 - <b>待办事项</b>：任务管理，优先级标记<br>
 - <b>笔记</b>：分文件夹笔记管理，支持搜索<br>
 - <b>书签</b>：网页链接收藏与分类<br>
@@ -422,7 +422,7 @@ Copyright 2025 CalcE Team | virmuran@163.com<br><br>
 <b>核心功能：</b><br>
 - 38+ 化工工程计算器（管道、换热、泵、制冷、安全等）<br>
 - 多类单位换算器<br>
-- 番茄时钟 / 待办事项 / 笔记 / 书签<br>
+- 待办事项 / 笔记 / 书签<br>
 - 重要日期 / 倒计时 / 今年余额<br><br>
 
 <b>数据安全：</b><br>

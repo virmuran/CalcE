@@ -756,24 +756,10 @@ class DataManager(QObject):
         if self._save_data():
             self.data_changed.emit("custom_holidays")
     
-    # ==================== 番茄时钟会话 ====================
-    def get_pomodoro_sessions(self):
-        return self._get_items("pomodoro_sessions")
-    
-    def add_pomodoro_session(self, session_data):
-        return self._add_item("pomodoro_sessions", session_data)
-    
-    def update_pomodoro_session(self, session_id, **kwargs):
-        return self._update_item("pomodoro_sessions", session_id, kwargs)
-    
-    def delete_pomodoro_session(self, session_id):
-        self._delete_item("pomodoro_sessions", session_id)
-    
     def get_default_data(self):
         """返回默认数据结构（新格式）"""
         default_data = {
             "todos": [],
-            "pomodoro_sessions": [],
             "notes": [],
             "bookmarks": [],
             "birthdays": [],
